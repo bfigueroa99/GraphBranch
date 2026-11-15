@@ -100,6 +100,12 @@ test('el orden: pestañas tal cual, actividad por commits y nombre sin mayúscul
   assert.deepEqual(C.sortItems(withForks, 'forks').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'más forks primero; sin dato cuenta como 0; empata por pestaña');
   assert.deepEqual(C.sortItems(items, 'forks').map((i) => i.key), keys('tabs'), 'sin forks cargados queda el orden de las pestañas');
   assert.equal(C.orderParam(new URLSearchParams('order=%20Forks')), 'forks');
+  const withLast = items.map((it, i) => ({ ...it, last: [2e12, null, 3e12, 2e12][i], state: ['live', 'loading', 'live', 'live'][i] }));
+  assert.deepEqual(C.sortItems(withLast, 'recent').map((i) => i.key), ['o/c', 'o/b', 'o/d', 'o/a'], 'el commit más reciente primero; empata por pestaña; sin fecha (cargando o vacío) al final');
+  const someEmpty = items.map((it, i) => ({ ...it, last: [null, 5e11, undefined, 9e11][i] }));
+  assert.deepEqual(C.sortItems(someEmpty, 'recent').map((i) => i.key), ['o/d', 'o/a', 'o/b', 'o/c'], 'los que no tienen commits van al final, en el orden de las pestañas');
+  assert.deepEqual(C.sortItems(items, 'recent').map((i) => i.key), keys('tabs'), 'sin fechas cargadas queda el orden de las pestañas');
+  assert.equal(C.orderParam(new URLSearchParams('order=RECENT')), 'recent');
   assert.deepEqual(items.map((i) => i.key), ['o/b', 'o/a', 'o/c', 'o/d'], 'no toca la lista original');
 });
 
@@ -209,4 +215,95 @@ test('forks con lo ya cargado: el total de la consulta del repo, o null si la fu
   assert.equal(C.forksOf({ repo: { stars: 5 } }), null, 'sin dato (Bitbucket, Azure, un repo local): null; no toma las estrellas');
   assert.equal(C.forksOf({ repo: { forks: null } }), null);
   assert.equal(C.forksOf(null), null);
+});
+
+test('cada galaxia dice, junto a sus commits y ramas, cuánto hace de su commit más reciente ya cargado; nada si carga o está vacía', () => {
+  const NOW = 1_800_000_000_000;
+  const text = (k, p) => (k === 'constellation.stats' ? `commits: ${p.commits} · ramas: ${p.branches}` : k === 'tabs.unread' ? `${p.n} sin ver` : k);
+  const ago = (ms) => `hace ${(NOW - ms) / 3600e3} h`;
+  const fmt = (n) => `#${n}`;
+  const d = C.describe({ name: 'o/a', commits: 12, branches: 3, last: NOW - 3 * 3600e3, unread: 2 }, { text, fmt, ago });
+  // el lector de pantalla lo lee en el nombre de la galaxia; el globo lo muestra junto a las cifras
+  assert.equal(d.label, 'o/a, commits: #12 · ramas: #3, hace 3 h, 2 sin ver');
+  assert.equal(d.title, 'o/a · commits: #12 · ramas: #3 · hace 3 h');
+  // la que carga o está vacía no tiene `last`: no dice nada de tiempo (y ni siquiera se llama al formato)
+  const never = () => assert.fail('sin commit cargado no se formatea ninguna fecha');
+  for (const last of [null, undefined, NaN, 'ayer']) {
+    const e = C.describe({ name: 'o/b', commits: 0, branches: 0, last, state: 'loading' }, { text, ago: never });
+    assert.equal(e.label, 'o/b, commits: 0 · ramas: 0');
+    assert.equal(e.title, 'o/b · commits: 0 · ramas: 0');
+  }
+  // quien monta la constelación sin `ago` sigue viendo nombre y cifras
+  assert.equal(C.describe({ name: 'o/c', commits: 1, branches: 1, last: NOW }, { text }).title, 'o/c · commits: 1 · ramas: 1');
+});
+
+test('una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; las que cargan o no tienen fecha no', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const text = (k, p) => (k === 'constellation.stats' ? `c${p.commits}/r${p.branches}` : k === 'textview.quiet' ? 'sin actividad hace más de 30 días' : k);
+  const ago = () => 'hace mucho';
+  assert.equal(C.QUIET_DAYS, 30);
+  assert.equal(C.isQuiet({ last: NOW - 31 * DAY }, NOW), true);
+  assert.equal(C.isQuiet({ last: NOW - 30 * DAY }, NOW), false, 'justo 30 días aún no es quieta');
+  assert.equal(C.isQuiet({ last: NOW - 2 * DAY }, NOW), false);
+  assert.equal(C.isQuiet({ last: NOW - 90 * DAY, state: 'loading' }, NOW), false, 'a medio cargar, con commits viejos todavía, no se marca');
+  for (const last of [null, undefined, NaN, 'ayer']) assert.equal(C.isQuiet({ last, state: 'loading' }, NOW), false, 'sin fecha no hay nada que decir');
+  const q = C.describe({ name: 'o/q', commits: 4, branches: 1, last: NOW - 90 * DAY, unread: 1 }, { text, ago, now: NOW });
+  assert.equal(q.label, 'o/q, c4/r1, hace mucho, sin actividad hace más de 30 días, tabs.unread');
+  assert.equal(q.title, 'o/q · c4/r1 · hace mucho · sin actividad hace más de 30 días');
+  const live = C.describe({ name: 'o/v', commits: 4, branches: 1, last: NOW - DAY }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(live.label + live.title));
+  const loading = C.describe({ name: 'o/l', commits: 0, branches: 0, state: 'loading' }, { text, ago, now: NOW });
+  assert.ok(!/sin actividad/.test(loading.label));
+});
+
+test('una organización seguida: sus repos sin pestaña son galaxias tenues con su último push, hasta 100 por dueño y sin repetir', () => {
+  const keyOf = ({ owner, name }) => `${owner}/${name}`.toLowerCase();
+  const push = (i) => new Date(Date.UTC(2026, 9, 1) - i * 3600e3).toISOString();
+  const acme = Array.from({ length: 130 }, (_, i) => ({ owner: 'acme', name: `r${i}`, pushedAt: push(i), private: false }));
+  acme[3].pushedAt = null; // sin fecha: la galaxia no la inventa
+  const lists = { acme, ana: [{ owner: 'Ana', name: 'Notas', pushedAt: push(0) }, { owner: 'acme', name: 'r5', pushedAt: push(5) }] };
+  const open = new Set(['acme/r0', 'acme/r2']); // las que tienen pestaña no se repiten como galaxia tenue
+  const ghosts = JSON.parse(JSON.stringify(C.ghostItems(lists, open, keyOf)));
+  assert.equal(C.ORG_MAX, 100);
+  // de acme, los 100 primeros de su lista (la de push más reciente) menos los 2 con pestaña; de ana, el suyo (r5 ya estaba)
+  assert.equal(ghosts.length, 98 + 1);
+  assert.deepEqual(ghosts.slice(0, 3).map((g) => g.key), ['acme/r1', 'acme/r3', 'acme/r4']);
+  assert.ok(!ghosts.some((g) => g.key === 'acme/r100'), 'pasado el tope de la lista no entra');
+  assert.equal(ghosts.filter((g) => g.key === 'acme/r5').length, 1, 'un repo en dos listas, una sola galaxia');
+  const notas = ghosts.find((g) => g.key === 'ana/notas');
+  assert.deepEqual(notas, { key: 'ana/notas', name: 'Ana/Notas', owner: 'Ana', repo: 'Notas', ghost: true, state: 'ghost', commits: 0, branches: 0, last: Date.parse(push(0)) });
+  assert.equal(ghosts.find((g) => g.key === 'acme/r3').last, null);
+  // sin listas (ninguna organización seguida, o su lista no llegó) no hay galaxias tenues
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems({}, open, keyOf))), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems(null, open, keyOf))), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(C.ghostItems({ x: 'no es una lista', y: [null, { owner: 'y' }] }, open, keyOf))), []);
+});
+
+test('una galaxia sin pestaña dice su último push y que no tiene pestaña, sin commits ni ramas que no se cargaron', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const text = (k, p) => (k === 'constellation.pushed' ? `último push ${p.ago}` : k === 'constellation.ghost' ? 'sin pestaña: elígela para abrirla' : k === 'textview.quiet' ? 'sin actividad hace más de 30 días' : k);
+  const ago = (ms) => `hace ${(NOW - ms) / DAY} d`;
+  const g = { key: 'acme/web', name: 'acme/web', ghost: true, state: 'ghost', commits: 0, branches: 0, last: NOW - 2 * DAY };
+  const d = C.describe(g, { text, ago, now: NOW });
+  assert.equal(d.label, 'acme/web, último push hace 2 d, sin pestaña: elígela para abrirla');
+  assert.equal(d.title, 'acme/web · último push hace 2 d · sin pestaña: elígela para abrirla');
+  const old = C.describe({ ...g, last: NOW - 90 * DAY }, { text, ago, now: NOW });
+  assert.equal(old.label, 'acme/web, último push hace 90 d, sin actividad hace más de 30 días, sin pestaña: elígela para abrirla');
+  const never = C.describe({ ...g, last: null }, { text, ago: () => assert.fail('sin fecha no se formatea nada'), now: NOW });
+  assert.equal(never.label, 'acme/web, sin pestaña: elígela para abrirla');
+});
+
+test('20 pestañas y 100 repos más de su organización: las 120 galaxias caben en el cuadro sin tocarse, las tenues afuera', () => {
+  const items = [...repos(20), ...Array.from({ length: 100 }, (_, i) => ({ key: `acme/g${i}`, commits: 0, ghost: true }))];
+  const spots = place(items);
+  assert.equal(spots.length, 120);
+  for (const s of spots) assert.ok(s.r > 0 && s.x - s.r >= 0 && s.x + s.r <= 100 && s.y - s.r >= 0 && s.y + s.r <= 100, JSON.stringify(s));
+  for (let i = 0; i < spots.length; i++)
+    for (let j = i + 1; j < spots.length; j++)
+      assert.ok(Math.hypot(spots[i].x - spots[j].x, spots[i].y - spots[j].y) >= spots[i].r + spots[j].r, `${i} toca a ${j}`);
+  // la espiral pone primero las de más commits: las tenues (sin commits cargados) quedan, en promedio, más afuera
+  const far = (list) => list.reduce((sum, s) => sum + Math.hypot(s.x - 50, s.y - 50), 0) / list.length;
+  assert.ok(far(spots.slice(20)) > far(spots.slice(0, 20)), 'las sin commits cargados van hacia afuera');
 });

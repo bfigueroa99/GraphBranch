@@ -83,7 +83,10 @@ test('el service worker guarda todo lo que la página puede pedir, y nada más',
   assert.deepEqual(sorted(files), sorted(expected), 'FILES de sw.js tiene que listar cada archivo de icons/, css/, js/ y vendor/');
   // y la página no pide nada fuera de esa lista
   const html = read('index.html').toString();
-  const refs = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !u.startsWith('data:'));
+  // <link rel="canonical"> no es un pedido: nombra la dirección de la página y el navegador nunca lo carga
+  const tags = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"[^>]*>/g)].filter((m) => !/^<link rel="canonical" href="https:\/\/[^"]+">$/.test(m[0]));
+  const refs = tags.map((m) => m[1]).filter((u) => !u.startsWith('data:'));
+  assert.ok(refs.length > 40, 'la página trae sus scripts y estilos');
   for (const ref of refs) assert.ok(files.includes(ref), `index.html pide ${ref}, que sw.js no guarda`);
 });
 
@@ -177,7 +180,11 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.deepEqual(directive('manifest-src'), ["'self'"]);
   assert.deepEqual(directive('worker-src'), ["'self'"]);
   assert.ok(directive('img-src').includes("'self'"), 'los íconos del manifiesto se cargan como imágenes del propio sitio');
-  assert.deepEqual(directive('connect-src'), ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com'], 'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps');
+  assert.deepEqual(
+    directive('connect-src'),
+    ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com', 'https://api.anthropic.com', 'https://api.openai.com', 'https://openrouter.ai', 'http://localhost:20128', 'http://127.0.0.1:20128'],
+    'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps, y las del gasto en IA (Anthropic, OpenAI, OpenRouter y un OmniRoute local en su puerto)',
+  );
 });
 
 test('compartir hacia la PWA: el manifiesto declara share_target y el enlace compartido se reconoce', () => {

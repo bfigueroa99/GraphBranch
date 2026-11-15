@@ -46,6 +46,9 @@
     'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
+  /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null) ni los
+      bots: la consulta GraphQL solo trae usuarios, y así con token y sin token salen las mismas personas. */
+  const logins = (list) => (Array.isArray(list) ? list.filter((u) => u?.type !== 'Bot').map((u) => u?.login).filter((u) => typeof u === 'string' && u) : []);
   /** Estado de los checks de GitHub (rollup o check-runs) en uno de tres: 'success', 'failure' o 'pending'. */
   const ciState = (s) => {
     s = String(s || '').toUpperCase();
@@ -67,12 +70,26 @@
       .sort((a, b) => b.pushedAt - a.pushedAt)
       .slice(0, FORK_MAX)
       .map(({ fullName, url, pushedAt, stars }) => ({ fullName, url, pushedAt, stars }));
+  /** Las semanas de `/stats/code_frequency` (`[[inicio en segundos, añadidas, -borradas], …]`, de la más vieja a la
+      actual) como `[{ time, added, deleted }]`, las borradas en positivo; solo las últimas 12, que el panel mira 8. Una
+      fila sin fecha no entra y una cifra que no es un número cuenta 0. */
+  const codeWeeks = (list) =>
+    (Array.isArray(list) ? list : [])
+      .filter((w) => Array.isArray(w) && Number.isFinite(w[0]) && w[0] > 0)
+      .map(([t, add, del]) => ({ time: t * 1000, added: Number.isFinite(add) ? Math.abs(add) : 0, deleted: Number.isFinite(del) ? Math.abs(del) : 0 }))
+      .slice(-12);
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
   const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
   const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
+  // un repo vacío no se llena solo en segundos: se mira cada minuto hasta su primer push (sin token, cada 5: cada
+  // intento gasta unas 3 consultas de las 60 por hora, y la cuota se comparte con los demás repos seguidos)
+  const EMPTY_MS = 60000;
+  const EMPTY_ANON_MS = 300000;
+  /** Errores de una consulta secundaria (tags, forks, despliegues…) que se dejan pasar: la función queda vacía y el ciclo sigue. */
+  const SOFT = new Set(['http', 'notfound', 'auth', 'empty']);
   /** Errores que cortan el ciclo entero: una consulta secundaria que falla así no los tapa. */
   const HARD = new Set(['rate', 'network', 'auth', 'aborted']);
   const hard = (err) => HARD.has(err?.kind);
@@ -119,7 +136,8 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending': el estado de los checks de su cabeza
         tags: new Map(), // commit -> [nombre de tag]
-        deploys: new Map(), // entorno -> { sha, ref }: el último despliegue de cada uno
+        deploys: new Map(), // entorno -> { id, sha, ref, at }: el último despliegue de cada uno (at: cuándo se creó)
+        deployStatus: new Map(), // id del despliegue -> { state, at }: su último estado (`/statuses`) y cuándo se preguntó
         forks: [], // forks con actividad reciente, el push más nuevo primero
         pins: this.pins, // van justo debajo de la rama por defecto (ver layout.js)
         mode: null,
@@ -146,6 +164,7 @@
       this.seenEvents = new Set();
       this.prInfo = new Map(); // número -> { title, draft } de PRs que solo conocemos por eventos (o null)
       this.prHeads = new Set();
+      this.kept = new Set(); // commits traídos con «Cargar más»: gc() no los recorta por viejos (solo si ninguna rama los alcanza)
       this.kids = null; // commit -> hijos, para saber qué ramas contienen un commit (se rehace al cambiar los commits)
       this.etags = new Map();
       this.lastPoll = {};
@@ -324,6 +343,7 @@
             this.limitedUntil = err.resetAt;
             delay = Math.max(5000, err.resetAt - Date.now() + 2000);
           } else if (offline) delay = OFFLINE_MS; // sin red no se insiste: el aviso del navegador adelanta el reintento
+          else if (err.kind === 'empty') delay = this.token ? EMPTY_MS : EMPTY_ANON_MS; // nada falla: el repo todavía no tiene commits
           else {
             // cada fallo seguido espera el doble (5 s, 10 s… hasta 5 min), con algo de azar: que no reintenten todos a la vez
             this.failures++;
@@ -398,7 +418,7 @@
       const cached = cacheKey ? this.etags.get(cacheKey) : null;
       if (cached) headers['If-None-Match'] = cached.etag;
 
-      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store' });
+      const { res, body } = await this.request(this.ep.api + path, { headers, cache: 'no-store', emptyOk: allow.includes(202) });
       this.readRate(res);
       if (res.status === 304 && cached) {
         if (!this.token) this.cost++; // sin token, los 304 sí cuentan
@@ -442,7 +462,7 @@
      * cuenta como fallo de red (se reintenta); si la fuente se detuvo mientras tanto, se corta y no
      * cuenta como nada. Con `raw`, el cuerpo queda como texto (un diff), sin leerlo como JSON.
      */
-    async request(url, { raw = false, ...opts } = {}) {
+    async request(url, { raw = false, emptyOk = false, ...opts } = {}) {
       const halt = this.halt || (this.halt = new AbortController());
       const stopped = () => new ApiError(M(this.term('err.network')), { kind: 'aborted' });
       if (halt.signal.aborted) throw stopped();
@@ -465,7 +485,7 @@
           } catch {
             body = undefined;
           }
-          if (res.ok && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada
+          if (res.ok && !(emptyOk && res.status === 202) && !body) throw new ApiError(M(this.term('err.network')), { kind: 'network' }); // llegó vacía o cortada (salvo el 202, «todavía calculando», de quien lo admite: puede venir sin cuerpo)
         }
         return { res, body };
       } catch (err) {
@@ -507,6 +527,10 @@
         return new ApiError(M(this.token ? 'err.rate' : 'err.rateAnon'), { status: res.status, kind: 'rate', resetAt });
       }
       if (res.status === 404) return this.notFound();
+      // GitHub responde 409 «Git Repository is empty» a las ramas y los commits de un repo sin ningún commit
+      if (res.status === 409 && /repository is empty/i.test(msg)) {
+        return new ApiError(M('err.empty', { repo: `${this.owner}/${this.name}` }), { status: 409, kind: 'empty' });
+      }
       return new ApiError(msg ? M('err.http', { status: res.status, message: msg }) : M('err.httpNoMessage', { status: res.status }), {
         status: res.status,
         kind: 'http',
@@ -583,7 +607,7 @@
         try {
           return (await this.api(`${this.base}/${path}`, { cacheKey })).data;
         } catch (err) {
-          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err; // cuota, red o corte: el ciclo lo maneja
+          if (!SOFT.has(err.kind)) throw err; // cuota, red o corte: el ciclo lo maneja
           return null;
         }
       };
@@ -600,7 +624,7 @@
       const deploys = await get('deployments?per_page=30', 'deploys');
       if (Array.isArray(deploys)) {
         const byEnv = new Map();
-        for (const d of deploys) if (d?.sha && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { sha: d.sha, ref: d.ref || '' }); // el más nuevo va primero
+        for (const d of deploys) if (typeof d?.sha === 'string' && typeof d.environment === 'string' && !byEnv.has(d.environment)) byEnv.set(d.environment, { id: Number.isSafeInteger(d.id) ? d.id : null, sha: d.sha, ref: typeof d.ref === 'string' ? d.ref : '', at: typeof d.created_at === 'string' ? d.created_at : '' }); // el más nuevo va primero
         this.data.deploys = byEnv;
       }
     }
@@ -614,7 +638,66 @@
         const { data } = await this.api(`${this.base}/forks?sort=newest&per_page=100`, { cacheKey: 'forks' });
         if (Array.isArray(data)) this.data.forks = recentForks(data);
       } catch (err) {
-        if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+        if (!SOFT.has(err.kind)) throw err;
+      }
+      return true;
+    }
+
+    /** Si salió bien, falló o sigue en curso el último despliegue de cada entorno: una consulta por entorno
+        (`/deployments/:id/statuses`, solo el más nuevo), solo cuando el panel de salud lo pide y no más de una cada
+        15 minutos por despliegue (con ETag). Un despliegue que falla queda sin estado; la cuota agotada o la red caída
+        cortan la tanda (se lanza el error, como en `syncForks`, y lo que faltó se pide al volver a abrir el panel). */
+    async syncDeployStatuses(now = Date.now()) {
+      const known = (this.data.deployStatus ||= new Map());
+      const ids = [...new Set([...(this.data.deploys || new Map()).values()].map((d) => d?.id))].filter((id) => Number.isSafeInteger(id));
+      for (const id of [...known.keys()]) {
+        if (ids.includes(id)) continue;
+        known.delete(id); // los despliegues que ya no son los últimos
+        this.etags.delete(`deploy-status-${id}`);
+      }
+      const todo = ids.filter((id) => !(now - (known.get(id)?.at ?? -Infinity) < 15 * 60000)).slice(0, this.token ? 10 : 5); // sin token, la cuota es de 60 por hora
+      for (const id of todo) known.set(id, { state: known.get(id)?.state ?? null, at: now }); // antes de preguntar: otra apertura del panel a mitad de la tanda no los repite
+      for (const id of todo) {
+        let state = known.get(id).state;
+        try {
+          const { data } = await this.api(`${this.base}/deployments/${id}/statuses?per_page=1`, { cacheKey: `deploy-status-${id}` });
+          state = Array.isArray(data) && typeof data[0]?.state === 'string' ? data[0].state : null;
+        } catch (err) {
+          if (!SOFT.has(err.kind)) {
+            for (const rest of todo.slice(todo.indexOf(id))) if (known.get(rest)?.at === now) known.set(rest, { ...known.get(rest), at: -Infinity }); // lo que no se llegó a preguntar
+            throw err;
+          }
+        }
+        if (known.has(id)) known.set(id, { state, at: now });
+      }
+      return todo.length > 0;
+    }
+
+    /** Líneas añadidas y borradas por semana (`/stats/code_frequency`): una consulta, solo cuando el panel de salud la
+        pide y no más de una cada 15 minutos (con ETag). GitHub responde 202 mientras la calcula: queda «calculando» y
+        se vuelve a preguntar en la próxima apertura; un 204 (repo vacío), un 422 (más de 10 000 commits) o sin permisos,
+        sin semanas. Mientras GitHub calcula, una apertura vuelve a preguntar pasado un minuto; nunca dos consultas a la vez.
+        La cuota agotada o la red caída cortan la consulta (lanza, como `syncForks`) y se vuelve a pedir pasado el tope.
+        Devuelve si preguntó. */
+    syncCodeFrequency() {
+      if (this.codeFreqAsk) return this.codeFreqAsk.then(() => false);
+      const wait = this.data.codeFreq?.state === 'pending' ? 60000 : 15 * 60000;
+      if (this.lastPoll.codeFreq && Date.now() - this.lastPoll.codeFreq < wait) return Promise.resolve(false);
+      this.lastPoll.codeFreq = Date.now();
+      const ask = this.askCodeFrequency().finally(() => (this.codeFreqAsk = null));
+      this.codeFreqAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askCodeFrequency() {
+      const prev = this.data.codeFreq;
+      try {
+        const { data, status } = await this.api(`${this.base}/stats/code_frequency`, { cacheKey: 'code-freq', allow: [202, 204] });
+        if (status === 202) this.data.codeFreq = { state: 'pending', weeks: prev?.weeks || [] };
+        else this.data.codeFreq = { state: 'ok', weeks: codeWeeks(data) };
+      } catch (err) {
+        if (!SOFT.has(err.kind)) throw err;
+        this.data.codeFreq = { state: 'none', weeks: [] };
       }
       return true;
     }
@@ -630,7 +713,7 @@
           const c = Array.isArray(data) ? data[0]?.commit : null;
           known.set(n, Date.parse(c?.author?.date || c?.committer?.date) || null);
         } catch (err) {
-          if (!['http', 'notfound', 'auth'].includes(err.kind)) throw err;
+          if (!SOFT.has(err.kind)) throw err;
           known.set(n, null);
         }
       }
@@ -753,6 +836,14 @@
     /** ¿Este servicio sabe leer y escribir un archivo? GitHub sí; las fuentes que heredan de esta lo dicen por su
         cuenta (GitLab y Codeberg sí; Bitbucket y las carpetas locales, todavía no). */
     canEdit() {
+      return !this.host || this.host === 'github';
+    }
+
+    /** ¿La actividad de este servicio trae las revisiones de sus PRs, con su hora? GitHub sí (el feed de eventos); las
+        fuentes que heredan de esta lo dicen por su cuenta (GitLab, sus aprobaciones; Codeberg, Bitbucket, Azure DevOps
+        y las carpetas locales, no). Sin ellas, el panel de salud no parte el tiempo de ciclo en etapas y lo dice, en vez
+        de contar cada PR como fusionado sin revisión. */
+    givesReviews() {
       return !this.host || this.host === 'github';
     }
 
@@ -967,7 +1058,7 @@
           ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
-            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
+            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } reviewRequests(first: 10) { nodes { requestedReviewer { ... on User { login } } } } assignees(first: 10) { nodes { login } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
           }
           ${aliases(first)}
         }
@@ -1085,8 +1176,10 @@
         sameRepo: !p.isCrossRepository,
         url: p.url,
         draft: !!p.isDraft,
-        review: p.reviewDecision === 'APPROVED' ? 'approved' : null,
+        review: p.reviewDecision === 'APPROVED' ? 'approved' : p.reviewDecision === 'CHANGES_REQUESTED' ? 'changes' : null, // «changes» solo lo usa la salud: ya tuvo revisión
         user: p.author ? { login: p.author.login, name: p.author.login, avatar: p.author.avatarUrl } : null,
+        requested: logins(p.reviewRequests?.nodes?.map((r) => r?.requestedReviewer)),
+        assignees: logins(p.assignees?.nodes),
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),
       }));
@@ -1499,6 +1592,29 @@
       }
     }
 
+    /**
+     * «Cargar más» de la ficha de una rama: otra tanda de su historia (tantos commits como el tope de Commits por
+     * rama), desde donde se cortó lo cargado. Una consulta, solo para esa rama: las demás no cambian. Devuelve
+     * cuántos commits se sumaron (0: la historia ya estaba entera) y avisa con un `update` tranquilo para que el grafo los dibuje.
+     */
+    async loadMore(name) {
+      const b = this.data.branches.get(name);
+      const from = b && U.historyCut(this.data.commits, b.sha);
+      if (!from) return 0;
+      // se cuentan los que agregó esta consulta (no la diferencia de tamaño: el ciclo de sondeo puede sumar o recortar a la vez)
+      const added = new Set();
+      if (this.mode === 'graphql') await this.historyQuery([{ head: b.sha, from, n: this.depth }], added, 0);
+      else {
+        const { data } = await this.api(`${this.base}/commits?sha=${encodeURIComponent(from)}&per_page=${this.depth}`, { allow: [404, 409, 422] });
+        for (const c of data || []) if (this.addCommit(c)) added.add(c.sha);
+      }
+      // el padre que falta existe en GitHub: no traer nada es un fallo (la consulta pesada que se rindió, un 404…)
+      if (!added.size) throw new Error('No se pudo traer la historia desde ' + from);
+      for (const sha of added) this.kept.add(sha);
+      if (this.running) this.emit('update', { activities: [], initial: false, calm: true });
+      return added.size;
+    }
+
     /** Historia de varias ramas, en consultas de unos cientos de commits. */
     async fetchHistories(jobs, added) {
       for (let i = 0; i < jobs.length; ) {
@@ -1579,10 +1695,12 @@
       const keep = U.reachable(commits, heads).set;
       const before = commits.size;
       for (const sha of [...commits.keys()]) if (!keep.has(sha)) commits.delete(sha);
-      const cap = Math.max(600, this.depth * (branches.size + 10) * 2);
+      for (const sha of this.kept) if (!commits.has(sha)) this.kept.delete(sha); // ya ninguna rama los alcanza
+      const cap = Math.max(600, this.depth * (branches.size + 10) * 2) + this.kept.size;
       if (commits.size > cap) {
         const headSet = new Set(heads);
-        const old = [...commits.values()].filter((c) => !headSet.has(c.sha)).sort((a, b) => a.date - b.date);
+        // lo traído con «Cargar más» es lo más viejo: recortar por fecha lo borraría primero
+        const old = [...commits.values()].filter((c) => !headSet.has(c.sha) && !this.kept.has(c.sha)).sort((a, b) => a.date - b.date);
         for (const c of old.slice(0, commits.size - cap)) commits.delete(c.sha);
       }
       if (commits.size !== before) this.kids = null;
@@ -1726,6 +1844,8 @@
         url: p.html_url,
         draft: !!p.draft,
         user: { login: p.user?.login, name: p.user?.login, avatar: p.user?.avatar_url },
+        requested: logins(p.requested_reviewers), // a quiénes se les pidió revisión (sin los equipos) y quiénes están asignados:
+        assignees: logins(p.assignees), //            el filtro por persona del Launchpad
         createdAt: Date.parse(p.created_at) || Date.now(),
       };
     }
@@ -2077,9 +2197,10 @@
    * Los repos de una organización o de un usuario (lo que sigue `org:nombre` o `@usuario`): los de
    * push más reciente primero, sin forks ni archivados. Una consulta para una organización (con
    * token, también sus privados que el token ve); dos para un usuario, que primero se prueba como
-   * organización. → [{ owner, name, pushedAt, private }], hasta 100.
+   * organización. → [{ owner, name, pushedAt, private }], hasta 100. Con `prefix` (una tarea de GitHub
+   * Classroom, `org:curso/tarea-1-*`), solo los de esa lista cuyo nombre empieza así: la misma consulta.
    */
-  GitHubSource.ownerRepos = async (owner, { token = '', apiUrl = '' } = {}) => {
+  GitHubSource.ownerRepos = async (owner, { token = '', apiUrl = '', prefix = '' } = {}) => {
     const src = new GitHubSource({ owner, name: '', token, apiUrl });
     const q = 'sort=pushed&direction=desc&per_page=100';
     const who = encodeURIComponent(owner);
@@ -2087,7 +2208,7 @@
     if (res.status === 404) res = await src.api(`/users/${who}/repos?${q}&type=owner`, { allow: [404] });
     if (res.status === 404) throw new ApiError(M('err.ownerNotFound', { owner }), { status: 404, kind: 'notfound' });
     return (Array.isArray(res.data) ? res.data : [])
-      .filter((r) => r && r.name && !r.fork && !r.archived && !r.disabled)
+      .filter((r) => r && r.name && !r.fork && !r.archived && !r.disabled && U.ownerMatch({ prefix }, r.name))
       .map((r) => ({ owner: r.owner?.login || owner, name: r.name, pushedAt: r.pushed_at || null, private: !!r.private }));
   };
 
@@ -2119,24 +2240,50 @@
     };
   };
 
-  /** La segunda cuenta de GitHub, como se guarda: el token atado a su dueño u organización ('' si falta uno o el dueño no vale). */
+  /* Las otras cuentas de GitHub: hasta MAX_ACCOUNTS tokens más, cada uno atado a un dueño u organización y usado
+     solo con sus repos. Se guardan en el mismo lugar que la segunda cuenta de antes ('account2' en el navegador,
+     'github2' en el llavero): con una sola, con la misma forma que entonces ({ owner, token }), así que volver a una
+     versión anterior no la pierde; con más, la lista. */
   const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,38})$/;
-  GitHubSource.pack2 = (owner, token) => {
-    owner = String(owner || '').trim().replace(/^@/, '');
-    return owner && OWNER_RE.test(owner) && token ? JSON.stringify({ owner, token: String(token).trim() }) : '';
+  GitHubSource.MAX_ACCOUNTS = 5;
+  /** Las cuentas que valen de `list`, limpias: con dueño válido y token, cada dueño una vez (gana la primera, sin
+      distinguir mayúsculas: con dos tokens para el mismo dueño no se sabría cuál usar) y hasta MAX_ACCOUNTS. */
+  const cleanAccounts = (list) => {
+    const out = [];
+    const seen = new Set();
+    for (const a of list) {
+      if (!a || typeof a.owner !== 'string' || typeof a.token !== 'string') continue;
+      const owner = a.owner.trim().replace(/^@/, '');
+      const token = a.token.trim();
+      if (!owner || !OWNER_RE.test(owner) || !token || seen.has(owner.toLowerCase())) continue;
+      seen.add(owner.toLowerCase());
+      out.push({ owner, token });
+      if (out.length === GitHubSource.MAX_ACCOUNTS) break;
+    }
+    return out;
   };
-  /** Lo guardado de la segunda cuenta → { owner, token } (vacíos si no hay o está roto). */
-  GitHubSource.unpack2 = (stored) => {
+  /** Las cuentas como se guardan: '' sin ninguna, el objeto de la cuenta con una sola y la lista con más. */
+  GitHubSource.packAccounts = (list) => {
+    const clean = cleanAccounts(Array.isArray(list) ? list : []);
+    return clean.length ? JSON.stringify(clean.length === 1 ? clean[0] : clean) : '';
+  };
+  /** Lo guardado → la lista de cuentas (vacía si no hay o está roto). La segunda cuenta de antes, un objeto, pasa a
+      ser la primera de la lista. */
+  GitHubSource.unpackAccounts = (stored) => {
     try {
       const v = JSON.parse(String(stored || ''));
-      return v && OWNER_RE.test(v.owner) && typeof v.token === 'string' && v.token ? { owner: v.owner, token: v.token } : { owner: '', token: '' };
+      return cleanAccounts(Array.isArray(v) ? v : [v]);
     } catch {
-      return { owner: '', token: '' };
+      return [];
     }
   };
-  /** El token que corresponde a los repos de `owner`: el de la segunda cuenta solo si es su dueño; para todo lo demás, el principal. */
-  GitHubSource.tokenFor = (owner, main, second) =>
-    second?.token && second.owner && String(owner || '').toLowerCase() === second.owner.toLowerCase() ? second.token : main || '';
+  /** El token que corresponde a los repos de `owner`: el de la cuenta de ese dueño, si hay una; para todo lo demás, el
+      principal. Nunca el de otra cuenta. */
+  GitHubSource.tokenFor = (owner, main, accounts) => {
+    const o = String(owner || '').toLowerCase();
+    const hit = o && (Array.isArray(accounts) ? accounts : []).find((a) => a?.token && a.owner && a.owner.toLowerCase() === o);
+    return hit ? hit.token : main || '';
+  };
 
   GitHubSource.endpoints = endpoints;
   GitHubSource.ApiError = ApiError;

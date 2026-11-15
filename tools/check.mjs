@@ -12,12 +12,18 @@
      npm run check -- --auditar     la auditoría (tools/audit.mjs --puerta) siempre; sola, si el diff toca la página
      npm run check -- --sin-auditar la auditoría nunca
 
-   Salida: 0 todo en verde · 1 un paso falló (FALLA <paso> y sus últimas 40 líneas) · 2 no se pudo
+   Un smoke con pocos pasos en rojo (hasta REPETIR_PASOS, en hasta REPETIR_SECCIONES secciones) no frena la
+   puerta de entrada: se repiten solo esas secciones (node tools/smoke.mjs --seccion …). Si pasan, el paso
+   era intermitente: la puerta sigue, lo dice en una línea «Intermitente:» y lo deja en la línea «Validado:».
+   Si vuelven a fallar, es rojo. Así una intermitencia cuesta su sección y no otra puerta entera.
+
+   Salida: 0 todo en verde · 1 un paso falló (FALLA <paso> y sus últimas 40 líneas; de node --test, el
+   error de cada prueba que falló) · 2 no se pudo
    verificar (sin Chromium, sin Electron o sin pantalla ni xvfb-run). Elige el Chromium solo:
    PLAYWRIGHT_CHROMIUM_PATH, el de playwright-core, el más nuevo de /opt/pw-browsers o de
    PLAYWRIGHT_BROWSERS_PATH, o lo instala. Los logs completos quedan en test-results/check/ (las e2e
    vacían test-results/ al empezar: tras ellas queda solo e2e.log). */
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { delimiter, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,14 +32,28 @@ import { spawn, spawnSync } from 'node:child_process';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const logs = join(root, 'test-results', 'check');
 const FLAGS = ['--e2e', '--sin-e2e', '--langs', '--lento', '--auditar', '--sin-auditar'];
-const opciones = new Set(process.argv.slice(2));
-for (const a of opciones) {
-  if (!FLAGS.includes(a)) {
-    console.error(`opción desconocida: ${a} (node tools/check.mjs ${FLAGS.map((f) => `[${f}]`).join(' ')})`);
-    process.exit(1);
+/** true si esto se corrió como comando (npm run check) y no importado por una prueba. Se comparan las rutas
+    reales: con el repo detrás de un enlace simbólico, comparar las escritas daría false y la puerta saldría 0
+    sin haber corrido nada. */
+function corridaDirecta() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
   }
 }
-mkdirSync(logs, { recursive: true });
+const directo = corridaDirecta();
+const opciones = new Set(directo ? process.argv.slice(2) : []);
+/** Hasta cuántos pasos en rojo, y en cuántas secciones, se repiten por secciones: más que eso no es una
+    intermitencia sino un cambio que rompió el smoke, y repetirlo solo gasta tiempo. Tres de cada cuatro
+    puertas en rojo de las iteraciones 192 a 271 fueron un solo paso ajeno que pasó al repetir. */
+export const REPETIR_PASOS = 3;
+export const REPETIR_SECCIONES = 2;
+/** Cuántas veces se repite por secciones: la segunda solo si la primera repetición falló en otro paso, que
+    también tiene que pasar una vez (son las tres corridas que ya daba la skill, sin las otras 180 y pico de
+    pasos de cada una). Un paso que falla dos veces es rojo sin más vueltas. */
+export const REPETICIONES = 2;
 
 const RE_E2E = /^(index\.html|sw\.js|manifest\.webmanifest|package\.json|playwright\.config\.mjs|css\/|js\/|electron\/|vendor\/|e2e\/)/;
 const RE_LANGS = /^(js\/locales\/|css\/|index\.html)/;
@@ -53,15 +73,90 @@ function correr(paso, cmd, args, env = process.env) {
   return { status: r.error ? 127 : (r.status ?? 1), salida, ms: Date.now() - t0, log: paso };
 }
 
+/** De la salida TAP de node --test: cada prueba que falló con su error (el bloque que sigue a su «not ok»,
+    sin la traza), hasta `max`. Las suites que solo fallan porque falló una prueba suya no cuentan. Sin esto la
+    puerta mostraba las últimas 40 líneas, que son las pruebas que corrieron al final y pasaron, y había que ir
+    al log a buscar qué regla se rompió. */
+export function fallosTap(salida, max = 6) {
+  const lineas = salida.split('\n');
+  const fallos = [];
+  for (let i = 0; i < lineas.length; i++) {
+    const m = /^(\s*)not ok \d+ - (.*)$/.exec(lineas[i]);
+    if (!m) continue;
+    const sangria = m[1].length;
+    const bloque = [];
+    for (let j = i + 1; j < lineas.length; j++) {
+      const l = lineas[j];
+      if (l.trim() === '...' || (l.trim() && l.length - l.trimStart().length <= sangria)) break;
+      bloque.push(l.slice(sangria + 2));
+    }
+    if (bloque.some((l) => /^type: 'suite'/.test(l)) || bloque.some((l) => /subtestsFailed/.test(l))) continue;
+    const desde = bloque.findIndex((l) => /^error:/.test(l));
+    const hasta = bloque.findIndex((l, k) => k > desde && /^(code|name|stack|expected|actual|operator):/.test(l));
+    const error = desde < 0 ? [] : bloque.slice(desde, hasta < 0 ? desde + 12 : Math.min(hasta, desde + 12));
+    fallos.push({ nombre: m[2], error: error.map((l) => l.trimEnd()).filter(Boolean) });
+  }
+  return fallos.slice(0, max);
+}
+
+/** Del registro del smoke en rojo: las secciones que tuvieron fallos («§ Título»), los pasos que fallaron
+    en ellas («· nombre», debajo de su sección) y sus líneas de error («  ✗ nombre: error»). */
+export function fallosSmoke(salida) {
+  const lineas = salida.split('\n');
+  return {
+    secciones: lineas.filter((l) => l.startsWith('§ ')).map((l) => l.slice(2).trim()),
+    pasos: lineas.filter((l) => l.startsWith('· ')).map((l) => l.slice(2).trim()),
+    errores: lineas.filter((l) => /^\s*✗ /.test(l)).map((l) => l.replace(/^\s*✗ /, '').trim()),
+  };
+}
+
+/** Un smoke en rojo se repite por secciones solo si parece una intermitencia: pocos pasos, en pocas secciones
+    (y un registro que las nombra: sin «§», el smoke murió antes de terminar y no hay qué repetir). */
+export const repetible = ({ pasos, secciones }) => pasos.length >= 1 && pasos.length <= REPETIR_PASOS && secciones.length >= 1 && secciones.length <= REPETIR_SECCIONES;
+
+/** El smoke con su repetición por secciones. `correr(extra)` corre `node tools/smoke.mjs` con esos argumentos
+    de más y devuelve { status, salida, ms }. Devuelve { primera, rojo, motivo, intermitentes, ms }: `rojo` es la
+    corrida que frena la puerta (null si el smoke vale), `intermitentes` los pasos que fallaron una vez y pasaron
+    al repetir su sección, y `ms` lo que tardaron las repeticiones. Vale solo si cada paso que falló alguna vez
+    pasó después en una corrida de su sección; el que falla dos veces, o un rojo que no parece intermitencia
+    (muchos pasos, o un smoke que murió sin decir en qué sección), frena. */
+export function validarSmoke(correr, { repeticiones = REPETICIONES, avisar = () => {} } = {}) {
+  const primera = correr([]);
+  if (primera.status === 0) return { primera, rojo: null, motivo: '', intermitentes: [], ms: 0 };
+  let f = fallosSmoke(primera.salida);
+  if (!repetible(f)) return { primera, rojo: primera, motivo: '', intermitentes: [], ms: 0 };
+  const intermitentes = [];
+  let ms = 0;
+  for (let ronda = 1; ; ronda++) {
+    intermitentes.push(...f.pasos);
+    avisar(f, ronda);
+    const otra = correr(f.secciones.flatMap((x) => ['--seccion', x]));
+    ms += otra.ms;
+    if (otra.status === 0 && /✓/.test(otra.salida)) return { primera, rojo: null, motivo: '', intermitentes, ms };
+    const g = fallosSmoke(otra.salida);
+    const repetidos = g.pasos.filter((p) => intermitentes.includes(p));
+    if (repetidos.length) return { primera, rojo: otra, motivo: `falló dos veces, la segunda con su sección sola: no es una intermitencia (${repetidos.map((p) => `«${nombrePaso(p)}»`).join(', ')})`, intermitentes, ms };
+    if (!repetible(g)) return { primera, rojo: otra, motivo: 'la repetición por secciones no terminó o falló en demasiados pasos', intermitentes, ms };
+    if (ronda >= repeticiones) return { primera, rojo: otra, motivo: `en ${ronda + 1} corridas falló cada vez en un paso distinto: el smoke no es confiable así, se arregla antes de seguir`, intermitentes, ms };
+    f = g;
+  }
+}
+
+/** El nombre de un paso, acortado para la línea «Validado:». */
+export const nombrePaso = (paso, max = 70) => (paso.length > max ? `${paso.slice(0, max - 1).trimEnd()}…` : paso);
+
 function falla(nombre, r) {
   console.log(`FALLA ${nombre} (código ${r.status})`);
   const lineas = r.salida.trim().split('\n');
-  const noOk = lineas.filter((l) => /^\s*not ok /.test(l));
-  if (noOk.length) {
+  const tap = fallosTap(r.salida);
+  if (tap.length) {
     console.log('  Fallaron:');
-    for (const l of noOk) console.log(`  ${l.trim()}`);
+    for (const f of tap) {
+      console.log(`  not ok - ${f.nombre}`);
+      for (const l of f.error) console.log(`      ${l}`);
+    }
   }
-  for (const l of lineas.slice(-40)) console.log(`  ${l}`);
+  for (const l of lineas.slice(tap.length ? -10 : -40)) console.log(`  ${l}`);
   console.log(`(la salida entera está en test-results/check/${r.log}.log)`);
   process.exit(1);
 }
@@ -146,6 +241,13 @@ function entornoE2E() {
 }
 
 async function main() {
+  for (const a of opciones) {
+    if (!FLAGS.includes(a)) {
+      console.error(`opción desconocida: ${a} (node tools/check.mjs ${FLAGS.map((f) => `[${f}]`).join(' ')})`);
+      process.exit(1);
+    }
+  }
+  mkdirSync(logs, { recursive: true });
   const cambios = diff();
   const toca = (re) => cambios === null || cambios.some((f) => re.test(f));
   const conE2E = opciones.has('--e2e') || (!opciones.has('--sin-e2e') && toca(RE_E2E));
@@ -201,11 +303,26 @@ async function main() {
   const prefijo = conE2E ? entornoE2E() : [];
 
   // 6. el smoke
-  const smoke = correr('smoke', process.execPath, [join(root, 'tools', 'smoke.mjs'), ...(langs ? ['--langs'] : [])], entorno);
-  if (smoke.status !== 0) falla('smoke', smoke);
-  const pasos = (smoke.salida.match(/✓/g) || []).length;
+  // un paso que falló una vez se repite con su sección sola, no con la puerta entera (ver la cabecera)
+  const argsSmoke = [join(root, 'tools', 'smoke.mjs'), ...(langs ? ['--langs'] : [])];
+  let corrida = 0;
+  const v = validarSmoke((extra) => correr(corrida++ ? `smoke-repeticion-${corrida - 1}` : 'smoke', process.execPath, [...argsSmoke, ...extra], entorno), {
+    avisar: (f) => {
+      console.log(`smoke: ${f.pasos.length} paso(s) en rojo; se repite solo su sección (${f.secciones.map((x) => `«${x}»`).join(', ')})`);
+      for (const p of f.errores) console.log(`  ✗ ${p.slice(0, 300)}`);
+    },
+  });
+  const smoke = v.primera;
+  if (v.rojo) {
+    if (v.motivo) console.log(`smoke: ${v.motivo}. La primera corrida está en test-results/check/smoke.log.`);
+    falla('smoke', v.rojo);
+  }
+  const intermitentes = v.intermitentes.map((p) => nombrePaso(p));
+  const repeticion = intermitentes.length ? `; ${intermitentes.length} en rojo la primera vez, en verde al repetir su sección (${dur(v.ms)})` : '';
+  const pasos = (smoke.salida.match(/✓/g) || []).length + fallosSmoke(smoke.salida).pasos.length;
   const idiomas = (/(\d+) idiomas/.exec(smoke.salida) || [])[1];
-  console.log(`ok  smoke ${pasos} pasos${langs ? `, ${idiomas} idiomas` : ''} (${dur(smoke.ms)})`);
+  console.log(`ok  smoke ${pasos} pasos${langs ? `, ${idiomas} idiomas` : ''} (${dur(smoke.ms)}${repeticion})`);
+  for (const p of intermitentes) console.log(`Intermitente: «${p}» falló una vez en el smoke y pasó al repetir su sección. Si es del cambio (un paso nuevo, o de lo que toca el diff), se arregla; si es ajeno, se anota en su pendiente [Deuda] de Mantenimiento.`);
 
   // 7. la auditoría: hallazgos nuevos frente a tools/audit-base.json (falla solo si se repiten en dos corridas)
   let audit = null;
@@ -230,13 +347,16 @@ async function main() {
     console.log(`ok  e2e ${passed} passed (${dur(r.ms)})`);
   } else console.log(opciones.has('--sin-e2e') ? 'e2e: saltadas por --sin-e2e' : 'e2e: no corridas (el cambio no toca la página ni el escritorio)');
 
-  const smokeTxt = langs ? `smoke (${idiomas} idiomas)` : 'smoke';
+  const notas = [...(langs ? [`${idiomas} idiomas`] : []), ...(intermitentes.length ? [`intermitente, en verde al repetir su sección: ${intermitentes.map((p) => `«${p}»`).join(', ')}`] : [])];
+  const smokeTxt = notas.length ? `smoke (${notas.join('; ')})` : 'smoke';
   const auditTxt = audit ? `, auditoría (${audit.nuevos} hallazgos nuevos, ${audit.conocidos} conocidos)` : '';
   const base = `Validado: ${nTests} pruebas (\`node --test\`), ${smokeTxt}, i18n (${mI18n[2]} errores)${auditTxt}`;
   console.log(e2e === null ? `${base} en verde; e2e no corridas (${opciones.has('--sin-e2e') ? 'saltadas por --sin-e2e' : 'no toca la página ni el escritorio'}).` : `${base} y ${e2e} e2e en verde.`);
 }
 
-main().catch((err) => {
-  console.error(`ERROR: ${err.message}`);
-  process.exit(1);
-});
+if (directo) {
+  main().catch((err) => {
+    console.error(`ERROR: ${err.message}`);
+    process.exit(1);
+  });
+}

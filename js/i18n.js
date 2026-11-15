@@ -295,6 +295,8 @@ window.GB = window.GB || {};
   }
 
   const fmtNum = (n) => intl('NumberFormat').format(Number(n));
+  /** Dólares, como los cobran los servicios de IA: con centavos hasta 100, sin ellos desde ahí. */
+  const fmtUsd = (n) => intl('NumberFormat', { style: 'currency', currency: 'USD', maximumFractionDigits: Math.abs(Number(n)) < 100 ? 2 : 0 }).format(Number(n) || 0);
   const fmtDate = (ms) => intl('DateTimeFormat', { day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
   const fmtDateTime = (ms) => intl('DateTimeFormat', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(ms);
   const fmtDayLong = (ms) => intl('DateTimeFormat', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(ms);
@@ -413,6 +415,7 @@ window.GB = window.GB || {};
     msg,
     text,
     fmtNum,
+    fmtUsd,
     fmtDate,
     fmtDayLong,
     fmtDateTime,

@@ -8,8 +8,9 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** util.js en un contexto aislado cuyo localStorage guarda lo que se le diga (válido o corrupto). */
-function load(saved, hostname = 'localhost', session = {}) {
+function load(saved, hostname = 'localhost', session = {}, extra = {}) {
   const ctx = vm.createContext({
+    ...extra,
     console,
     setTimeout,
     clearTimeout,
@@ -60,6 +61,23 @@ test('U.secret: en <usuario>.github.io el token va a sessionStorage y el de loca
   assert.equal(Object.keys(session).length, 0);
 });
 
+test('U.secret: en el panel de VS Code (GBSessionSecrets) el token no toca localStorage, aunque el origen sea 127.0.0.1', () => {
+  // el puerto del servidor local cambia en cada sesión del panel: lo que quedara en localStorage se quedaría en el disco, en un origen que nadie vuelve a abrir
+  const local = { 'graphbranch:gitlabToken': '"glpat-viejo"' };
+  const session = { 'graphbranch:token': '"gho_sesion"' };
+  const U = load(local, '127.0.0.1', session, { GBSessionSecrets: true });
+  assert.equal(U.secret.shared(), true);
+  assert.equal(U.secret.get('token', ''), 'gho_sesion');
+  assert.equal(U.secret.get('gitlabToken', ''), 'glpat-viejo'); // el que hubiera quedado se muda a la sesión
+  assert.deepEqual(Object.keys(local), []);
+  U.secret.set('codebergToken', 'cb_x');
+  assert.equal(session['graphbranch:codebergToken'], '"cb_x"');
+  assert.deepEqual(Object.keys(local), []);
+  // sin la marca, 127.0.0.1 es un origen como cualquier otro (el de las pruebas e2e): localStorage
+  assert.equal(load({}, '127.0.0.1', {}).secret.shared(), false);
+  assert.equal(load({}, '127.0.0.1', {}, { GBSessionSecrets: 'sí' }).secret.shared(), false);
+});
+
 test('U.secret: en otro origen el token sigue en localStorage', () => {
   const local = {};
   const session = {};
@@ -104,6 +122,8 @@ test('statusKey: un 404 o la cuota agotada no se rotulan «Sin conexión»', () 
   assert.equal(U.statusKey({ state: 'live' }), 'status.live');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'notfound' } }), 'status.errorNotFound');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'rate' } }), 'status.errorRate');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'auth' } }), 'status.errorAuth');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'empty' } }), 'status.errorEmpty'); // un repo sin commits no es «Sin conexión»
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'network' } }), 'status.error');
   assert.equal(U.statusKey({ state: 'error' }), 'status.error');
   assert.equal(U.statusKey({ state: 'inventado' }), null);

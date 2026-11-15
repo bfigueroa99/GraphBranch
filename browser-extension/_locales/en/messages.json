@@ -1,0 +1,5 @@
+{
+  "description": {
+    "message": "Adds an “Open in GraphBranch” button to GitHub, GitLab, Codeberg and Bitbucket repository pages: opens its live branch graph."
+  }
+}

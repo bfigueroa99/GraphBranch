@@ -170,6 +170,161 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
 - **Implica:** el Widget embebible y capa para streaming (ítem 11) llena un hueco sin competencia directa
   encontrada, con poco esfuerzo: la app ya es una página estática que OBS puede cargar.
 
+### 2026-11-12 · Contributor Absence Factor (CHAOSS)
+
+- **Qué es:** métrica de la comunidad CHAOSS (antes «Bus Factor»): el menor número de personas que suman
+  el 50 % de las contribuciones de un tipo (commits, issues, comentarios…). Se ordena de más a menos y se
+  suma hasta pasar la mitad; cuanto más bajo, más depende el proyecto de pocas personas. Responde «¿qué tan
+  alto es el riesgo si se van los más activos?», y sirve mirada en el tiempo y entre varios repos.
+- **Fuente:** https://chaoss.community/kb/metric-bus-factor/ (consultada el 2026-11-12)
+- **Implica:** una cifra del repo, no una lista de personas: entra en la salud sin romper «describe al
+  repositorio, nunca a personas», con los commits ya cargados y sin consultas.
+
+### 2026-11-12 · Git Truck
+
+- **Qué es:** visualización local e interactiva de un repo Git que se abre en el navegador: estructura,
+  tipo de archivo, lo cambiado hace poco, quién cambió más líneas de cada archivo, dónde y cuándo trabajó
+  cada persona e historia. Se instala con npm y corre sin nube ni seguimiento.
+- **Fuente:** https://github.com/git-truck/git-truck (consultada el 2026-11-12)
+- **Implica:** colorear las galaxias por la antigüedad del último cambio de cada archivo es lo que más se
+  le acerca; en la web pide la fecha de cada archivo (una consulta por archivo en GitHub), así que encaja
+  primero en las carpetas locales del escritorio.
+
+### 2026-11-12 · Oh My Git!
+
+- **Qué es:** juego libre para aprender Git: muestra las estructuras internas del repo en tiempo real,
+  presenta los comandos como cartas con una descripción y un ícono (acción y referencia a la vez), tiene
+  una terminal con un Git real y enseña a trabajar con remotos entre varios repos. Para Linux, macOS y
+  Windows (itch.io). No consta su licencia en la portada ni si tiene niveles.
+- **Fuente:** https://ohmygit.org/ (consultada el 2026-11-12)
+- **Implica:** la práctica de git (ítem 16) solo se usa escribiendo: las cartas abren la puerta a quien
+  todavía no sabe qué escribir, y los remotos (`push`, `fetch`) son lo que más falta en el simulador.
+
+### 2026-11-12 · Información del repositorio en GitHub (Commits y Code frequency)
+
+- **Qué es:** las gráficas de «Insights» de GitHub: Commits (los del último año por semana, sin merges, y
+  el promedio por día de la semana) y Code frequency (líneas añadidas y borradas cada semana de toda la
+  historia, como tabla, CSV o PNG); limitadas a repos de menos de 10.000 commits.
+- **Fuente:** https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/analyzing-changes-to-a-repositorys-content (consultada el 2026-11-12)
+- **Implica:** la salud ya cuenta commits por semana; le faltan las líneas añadidas y borradas (una
+  consulta a `/stats/code_frequency`, al abrir el panel) y el reparto por día de la semana.
+
+### 2026-11-12 · OSS Insight
+
+- **Qué es:** plataforma gratuita de análisis sobre más de 10.000 millones de eventos de GitHub:
+  estrellas, PRs, issues, commits, revisiones, contribuidores y salud de la comunidad; repos en tendencia,
+  colecciones y un explorador de datos. Avisa que desde mediados de 2025 el feed de eventos de GitHub
+  capta de menos estrellas, PRs e issues (cambio de paginación); los commits no.
+- **Fuente:** https://ossinsight.io/ (consultada el 2026-11-12)
+- **Implica:** lo que GraphBranch saca del feed de eventos (estrellas, forks, ramas nuevas) queda corto en
+  repos con mucho movimiento, como ya dice Límites conocidos; las cifras que salen de los commits cargados
+  (autores, ausencia) son las más firmes. No consta una comparación entre repos.
+
+### 2026-11-13 · OpenSSF Scorecard
+
+- **Qué es:** la herramienta de la Open Source Security Foundation que evalúa los riesgos de seguridad de un
+  proyecto de código abierto con 18 comprobaciones automáticas (vulnerabilidades, herramienta de
+  actualización de dependencias, mantenido, política de seguridad, licencia, protección de ramas, revisión de
+  código, flujos peligrosos, dependencias fijadas, permisos de tokens, versiones firmadas…), cada una con un
+  puntaje sobre 10. La portada le habla a quien mantiene un proyecto, a las organizaciones y a quien consume
+  dependencias; el README enlaza una API REST con los puntajes ya calculados (escanea más de 1,3 millones de
+  repos cada semana) y la insignia `https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge`.
+- **Fuente:** https://scorecard.dev/ y https://github.com/ossf/scorecard (consultadas el 2026-11-13). Medido
+  el 2026-11-13: `GET https://api.scorecard.dev/projects/github.com/ossf/scorecard` responde 200, sin token,
+  con `access-control-allow-origin: *`, la fecha del análisis, el puntaje total y cada comprobación con su
+  puntaje y su motivo.
+- **Implica:** el panel de salud podría dar el puntaje de Scorecard y sus comprobaciones más bajas con una
+  consulta por repo al abrirse, sin token; es un servidor nuevo en la CSP (`connect-src`), así que va con plan
+  por consenso deliberado. Solo los repos de GitHub que Scorecard analizó tienen puntaje.
+
+### 2026-11-13 · Swarmia (tiempo de ciclo de un PR)
+
+- **Qué es:** plataforma de métricas de ingeniería para equipos. Define el tiempo de ciclo de un PR como la
+  suma de tres etapas: en curso (del primer commit o de la apertura del PR, lo que pase antes, al primer
+  pedido de revisión), en revisión (del primer pedido de revisión, o de la apertura si no hubo, a la
+  aprobación final) y hasta fusionar (de la aprobación final a la fusión).
+- **Fuente:** https://help.swarmia.com/features/metrics/pull-request-cycle-time (consultada el 2026-11-13)
+- **Implica:** la salud ya da el tiempo a fusionar y el tiempo de entrega desde el primer commit; le falta
+  partirlo en etapas para ver dónde espera un PR, con lo que ya traen los PRs fusionados.
+
+### 2026-11-13 · GitHub Classroom
+
+- **Qué es:** el servicio de GitHub para cursos. Cada tarea individual crea un repo por estudiante en la
+  organización del curso, con el prefijo de la tarea y el usuario del estudiante (`assignment-1-octocat`; el
+  prefijo es por defecto el título de la tarea y se puede cambiar). La visibilidad la elige quien crea la
+  tarea.
+- **Fuente:** https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/create-an-individual-assignment (consultada el 2026-11-13)
+- **Implica:** las entregas de una tarea son los repos de una organización con un mismo prefijo: seguir la
+  organización y quedarse con los de ese prefijo deja ver a la clase entera, cada entrega una galaxia (la
+  constelación ya dibuja hasta 100 repos de una organización). Las privadas piden un token de la
+  organización.
+
+### 2026-11-13 · Dueños del código en GitHub (CODEOWNERS)
+
+- **Qué es:** el archivo `CODEOWNERS` (en `.github/`, en la raíz o en `docs/`; GitHub usa el primero que
+  encuentra, en ese orden) asigna patrones de archivo, con la sintaxis de gitignore, a personas o equipos, y
+  el último patrón que coincide manda. GitHub pide revisión a los dueños cuando un PR toca sus archivos (no en
+  los borradores) y usa el archivo de la rama base del PR.
+- **Fuente:** https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners (consultada el 2026-11-13)
+- **Implica:** GraphBranch podría decir de quién es cada archivo del diff de un commit, con una consulta al
+  archivo de la rama por defecto y la coincidencia hecha en el navegador: a un equipo le dice a quién
+  preguntar.
+
+### 2026-11-13 · Notas de la versión generadas por GitHub
+
+- **Qué es:** al publicar una versión, GitHub arma unas notas con la lista de PRs fusionados, la de quienes
+  contribuyeron y un enlace al registro completo de cambios, desde la versión anterior que se elija;
+  `.github/release.yml` las agrupa en categorías por etiqueta y excluye etiquetas o autores.
+- **Fuente:** https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes (consultada el 2026-11-13)
+- **Implica:** con lo ya cargado (los tags y los PRs fusionados con su autor), GraphBranch podría sacar un
+  borrador de notas en Markdown de lo fusionado desde el último tag, sin publicar nada (la app no escribe en
+  el repo); las categorías por etiqueta, en otra entrega.
+
+### 2026-11-13 · Star History
+
+- **Qué es:** sitio que se presenta como «The de facto GitHub star history graph»: la curva de estrellas de
+  un repo de GitHub en el tiempo, la comparación entre repos y los que más crecieron en la semana. La portada
+  no dice de dónde saca los datos.
+- **Fuente:** https://www.star-history.com/ y, para los datos, https://docs.github.com/en/rest/activity/starring (consultadas el 2026-11-13)
+- **Implica:** no entra a la hoja de ruta: la curva necesita la lista de stargazers con su fecha
+  (`application/vnd.github.star+json`), y la documentación de la API dice que el acceso a esa lista se limita
+  a administradores y colaboradores (desde julio de 2026). La salud sigue contando las estrellas del feed de
+  eventos.
+
+### 2026-11-13 · API de Gitea: estado combinado de un commit
+
+- **Qué es:** la API de Gitea (la base de Forgejo y de Codeberg) da el estado combinado del CI de una rama, un
+  tag o un commit: `GET /repos/{owner}/{repo}/commits/{ref}/status`, con `state` (pending, success, error,
+  failure, warning o skipped), cada estado aparte y su total.
+- **Fuente:** https://docs.gitea.com/api/next/operations/repo-get-combined-status-by-ref/ (consultada el 2026-11-13)
+- **Implica:** el CI en el grafo, que hoy es de GitHub y de GitLab, podría llegar a Codeberg y a un Forgejo
+  propio con una consulta por rama movida, como el de GitLab. La página de Forgejo Actions
+  (https://forgejo.org/docs/latest/user/actions/overview/) no dice cómo informa sus resultados. Queda como
+  candidata: la usaría un nicho.
+
+### 2026-11-14 · Sentry (reporte de errores)
+
+- **Qué es:** plataforma de monitoreo de aplicaciones: agrupa los errores en issues, cada uno con la traza de la pila,
+  las migas (lo que pasó antes) y la versión y el entorno. Sus SDK limpian en el origen: `beforeSend` cambia o descarta
+  cada evento antes de que salga y `beforeBreadcrumb` cada miga; en el SDK de JavaScript 10, `dataCollection` decide
+  qué datos junta solo (el antiguo `sendDefaultPii` queda de respaldo), y el servidor limpia otra vez al recibir. Para
+  una página sin compilación ofrece el Loader Script, que se actualiza solo, o los bundles de su CDN con la versión en
+  la URL e `integrity`. En una extensión de navegador pide no usar `Sentry.init` (ensucia el estado global y puede
+  mandar eventos al proyecto equivocado), sino un `BrowserClient` con su `Scope`, sin las integraciones globales y
+  capturando a mano. El SDK de Electron (`@sentry/electron`, desde Electron 35) se inicia en el proceso principal, los
+  eventos del renderizador pasan por él, y por defecto manda la IP y el id del usuario.
+- **Fuente:** https://docs.sentry.io/platforms/javascript/configuration/options/,
+  https://docs.sentry.io/platforms/javascript/install/loader/,
+  https://docs.sentry.io/platforms/javascript/best-practices/shared-environments/ y
+  https://docs.sentry.io/platforms/javascript/guides/electron/ (consultadas el 2026-11-14), y las guías del plugin
+  `sentry` (https://github.com/getsentry/sentry-for-ai, commit c198c98: `references/concepts/data-scrubbing.md` y
+  `errors.md`). Pedido de Benjamin del 2026-11-14.
+- **Implica:** GraphBranch puede reportar sus fallos sin romper «sin CDN» ni «sin dependencias nuevas»: un emisor propio
+  o el SDK fijado en `vendor/`, cargado solo si quien usa la app lo prende; el Loader queda fuera porque cambia solo.
+  Sus reglas (sin tokens, cabeceras, URLs de las APIs, repos, ramas ni usuarios) caben en `beforeSend` y
+  `beforeBreadcrumb`; en Electron hay que apagar lo que manda por defecto, y en la extensión va un cliente propio. Cada
+  error que llegue es evidencia para Errores y QA del loop.
+
 ## Ideas puntuadas
 
 Las de la hoja de ruta (su puntaje está también en `IMPROVEMENTS.md`) y las candidatas que salen de esta
@@ -323,11 +478,54 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Launchpad: posponer un PR | Escala | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 166 |
 | Salud del repo: tendencia de estrellas | Análisis | 1×2/2 | 1,0 | DORA | ítem 167 |
 | Constelación: ordenar por último commit | Escala | 1×2/1 | 2,0 | Red de ramas de GitHub | ítem 172 |
+| Práctica: stash show | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 183 |
+| Práctica: tag anotado | Público | 1×2/2 | 1,0 | git-sim | ítem 184 |
+| Práctica: branch -c | Público | 1×2/2 | 1,0 | git-sim | ítem 185 |
+| Resumen de la semana de la organización: quién abrió más PRs | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 186 |
+| Salud del repo: tendencia de forks | Análisis | 1×2/2 | 1,0 | DORA | ítem 187 |
+| Vista de texto: PRs con CI fallido | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 188 |
+| Resumen de la semana: quién cerró más issues | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 189 |
+| Práctica: git show | Público | 1×2/2 | 1,0 | git-sim | ítem 190 |
+| Práctica: git diff | Público | 1×2/2 | 1,0 | git-sim | ítem 191 |
+| Vista de texto: PRs en borrador | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 192 |
+| Columnas de SHA, autor y fecha en el grafo 3D | Análisis | 1×2/2 | 1,0 | Replica (GitKraken) | ítem 193 |
+| Salud del repo: autores nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | hecho en #342 |
+| Salud del repo: forks nuevos por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 195 |
+| Práctica: branch --merged y --no-merged | Público | 1×2/2 | 1,0 | git-sim | ítem 196 |
+| Vista de texto: PRs aprobados | Público | 1×2/2 | 1,0 | (accesibilidad) | ítem 197 |
+| Resumen de la semana: estrellas nuevas | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 198 |
+| Resumen de la semana: forks nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 199 |
+| Salud del repo: estrellas nuevas por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 200 |
+| Salud del repo: factor de ausencia (CHAOSS) | Análisis | 2×2/1 | 4,0 | Contributor Absence Factor (CHAOSS) | ítem 202 |
+| Práctica: un remoto con push y fetch | Público | 2×3/2 | 3,0 | Oh My Git! | ítem 203 |
+| Práctica: cartas de comandos | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 204 |
+| Práctica: el índice y el árbol de trabajo a la vista | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 205 |
+| Salud del repo: líneas añadidas y borradas por semana | Análisis | 2×2/2 | 2,0 | Información del repositorio en GitHub | ítem 206 |
+| Salud del repo: commits por día de la semana | Análisis | 1×2/2 | 1,0 | Información del repositorio en GitHub | ítem 207 |
+| Práctica: conflictos de merge | Público | 2×3/2 | 3,0 | Fork, Learn Git Branching | ítem 209 |
+| Launchpad: filtrar por persona | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 210 |
+| Launchpad: también los issues | Análisis | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 211 |
+| Más de dos cuentas de GitHub | Fuentes | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 212 |
+| Cargar más historia de una rama | Escala | 2×2/2 | 2,0 | Replica (GitKraken) | ítem 213 |
+| Constelación de una organización entera | Escala | 2×2/3 | 1,3 | GitKraken, Mapa de alcance | ítem 214 |
+| Galaxias por antigüedad del último cambio (carpetas locales) | Análisis | 1×2/2 | 1,0 | Git Truck | candidata |
+| Una tarea de GitHub Classroom: los repos de un prefijo | Público | 2×3/2 | 3,0 | GitHub Classroom | ítem 216 |
+| Salud del repo: el tiempo de ciclo de un PR por etapas | Análisis | 2×2/2 | 2,0 | Swarmia | ítem 217 |
+| Puntaje de OpenSSF Scorecard en la salud | Datos | 2×2/2 | 2,0 | OpenSSF Scorecard | ítem 218 |
+| Dueños del código en el diff | Datos | 2×2/2 | 2,0 | Dueños del código en GitHub (CODEOWNERS) | ítem 219 |
+| Borrador de notas de la versión | Salidas | 2×2/2 | 2,0 | Notas de la versión generadas por GitHub | ítem 220 |
+| Constelación: organizaciones de más de 100 repos | Escala | 1×2/2 | 1,0 | (ítem 214) | ítem 221 |
+| Tiempo de ciclo por etapas: las revisiones que el feed no trajo | Análisis | 2×2/2 | 2,0 | (ítem 217) | ítem 223 |
+| Reporte de errores opcional con Sentry | Salidas | 2×2/3 | 1,3 | Sentry (reporte de errores) | ítem 224 |
+| CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | candidata |
+| Curva de estrellas en el tiempo | Análisis | 2×2/2 | 2,0 | Star History | descartada: la lista de stargazers con su fecha queda para administradores y colaboradores |
 
 ## Públicos
 
 - **Quien enseña o aprende Git:** Learn Git Branching y git-sim muestran que la demanda existe y que
   funciona en el navegador; nadie lo hace sobre un grafo en vivo y en 40 idiomas (ítems 16 y 18).
+  Quien enseña con GitHub Classroom tiene cada entrega de una tarea como un repo de la organización del curso,
+  con el prefijo de la tarea (ítem 216).
 - **Quien transmite mientras programa:** no hay una capa de OBS lista para la actividad de GitHub
   (ítem 11).
 - **Equipos:** miden con DORA y miran Pulse; los clientes de escritorio cobran los choques entre ramas y

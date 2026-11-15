@@ -1,16 +1,18 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
-   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión), cuánto tardaron
-   en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits y sus autores distintos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado). No hace ninguna consulta: parte del
+   Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
+   en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits, sus autores distintos y los autores nuevos por semana y, en el idioma de DORA, la frecuencia de
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana. No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
 
   const DAY = 864e5;
   const STALE_DAYS = 30;
+  const UNREVIEWED_DAYS = 7; // un PR abierto que pasa de esto sin ninguna revisión cuenta como «sin revisión»
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
-  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits y de autores
+  const CYCLE_DAYS = 28; // los PRs fusionados de las últimas 4 semanas entran en el tiempo de ciclo por etapas
+  const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos, de forks nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
   const at = (x) => (typeof x === 'number' ? x : Date.parse(x) || 0);
@@ -20,7 +22,7 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados o ramas creadas) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
+  /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados, ramas creadas, forks nuevos…) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
     const weeks = new Array(WEEKS).fill(0);
     for (const a of list) {
@@ -31,6 +33,27 @@
     return weeks;
   }
 
+  /** La clave de un autor: su usuario o, sin usuario, su nombre (como en la búsqueda por autor), sin distinguir
+      mayúsculas; vacía si el commit no trae autor. La misma en los autores distintos y en los nuevos, para que
+      nunca salgan más nuevos que distintos en una semana. */
+  const authorKey = (c) => String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+
+  /** Líneas añadidas y borradas en cada una de las últimas WEEKS semanas, con las semanas de `/stats/code_frequency`
+      (`data.codeFreq.weeks`: `[{ time, added, deleted }]`, la que empieza en `time`). Cada semana de GitHub va al bloque de
+      7 días donde empieza, como un evento más; una cifra que no es un número no suma. */
+  function codeWeekly(code, now) {
+    const added = new Array(WEEKS).fill(0);
+    const deleted = new Array(WEEKS).fill(0);
+    for (const w of code?.weeks || []) {
+      if (!(w?.time > 0) || w.time > now) continue;
+      const k = Math.floor((now - w.time) / (7 * DAY));
+      if (k >= WEEKS) continue;
+      if (Number.isFinite(w.added) && w.added > 0) added[WEEKS - 1 - k] += w.added;
+      if (Number.isFinite(w.deleted) && w.deleted > 0) deleted[WEEKS - 1 - k] += w.deleted;
+    }
+    return { added, deleted };
+  }
+
   /** Cuántos autores distintos hicieron commits en cada una de las últimas WEEKS semanas, con los commits
       cargados. Un autor es su usuario o, sin usuario, su nombre (como en la búsqueda por autor); un commit
       sin autor no suma. Cuenta personas distintas, nunca cuánto hizo cada una. */
@@ -38,7 +61,7 @@
     const weeks = Array.from({ length: WEEKS }, () => new Set());
     for (const c of commits) {
       const time = at(c?.date);
-      const key = String(c?.author?.login || c?.author?.name || '').trim().toLowerCase();
+      const key = authorKey(c);
       if (!time || !key || time > now) continue;
       const k = Math.floor((now - time) / (7 * DAY));
       if (k < WEEKS) weeks[WEEKS - 1 - k].add(key);
@@ -46,9 +69,137 @@
     return weeks.map((w) => w.size);
   }
 
-  /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada.
+  /** Cuántos autores nuevos hubo en cada una de las últimas WEEKS semanas: quienes firmaron ahí su primer commit
+      de los cargados. Cada autor cuenta una sola vez, en la semana de su primer commit (con la misma clave que
+      `authorsWeekly`); uno cuyo primer commit cargado es de antes de las 8 semanas no suma. Con la historia cortada,
+      «primero» es el primero de lo cargado, no el primero del repo. Cuenta personas, nunca cuánto hizo cada una. */
+  function newAuthorsWeekly(commits, now) {
+    const first = new Map();
+    for (const c of commits) {
+      const time = at(c?.date);
+      const key = authorKey(c);
+      if (!time || !key || time > now) continue;
+      if (!first.has(key) || time < first.get(key)) first.set(key, time);
+    }
+    return weekly([...first.values()].map((time) => ({ time })), now);
+  }
+
+  /** El factor de ausencia de CHAOSS («Contributor Absence Factor»): cuántas personas, de las que más commits firmaron
+      a las que menos, hacen falta para llegar a la mitad de los commits cargados. Con la misma clave que los autores
+      por semana; un commit sin autor no cuenta ni para la mitad ni para el total. Devuelve solo cifras del conjunto
+      (`n`, cuántos autores y cuántos commits), nunca quién ni cuánto hizo cada uno; `null` sin commits con autor. */
+  function absenceFactor(commits) {
+    const by = new Map();
+    let total = 0;
+    for (const c of commits) {
+      const key = authorKey(c);
+      if (!key) continue;
+      by.set(key, (by.get(key) || 0) + 1);
+      total++;
+    }
+    if (!total) return null;
+    const counts = [...by.values()].sort((a, b) => b - a);
+    let n = 0;
+    for (let sum = 0; sum * 2 < total; n++) sum += counts[n];
+    return { n, authors: counts.length, commits: total };
+  }
+
+  /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
+      (la de `ref` si está cargada, si no la rama por defecto), `behind` con cuántos commits lleva la rama que el
+      despliegue no tiene (como `git rev-list desplegado..rama`), y `unknown` si la rama no está cargada o su historia
+      cargada no contiene el commit desplegado (otra rama, un tag, historia reescrita o aún sin cargar). Sin consultas. */
+  function deployState(data, d) {
+    const branch = (d.ref && data.branches.get(d.ref)) || data.branches.get(data.repo?.defaultBranch);
+    if (!branch) return { state: 'unknown', branch: null };
+    if (branch.sha === d.sha) return { state: 'current', branch: branch.name };
+    const walk = (from) => {
+      const seen = new Set();
+      const stack = [from];
+      while (stack.length) {
+        const s = stack.pop();
+        if (seen.has(s)) continue;
+        const c = data.commits.get(s);
+        if (!c) continue;
+        seen.add(s);
+        for (const p of c.parents || []) stack.push(p);
+      }
+      return seen;
+    };
+    const tip = walk(branch.sha);
+    if (!tip.has(d.sha)) return { state: 'unknown', branch: null };
+    const deployed = walk(d.sha);
+    let behind = 0;
+    for (const s of tip) if (!deployed.has(s)) behind++;
+    return { state: 'behind', branch: branch.name, behind };
+  }
+
+  /** El estado de un despliegue como lo da GitHub (`/deployments/:id/statuses`) en tres: `ok` (salió bien), `failed`
+      (falló o dio error) y `running` (en cola, pendiente o en curso); `null` si no se sabe o ya no está activo. */
+  function deployOutcome(state) {
+    if (state === 'success') return 'ok';
+    if (state === 'failure' || state === 'error') return 'failed';
+    if (state === 'queued' || state === 'pending' || state === 'in_progress') return 'running';
+    return null;
+  }
+
+  /** El tiempo de ciclo de los PRs fusionados en las últimas CYCLE_DAYS, partido en tres etapas como lo hace Swarmia: de
+      abierto a la primera revisión, de ahí a la aprobación (la última antes de fusionar) y de la aprobación a la fusión,
+      cada una con su mediana y cuántos PRs la midieron. Todo sale de la actividad ya cargada: el merge (con su número y su
+      `openedAt`) y las revisiones de ese número entre la apertura y la fusión (pedir una no cuenta; en GitLab solo llegan
+      las aprobaciones). Sin revisión, ninguna etapa se mide y el PR va a `noReview`; con revisión y sin aprobación, solo
+      la primera, y va a `noApproval`. Un PR abierto antes de la actividad más vieja cargada no entra en las etapas (sus
+      revisiones de entonces pueden faltar) y va a `early`. Con `reviews` en false (la fuente no da revisiones) no se
+      mide nada: solo cuántos se fusionaron. `null` si la fuente da revisiones y no hay PRs fusionados que mirar. */
+  function cycleTime(acts, now, reviews = true) {
+    const merges = new Map(); // cada número una vez: su primer merge visto y su apertura más temprana
+    for (const a of acts) {
+      if (a.kind !== 'pr-merge' || a.number == null || !(a.openedAt > 0) || !(a.time > a.openedAt) || a.time > now || now - a.time > CYCLE_DAYS * DAY) continue;
+      const m = merges.get(a.number);
+      if (!m) merges.set(a.number, { time: a.time, openedAt: a.openedAt });
+      else merges.set(a.number, { time: Math.min(m.time, a.time), openedAt: Math.min(m.openedAt, a.openedAt) });
+    }
+    if (!reviews) return { reviews: false, merged: merges.size };
+    if (!merges.size) return null;
+    let since = Infinity; // hasta dónde llega la actividad cargada: antes de eso, no se sabe si hubo revisiones
+    for (const a of acts) if (a.time > 0 && a.time < since) since = a.time;
+    const byPr = new Map();
+    for (const a of acts) {
+      if (a.number == null || a.request || !a.time || (a.kind !== 'review' && a.kind !== 'review-ok' && a.kind !== 'review-changes')) continue;
+      (byPr.get(a.number) || byPr.set(a.number, []).get(a.number)).push(a);
+    }
+    const stage = { open: [], review: [], merge: [] };
+    let noReview = 0;
+    let noApproval = 0;
+    let early = 0;
+    for (const [number, m] of merges) {
+      if (m.openedAt < since) {
+        early++;
+        continue;
+      }
+      const revs = (byPr.get(number) || []).filter((a) => a.time >= m.openedAt && a.time <= m.time);
+      if (!revs.length) {
+        noReview++;
+        continue;
+      }
+      const first = Math.min(...revs.map((a) => a.time));
+      stage.open.push(first - m.openedAt);
+      const oks = revs.filter((a) => a.kind === 'review-ok').map((a) => a.time);
+      if (!oks.length) {
+        noApproval++;
+        continue;
+      }
+      const ok = Math.max(...oks);
+      stage.review.push(ok - first);
+      stage.merge.push(m.time - ok);
+    }
+    const of = (xs) => ({ median: xs.length ? median(xs) : null, n: xs.length });
+    return { reviews: true, merged: merges.size, open: of(stage.open), review: of(stage.review), merge: of(stage.merge), noReview, noApproval, early };
+  }
+
+  /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada; `opts.reviews` en false,
+      una fuente que no da las revisiones de sus PRs (el tiempo de ciclo no se parte en etapas).
       Devuelve las listas ordenadas (lo peor primero) con su total, y el ritmo. */
-  function compute(data, acts = [], now = Date.now(), forkSort = 'recent') {
+  function compute(data, acts = [], now = Date.now(), forkSort = 'recent', opts = {}) {
     const withPr = new Set();
     for (const p of data.pulls.values()) if (p.sameRepo && p.head) withPr.add(p.head);
 
@@ -75,6 +226,15 @@
     }
     const prStates = {};
     for (const k in states) prStates[k] = { total: states[k].length, rows: states[k].slice(0, ROWS) };
+
+    // sin revisión hace días: abiertos hace más de UNREVIEWED_DAYS, fuera de los borradores, sin decisión de revisión
+    // (aprobado o con cambios pedidos), sin un revisor que ya votó y sin ninguna revisión en la actividad ya cargada (pedir una no cuenta)
+    const reviewed = new Set();
+    for (const a of acts) if (a.number != null && !a.request && (a.kind === 'review' || a.kind === 'review-ok' || a.kind === 'review-changes')) reviewed.add(a.number);
+    const unreviewed = prs.filter((r) => {
+      const p = data.pulls.get(r.number);
+      return !r.draft && !p.review && !p.reviewers?.some((x) => x.vote) && !reviewed.has(r.number) && r.age > UNREVIEWED_DAYS * DAY; // `reviewers` con voto: Azure DevOps
+    });
 
     const seen = new Set();
     const merges = acts.filter((a) => a.kind === 'pr-merge' && a.time && !seen.has(a.id) && seen.add(a.id));
@@ -119,6 +279,31 @@
       if (k == null) continue;
       if (!created.has(k) || a.time < created.get(k).time) created.set(k, { time: a.time });
     }
+    // estrellas nuevas: cada usuario cuenta una vez, con la hora de su primera estrella vista (quitarla y volver a ponerla no
+    // suma dos); sin usuario, cada actividad cuenta sola
+    const starred = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'star' || !a.time) continue;
+      const login = String(a.actor?.login || '').trim().toLowerCase();
+      const k = login ? `u:${login}` : a.id;
+      if (k == null) continue;
+      if (!starred.has(k) || a.time < starred.get(k).time) starred.set(k, { time: a.time });
+    }
+    const starWeeks = weekly([...starred.values()], now);
+    // la semana anterior solo se mide si la actividad cargada llega a ella entera: la más vieja (de cualquier tipo) es de
+    // hace dos semanas o más. Si no (el feed de GitHub trae pocos eventos), la anterior es null y el panel no la compara
+    const fullPrev = acts.some((a) => a.time && a.time <= now - 2 * 7 * DAY);
+    // forks nuevos: cada fork (su nombre completo, sin distinguir mayúsculas) cuenta una vez, con la hora en que se vio
+    // primero; sin nombre, cada actividad cuenta sola. Sale de la actividad ya cargada: no pide la lista de forks
+    const forked = new Map();
+    for (const a of acts) {
+      if (a.kind !== 'fork' || !a.time) continue;
+      const name = String(a.detail || '').trim().toLowerCase();
+      const k = name ? `f:${name}` : a.id;
+      if (k == null) continue;
+      if (!forked.has(k) || a.time < forked.get(k).time) forked.set(k, { time: a.time });
+    }
+    const forkWeeks = weekly([...forked.values()], now);
     // el tiempo de entrega cuenta desde el primer commit del PR si ya se conoce (data.firstCommits), si no desde su apertura
     let fromCommit = 0;
     const lead = merges
@@ -177,16 +362,34 @@
       if (time) for (const name of names) if (name) tagTimes.push({ time });
     }
 
+    // el último despliegue de cada entorno (lo que trae la carga de despliegues), el más reciente primero
+    const deploys = [...(data.deploys || [])]
+      .filter(([env, d]) => env && typeof d?.sha === 'string' && d.sha)
+      .map(([env, d]) => {
+        const time = at(d.at) || at(data.commits.get(d.sha)?.date);
+        const st = deployState(data, d);
+        return { env, sha: d.sha, ref: d.ref || '', head: st.branch, state: st.state, behind: st.behind || 0, status: deployOutcome(data.deployStatus?.get(d.id)?.state ?? d.status), time, age: time && time <= now ? now - time : null };
+      })
+      .sort((a, b) => b.time - a.time || (a.env < b.env ? -1 : 1));
+
+    const code = codeWeekly(data.codeFreq, now);
     return {
+      deploys: { total: deploys.length, rows: deploys.slice(0, ROWS) },
       forks: { total: forks.length, rows: forks.slice(0, ROWS) },
       stale: { total: stale.length, rows: stale.slice(0, ROWS) },
       prs: { total: prs.length, rows: prs.slice(0, ROWS) },
       prStates,
+      unreviewed: { total: unreviewed.length, rows: unreviewed.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
+      cycle: cycleTime(acts, now, opts.reviews !== false), // el tiempo de ciclo de los PRs fusionados de las 4 semanas, por etapas
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
-      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now) }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
+      forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
+      stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
+      code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
+      absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
+      pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), forkWeeks, addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
 
@@ -275,5 +478,5 @@
     return !(q && typeof q.has === 'function' && q.has('forks') && /^(0|false|no|off)$/i.test(String(q.get('forks')).trim()));
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS };
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS, CYCLE_DAYS };
 })(window.GB);

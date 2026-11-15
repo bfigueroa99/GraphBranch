@@ -335,9 +335,9 @@ test('CI: el estado del pipeline de la cabeza va a data.ci, una consulta por ram
   assert.deepEqual(errors, []);
   assert.equal(src.data.ci.get('main'), 'success');
   const asked = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length;
-  assert.equal(asked(), 1);
+  assert.equal(asked(), 2, 'la por defecto y `feature`, del resto');
   await src.cycle();
-  assert.equal(asked(), 1, 'la misma cabeza no se vuelve a preguntar');
+  assert.equal(asked(), 2, 'la misma cabeza no se vuelve a preguntar');
 
   // un push sin pipeline todavía: sin estado; después corre y falla
   gl.push('main', 'm4', 'm3');
@@ -382,6 +382,28 @@ test('CI: una rama con MR abierta también; un proyecto sin pipelines (403) deja
   noTok.src.data.repo.private = true;
   await noTok.src.syncCiGitlab([], true);
   assert.equal(priv.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length, 0);
+});
+
+test('CI: el resto de las ramas también, con tope propio por ciclo y solo entre las 20 más recientes', async () => {
+  const gl = project();
+  for (let i = 0; i < 5; i++) {
+    gl.push('r' + i, 'r' + i + 'x', 'm3');
+    gl.pipelines.push({ ref: 'r' + i, sha: 'r' + i + 'x', status: 'success' });
+  }
+  gl.pipelines.push({ ref: 'main', sha: 'm3', status: 'success' });
+  const { src, errors } = connect(gl);
+  const asked = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length;
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const others = () => [...src.data.ci.keys()].filter((k) => k !== 'main').length;
+  assert.ok(asked() <= 3, 'la por defecto y como mucho 2 del resto por ciclo');
+  const first = others();
+  assert.ok(first >= 1 && first <= 2);
+  for (let i = 0; i < 6; i++) await src.cycle();
+  assert.equal(others(), 5, 'en unos ciclos todas llevan su marca');
+  const n = asked();
+  await src.cycle();
+  assert.equal(asked(), n, 'una cabeza ya resuelta no se vuelve a preguntar');
 });
 
 test('un proyecto que no existe (o es privado) lo dice y no insiste', async () => {
@@ -615,6 +637,15 @@ test('un GitLab propio no muestra avatares (su host no está en img-src); gitlab
   assert.equal(new GB.GitLabSource({ path: 'g/p' }).person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, 'https://gitlab.com/uploads/a.png');
 });
 
+test('mapPull: los revisores y los asignados de un MR, para el filtro por persona del Launchpad', () => {
+  const GB = load(fakeGitLab());
+  const src = new GB.GitLabSource({ path: 'g/p' });
+  const m = src.mapPull({ iid: 4, title: 't', source_branch: 'f', target_branch: 'main', author: { username: 'ana' }, created_at: '2026-10-01T00:00:00Z', reviewers: [{ username: 'beto' }, {}], assignees: [{ username: 'carla' }] });
+  assert.deepEqual([...m.requested], ['beto']);
+  assert.deepEqual([...m.assignees], ['carla']);
+  assert.deepEqual([...src.mapPull({ iid: 5, title: 't' }).requested], [], 'sin listas, vacías');
+});
+
 test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama de quien escribió y quita la de nadie', async () => {
   const gl = project();
   gl.mr(5, 'feature', 'main');
@@ -718,6 +749,7 @@ test('editar: lee el archivo de la rama (su huella es el último commit que lo t
   };
   const { src } = connect(gl, { token: 'glpat-w' });
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), true, 'sus eventos traen las aprobaciones: la salud parte el tiempo de ciclo');
   assert.equal(src.canWrite(), null);
   const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
   assert.deepEqual([f.text, f.sha, f.binary], ['const a = 1;\n', 'f2', false]);

@@ -23,8 +23,11 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   });
   expect(info.libs).toEqual(['object', 'object', 'function']);
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
-  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'webhook']);
+  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'spend', 'webhook']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
+  // corre el Electron que fija package.json: con un node_modules viejo (sin npm ci tras subirlo) se probaría otro
+  const fijada = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).devDependencies.electron;
+  expect(await app.evaluate(() => process.versions.electron), 'Electron instalado frente al de package.json: npm ci').toBe(fijada);
   await app.close();
 });
 
@@ -134,7 +137,7 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--gitlab-url=https://git.example.com'] });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('https://gitlab.com https://git.example.com https://codeberg.org;');
     expect(page.url()).toContain('gitlab=' + encodeURIComponent('https://git.example.com'));
   } finally {
@@ -151,11 +154,29 @@ test('--gitlab-url suma solo ese host al CSP y la página lo recibe; sin https s
 
 test('--forge-url suma solo ese host al CSP (conexiones y avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
-  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--forge-url=https://forge.example.com'] });
+  const args = ['--lang=es', '--forge-url=https://forge.example.com'];
+  let { app, page, dir } = await launch(testInfo, { args });
+  const packed = JSON.stringify({ base: 'https://forge.example.com', token: 'fg-e2e' });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://forge.example.com;');
     expect(page.url()).toContain('forge=' + encodeURIComponent('https://forge.example.com'));
+    await loaded(page);
+    // su token, aparte en el llavero ('forgejo') y atado a ese servidor
+    expect(await page.evaluate(async (v) => {
+      await window.GBDesktop.setToken(v, 'forgejo');
+      return (await window.GBDesktop.getToken('forgejo')).token;
+    }, packed)).toBe(packed);
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { dir, args }));
+  try {
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#forge-token-field')).toBeVisible();
+    await expect(page.locator('#forge-token-input')).toHaveValue('fg-e2e');
+    await expect(page.locator('#forge-token-where')).toContainText('forge.example.com');
   } finally {
     await app.close();
   }
@@ -172,7 +193,7 @@ test('--api-url suma solo ese host al CSP y los repos de GitHub salen de él; si
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
   let { app, page } = await launch(testInfo, { args: ['--lang=es', '--repo=o/r', '--api-url=https://ghe.example.com/api/v3'] });
   try {
-    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com;');
+    expect(await csp(page)).toContain('connect-src https://api.github.com https://ghe.example.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com');
     expect(page.url()).toContain('api=' + encodeURIComponent('https://ghe.example.com/api/v3'));
   } finally {
     await app.close();
@@ -260,6 +281,80 @@ test('el token de GitLab se guarda cifrado, aparte del de GitHub, y vuelve al re
   await app.close();
 });
 
+test('las otras cuentas de GitHub: cinco, con tokens largos, quedan cifradas juntas y vuelven al reabrir', async ({}, testInfo) => {
+  // GitHub dice que un token puede llegar a 255 caracteres: cinco así pasan de los 1.000 que acepta un token solo
+  const accounts = ['acme', 'beta', 'gamma', 'delta', 'epsilon'].map((owner, i) => ({ owner, token: `github_pat_${i}`.padEnd(255, 'x') }));
+  let { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+  const services = () => Object.keys(tokenFiles(dir)).map((f) => f.replace(/\.(enc|txt)$/, '')).sort();
+  await loaded(page);
+  await page.click('#settings-btn');
+  for (const [i, { owner, token }] of accounts.entries()) {
+    if (i) await page.click('#account-add');
+    await page.fill(`#account-owner-${i + 1}`, owner);
+    await page.fill(`#account-token-${i + 1}`, token);
+  }
+  await expect(page.locator('#account-add')).toBeHidden();
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual(['github2-token']);
+  for (const [name, content] of Object.entries(tokenFiles(dir))) {
+    if (name.endsWith('.enc')) expect(accounts.some(({ token }) => content.includes(token.slice(0, 40)))).toBe(false);
+  }
+  expect(await page.evaluate(() => localStorage.getItem('graphbranch:account2'))).toBeNull();
+  await app.close();
+
+  ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'] }));
+  await loaded(page);
+  await page.click('#settings-btn');
+  for (const [i, { owner, token }] of accounts.entries()) {
+    await expect(page.locator(`#account-owner-${i + 1}`)).toHaveValue(owner);
+    await expect(page.locator(`#account-token-${i + 1}`)).toHaveValue(token);
+  }
+  // quitar las cinco deja una fila vacía y nada guardado
+  for (let n = 5; n >= 1; n--) await page.click(`#account-remove-${n}`);
+  await expect(page.locator('#accounts-list .account')).toHaveCount(1);
+  await page.click('#settings-form button[type=submit]');
+  await expect.poll(services).toEqual([]);
+  await app.close();
+});
+
+test('el gasto en IA: la clave de OmniRoute queda en el llavero y la consulta la hace el proceso principal', async ({}, testInfo) => {
+  const got = [];
+  const server = createServer((req, res) => {
+    got.push({ url: req.url, auth: req.headers.authorization || '', origin: req.headers.origin || '' });
+    if (req.headers.authorization !== 'Bearer sk-e2e-manage') return res.writeHead(401, { 'content-type': 'application/json' }).end('{}');
+    const today = new Date().toISOString().slice(0, 10);
+    res.writeHead(200, { 'content-type': 'application/json' }).end(
+      JSON.stringify({ summary: { totalCost: 7.5 }, dailyTrend: [{ date: today, cost: 7.5 }], byModel: [{ model: 'cc/claude-opus-5-5', cost: 7.5 }], byApiKey: [{ apiKeyName: 'Claude Code · loop', cost: 7.5, requests: 42 }] }),
+    );
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+    await loaded(page);
+    // sin clave guardada, un servicio dice que falta y no consulta nada
+    expect(await page.evaluate(() => window.GBDesktop.spend('anthropic', { days: 7 }))).toEqual({ error: 'auth', status: 0 });
+    // se conecta OmniRoute desde la vista de agentes
+    await page.click('#view-agents');
+    await page.click('#spend-connect');
+    await page.fill('#spend-omniroute-url', base);
+    await page.fill('#spend-omniroute', 'sk-e2e-manage');
+    await page.click('#spend-form button[type=submit]');
+    await expect(page.locator('#sp-agents .sp-name')).toHaveText(['Claude Code · loop']);
+    await expect(page.locator('#ag-spend h3 .hl-n')).toContainText('7,50');
+    await expect(page.locator('#ag-spend .sp-badge')).toHaveCount(0); // con un servicio de verdad, ya no es el ejemplo
+    expect(got.length).toBeGreaterThan(0);
+    expect(got.every((g) => g.url === '/api/usage/analytics?range=30d' && g.auth === 'Bearer sk-e2e-manage')).toBe(true);
+    expect(got.every((g) => !g.origin)).toBe(true); // la hizo el proceso principal, no la página
+    // la clave, en su archivo de la app y no en el almacenamiento de la página
+    expect(readdirSync(dir).some((f) => /^omniroute-token\.(enc|txt)$/.test(f))).toBe(true);
+    expect(await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain('sk-e2e-manage');
+    await app.close();
+  } finally {
+    server.close();
+  }
+});
+
 test('los avisos a Slack, Discord y Teams: la URL se guarda cifrada y la prueba llega al webhook', async ({}, testInfo) => {
   const got = [];
   const server = createServer((req, res) => {
@@ -345,8 +440,9 @@ test('cerrar la ventana la deja en la bandeja: la página lo sabe, sigue contand
   expect(r.error).toBeUndefined();
   expect(r.closed).toEqual({ visible: false, destroyed: false, hidden: true });
   expect(r.counted).toBe(true); // la demo sigue y el título (también el del ícono) cuenta las novedades
-  expect(r.titleHidden).toMatch(/^\(\d+\) acme\/orbita · GraphBranch$/);
-  expect(r.shown).toEqual({ visible: true, hidden: false, title: 'acme/orbita · GraphBranch' }); // como al hacer clic en una notificación
+  // con la demo, el título dice qué es la página (meta.title, en el idioma de la página) y no el repo inventado
+  expect(r.titleHidden).toMatch(/^\(\d+\) Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch$/);
+  expect(r.shown).toEqual({ visible: true, hidden: false, title: 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch' }); // como al hacer clic en una notificación
   expect(r.notices).toEqual(['GraphBranch sigue abierto']); // una sola vez, en el idioma de la página
   expect(existsSync(join(r.dir, 'tray-notice-shown'))).toBe(true);
 });
@@ -500,13 +596,17 @@ test('la página no puede pedir carpetas que el usuario no eligió', async ({}, 
 
 test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares) y la página lo recibe; sin https se ignora', async ({}, testInfo) => {
   const csp = (page) => page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
-  let { app, page } = await launch(testInfo, { args: ['--lang=es', '--bitbucket-url=https://bb.example.com'] });
+  const args = ['--lang=es', '--bitbucket-url=https://bb.example.com'];
+  let { app, page, dir } = await launch(testInfo, { args });
+  const packed = JSON.stringify({ base: 'https://bb.example.com', token: 'dc-e2e' });
   try {
-    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com;');
+    expect(await csp(page)).toContain('https://gitlab.com https://codeberg.org https://api.bitbucket.org https://bb.example.com https://dev.azure.com https://api.anthropic.com');
     expect(await csp(page)).toContain('img-src \'self\' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;');
     expect(page.url()).toContain('bitbucket=' + encodeURIComponent('https://bb.example.com'));
+    // la app lee el llavero una sola vez al arrancar (loadDesktopToken): se guarda con la página ya cargada y se mira
+    // al reabrir; guardarlo mientras arrancaba era una carrera que perdía con el equipo cargado
+    await loaded(page);
     // su token, aparte en el llavero ('bitbucketdc') y atado a ese servidor; Ajustes muestra su campo nombrando el host
-    const packed = JSON.stringify({ base: 'https://bb.example.com', token: 'dc-e2e' });
     const back = await page.evaluate(async (v) => {
       await window.GBDesktop.setToken(v, 'bitbucketdc');
       return (await window.GBDesktop.getToken('bitbucketdc')).token;
@@ -517,9 +617,15 @@ test('--bitbucket-url suma solo ese host a las conexiones del CSP (sin avatares)
       await window.GBDesktop.setToken('az-e2e', 'azure');
       return (await window.GBDesktop.getToken('azure')).token;
     })).toBe('az-e2e');
+  } finally {
+    await app.close();
+  }
+  ({ app, page } = await launch(testInfo, { dir, args }));
+  try {
     await loaded(page);
     await page.click('#settings-btn');
     await expect(page.locator('#bbdc-token-field')).toBeVisible();
+    await expect(page.locator('#bbdc-token-input')).toHaveValue('dc-e2e');
     await expect(page.locator('#azure-token-input')).toHaveValue('az-e2e');
     await expect(page.locator('#bbdc-token-where')).toContainText('bb.example.com');
   } finally {

@@ -11,6 +11,8 @@
   const WALK = 60; // commits que se recorren hacia atrás desde la cabeza de una rama fusionada
   const EVENTS = 12; // interacciones recientes que se listan; el total se dice aparte
   const NODES = 14; // participantes que entran en la red
+  const LANES = 8; // filas de la línea de tiempo
+  const TRACES = 160; // interacciones que entran en la línea de tiempo (las más recientes)
   /* sobre el grafo (2D y 3D): los arcos y las insignias más recientes, con tope para que miles de sesiones no tapen las
      ramas ni frenen el cuadro. Cada uno de los 7 agentes más activos tiene su color (--ag1…--ag7, validados para
      daltonismo en los dos temas) y los demás van juntos como «otros agentes» (--ag8): un color generado o repetido
@@ -312,6 +314,16 @@
     };
   }
 
+  /** El color de cada participante (Map key -> 1..8, 0 las personas): de 1 a 7 los 7 agentes más activos, 8 los demás
+      agentes y 0 las personas. Sigue al participante, no a lo que se ve: sale del orden de compute (por interacciones y
+      commits), así el grafo, su leyenda, la red y la línea de tiempo pintan a cada uno igual. */
+  function slots(res) {
+    const slot = new Map();
+    let i = 0;
+    for (const a of res?.actors || []) slot.set(a.key, a.agent ? Math.min(++i, OTHERS) : 0);
+    return slot;
+  }
+
   /** Lo que se dibuja sobre el grafo, en 2D y en 3D. `res`: lo de compute con todas las interacciones (`max: Infinity`).
       Solo las de un agente: las que van entre dos personas se quedan en el panel (en un repo de equipo serían la mayoría
       de los trazos y taparían lo que se vino a ver); con `onlyAgents`, solo las que van entre dos agentes. Las marcas de
@@ -350,10 +362,7 @@
     const weight = new Map();
     for (const x of [...A, ...P]) for (const k of [x.from, x.to]) weight.set(k, (weight.get(k) || 0) + x.n);
     const w = (a) => weight.get(a.key) || 0;
-    // el color sigue al participante, no a lo que se ve: sale del orden de compute (por interacciones y commits)
-    const slot = new Map();
-    let i = 0;
-    for (const a of res.actors) slot.set(a.key, a.agent ? Math.min(++i, OTHERS) : 0);
+    const slot = slots(res);
     const actors = res.actors
       .filter((a) => weight.has(a.key) || a.agent)
       .sort((x, y) => w(y) - w(x) || y.commits - x.commits || (x.name < y.name ? -1 : 1));
@@ -369,7 +378,8 @@
   }
 
   /** Lo que se dibuja: los `limit` participantes con más interacciones (solo agentes, con `onlyAgents`) y los
-      vínculos entre ellos. Con `onlyAgents`, solo los vínculos entre dos agentes. */
+      vínculos entre ellos. Con `onlyAgents`, solo los vínculos entre dos agentes. `slot`: el color de cada uno (ver
+      slots), el mismo que en el grafo. */
   function network(res, { onlyAgents = false, limit = NODES } = {}) {
     const byKey = new Map(res.actors.map((a) => [a.key, a]));
     const links = res.links.filter((l) => !onlyAgents || (byKey.get(l.from)?.agent && byKey.get(l.to)?.agent));
@@ -381,31 +391,83 @@
       .sort((x, y) => weight.get(y.key) - weight.get(x.key) || (x.name < y.name ? -1 : 1))
       .slice(0, limit);
     const keep = new Set(nodes.map((n) => n.key));
-    return { nodes, links: links.filter((l) => keep.has(l.from) && keep.has(l.to)), weight };
+    return { nodes, links: links.filter((l) => keep.has(l.from) && keep.has(l.to)), weight, slot: slots(res) };
+  }
+
+  /** Las interacciones en el tiempo: una fila por participante (los `lanes` con más interacciones; solo agentes, con
+      `onlyAgents`) y cada interacción entre dos de ellos como un trazo de quien actúa a quien recibe, en su momento.
+      Devuelve { lanes: [{ key, name, login, agent, slot, n }], events: [{ kind, from, to, time, sha, target, number,
+      slot }] (las `max` más recientes, de la más vieja a la más nueva), t0, t1 } o null si no hay ninguna con fecha. */
+  function timeline(res, { onlyAgents = false, lanes = LANES, max = TRACES } = {}) {
+    const byKey = new Map(res.actors.map((a) => [a.key, a]));
+    const ok = (e) => e.time > 0 && byKey.has(e.from) && byKey.has(e.to) && (!onlyAgents || (byKey.get(e.from).agent && byKey.get(e.to).agent));
+    const all = res.events.filter(ok);
+    const weight = new Map();
+    for (const e of all) for (const k of [e.from, e.to]) weight.set(k, (weight.get(k) || 0) + 1);
+    const slot = slots(res);
+    const rows = [...weight.keys()]
+      .map((k) => byKey.get(k))
+      .sort((x, y) => !!y.agent - !!x.agent || weight.get(y.key) - weight.get(x.key) || (x.name < y.name ? -1 : 1))
+      .slice(0, lanes);
+    const keep = new Set(rows.map((a) => a.key));
+    const events = all
+      .filter((e) => keep.has(e.from) && keep.has(e.to))
+      .slice(0, max)
+      .map((e) => ({ ...e, slot: slot.get(e.from) ?? 0 }))
+      .sort((x, y) => x.time - y.time);
+    if (!events.length) return null;
+    return {
+      lanes: rows.map((a) => ({ key: a.key, name: a.name, login: a.login, agent: a.agent, slot: slot.get(a.key) ?? 0, n: weight.get(a.key) })),
+      events,
+      t0: events[0].time,
+      t1: events[events.length - 1].time,
+    };
   }
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
   const cut = (s, n) => (String(s).length > n ? String(s).slice(0, n - 1) + '…' : String(s));
   const r1 = (x) => Math.round(x * 10) / 10;
+  /** Lo que más hizo un vínculo (a igualdad, en este orden): de eso es su trazo. */
+  const KINDS = ['continued', 'merged', 'reviewed', 'commented'];
+  const mainKind = (kinds = {}) => KINDS.reduce((best, k) => ((kinds[k] || 0) > (kinds[best] || 0) ? k : best), KINDS[0]);
+  /** La inicial de un participante, para su marca: la del producto si es un agente («C» de Claude Code), las iniciales
+      si es una persona. Por carácter, no por unidad UTF-16. */
+  function mono(node) {
+    const words = String(node?.agent?.name || node?.name || node?.login || '?')
+      .replace(/[^\p{L}\p{N} ]/gu, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const first = (w) => Array.from(w || '?')[0].toUpperCase();
+    if (node?.agent || words.length < 2) return first(words[0]);
+    return first(words[0]) + first(words[words.length - 1]);
+  }
+  /** La punta de una flecha que llega a (x, y) en la dirección (ux, uy): un triángulo de `l` de largo. */
+  const head = (x, y, ux, uy, l = 7, w = 3.6) => `M${r1(x)} ${r1(y)}L${r1(x - ux * l - uy * w)} ${r1(y - uy * l + ux * w)}L${r1(x - ux * l + uy * w)} ${r1(y - uy * l - ux * w)}Z`;
 
-  /** La red como SVG: cada participante en una elipse (los agentes, cuadrados; las personas, círculos; más grandes
-      cuantas más interacciones) y cada vínculo como una curva con flecha de quien actúa a quien recibe, más gruesa
-      cuantas más veces. `text`: { label(node), sub(node), title(link), aria } con los textos ya traducidos; todo se
-      escapa aquí. */
-  function svg(net, text, { width = 560, height = 300 } = {}) {
+  /** La red como SVG: cada participante en una elipse con su color (el mismo que en el grafo) y su inicial (los
+      agentes, cuadrados; las personas, círculos; más grandes cuantas más interacciones), y cada vínculo como una curva
+      con flecha de quien actúa a quien recibe, del color de quien actúa, con el trazo de lo que más hizo (continuó:
+      lleno; fusionó: a rayas; revisó o comentó: punteado), más gruesa cuantas más veces y con las veces junto a ella.
+      Cada participante es un botón (`data-key`): quien lo muestre lo ilumina con sus vínculos al pasar o al enfocarlo,
+      y lo elige al pulsarlo. `text`: { label(node), sub(node), title(link), node(node), aria } con los textos ya
+      traducidos; todo se escapa aquí. `sel`: el participante elegido, si lo hay. */
+  function svg(net, text, { width = 760, height = 360, sel = null } = {}) {
     const n = net.nodes.length;
     const cx = width / 2;
     const cy = height / 2;
-    const rx = n > 1 ? width / 2 - 92 : 0;
-    const ry = n > 1 ? height / 2 - 46 : 0;
+    const rx = n > 1 ? width / 2 - 128 : 0;
+    const ry = n > 1 ? height / 2 - 52 : 0;
     const maxW = Math.max(1, ...net.nodes.map((x) => net.weight.get(x.key) || 0));
     const maxT = Math.max(1, ...net.links.map((l) => l.total));
+    const slot = (key) => net.slot?.get(key) ?? 0;
     const pos = new Map();
     net.nodes.forEach((node, i) => {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(1, n);
-      const r = 7 + 9 * Math.sqrt((net.weight.get(node.key) || 0) / maxW);
+      const r = 10 + 8 * Math.sqrt((net.weight.get(node.key) || 0) / maxW);
       pos.set(node.key, { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), r, a });
     });
+    const agentOfKey = new Map(net.nodes.map((x) => [x.key, !!x.agent]));
     const edges = net.links
       .map((l) => {
         const p = pos.get(l.from);
@@ -417,7 +479,7 @@
         const dx = q.x - p.x;
         const dy = q.y - p.y;
         const len = Math.hypot(dx, dy) || 1;
-        const k = Math.min(28, len * 0.18);
+        const k = Math.min(34, len * 0.2);
         const c = { x: mx - (dy / len) * k, y: my + (dx / len) * k };
         const end = (from, to, r) => {
           const ex = from.x - to.x;
@@ -425,31 +487,95 @@
           const el = Math.hypot(ex, ey) || 1;
           return { x: to.x + (ex / el) * r, y: to.y + (ey / el) * r };
         };
-        const s0 = end(c, p, p.r + 2);
-        const s1 = end(c, q, q.r + 5);
-        const w = 1.2 + 3.8 * (l.total / maxT);
-        const both = net.nodes.find((x) => x.key === l.from)?.agent && net.nodes.find((x) => x.key === l.to)?.agent;
-        return `<path class="ag-edge${both ? ' ag-edge-agents' : ''}" d="M${r1(s0.x)} ${r1(s0.y)}Q${r1(c.x)} ${r1(c.y)} ${r1(s1.x)} ${r1(s1.y)}" stroke-width="${r1(w)}" marker-end="url(#ag-arrow${both ? '-agents' : ''})"><title>${esc(text.title(l))}</title></path>`;
+        const s0 = end(c, p, p.r + 3);
+        const tip = end(c, q, q.r + 3);
+        const ul = Math.hypot(tip.x - c.x, tip.y - c.y) || 1;
+        const ux = (tip.x - c.x) / ul;
+        const uy = (tip.y - c.y) / ul;
+        const s1 = { x: tip.x - ux * 6, y: tip.y - uy * 6 }; // la curva termina donde empieza la punta
+        const w = 1.4 + 3.6 * (l.total / maxT);
+        const both = agentOfKey.get(l.from) && agentOfKey.get(l.to);
+        const on = sel && (l.from === sel || l.to === sel) ? ' on' : '';
+        const cls = `ag-edge${both ? ' ag-edge-agents' : ''} ag-s${slot(l.from)} ag-k-${mainKind(l.kinds)}${on}`;
+        // las veces, en la mitad de la curva (B(½) = ¼·p + ½·c + ¼·q)
+        const bx = 0.25 * s0.x + 0.5 * c.x + 0.25 * s1.x;
+        const by = 0.25 * s0.y + 0.5 * c.y + 0.25 * s1.y;
+        const count = l.total > 1 ? `<text class="ag-cnt" x="${r1(bx)}" y="${r1(by + 3.5)}" text-anchor="middle">×${l.total}</text>` : '';
+        return `<g class="ag-e${on}" data-from="${esc(l.from)}" data-to="${esc(l.to)}" data-n="${l.total}"><path class="${cls}" d="M${r1(s0.x)} ${r1(s0.y)}Q${r1(c.x)} ${r1(c.y)} ${r1(s1.x)} ${r1(s1.y)}" stroke-width="${r1(w)}"/><path class="ag-ehead ag-s${slot(l.from)}" d="${head(tip.x, tip.y, ux, uy, 7 + w * 0.6, 3.2 + w * 0.5)}"/>${count}<title>${esc(text.title(l))}</title></g>`;
       })
       .join('');
     const nodes = net.nodes
       .map((node) => {
         const { x, y, r, a } = pos.get(node.key);
+        const s = slot(node.key);
         const shape = node.agent
-          ? `<rect class="ag-node ag-agent" x="${r1(x - r)}" y="${r1(y - r)}" width="${r1(2 * r)}" height="${r1(2 * r)}" rx="${r1(r * 0.35)}"/>`
-          : `<circle class="ag-node ag-person" cx="${r1(x)}" cy="${r1(y)}" r="${r1(r)}"/>`;
+          ? `<rect class="ag-node ag-agent ag-s${s}" x="${r1(x - r)}" y="${r1(y - r)}" width="${r1(2 * r)}" height="${r1(2 * r)}" rx="${r1(r * 0.32)}"/>`
+          : `<circle class="ag-node ag-person ag-s${s}" cx="${r1(x)}" cy="${r1(y)}" r="${r1(r)}"/>`;
+        const m = mono(node);
+        const initial = `<text class="ag-mono" x="${r1(x)}" y="${r1(y + (m.length > 1 ? 3.5 : 4.5))}" text-anchor="middle" style="font-size:${m.length > 1 ? 10 : 12}px">${esc(m)}</text>`;
         // el rótulo, por fuera de la elipse: a la derecha de los de la derecha, a la izquierda de los de la izquierda
         const cos = n > 1 ? Math.cos(a) : 0;
         const sin = n > 1 ? Math.sin(a) : 1;
         const anchor = cos > 0.3 ? 'start' : cos < -0.3 ? 'end' : 'middle';
-        const lx = x + cos * (r + 6);
-        const ly = y + sin * (r + 6) + (anchor === 'middle' ? (sin < 0 ? -4 : 12) : 4);
+        const lx = x + cos * (r + 7);
+        const ly = y + sin * (r + 7) + (anchor === 'middle' ? (sin < 0 ? -5 : 13) : 4);
         const sub = text.sub(node);
-        return `<g class="ag-n">${shape}<text class="ag-label" x="${r1(lx)}" y="${r1(ly)}" text-anchor="${anchor}">${esc(cut(text.label(node), 22))}${sub ? `<tspan class="ag-sub" x="${r1(lx)}" dy="13">${esc(cut(sub, 24))}</tspan>` : ''}</text><title>${esc(text.label(node) + (sub ? ' · ' + sub : ''))}</title></g>`;
+        const label = text.label(node);
+        const on = sel === node.key ? ' on sel' : sel && net.links.some((l) => (l.from === sel && l.to === node.key) || (l.to === sel && l.from === node.key)) ? ' on' : '';
+        return `<g class="ag-n${on}" data-key="${esc(node.key)}" tabindex="0" role="button" aria-pressed="${sel === node.key}" aria-label="${esc((text.node ? text.node(node) : label) || label)}">${shape}${initial}<text class="ag-label" x="${r1(lx)}" y="${r1(ly)}" text-anchor="${anchor}">${esc(cut(label, 24))}${sub ? `<tspan class="ag-sub" x="${r1(lx)}" dy="13">${esc(cut(sub, 26))}</tspan>` : ''}</text><title>${esc(label + (sub ? ' · ' + sub : ''))}</title></g>`;
       })
       .join('');
-    const arrow = (id, cls) => `<marker id="${id}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path class="${cls}" d="M0 0 8 4 0 8z"/></marker>`;
-    return `<svg class="ag-net" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(text.aria)}"><defs>${arrow('ag-arrow', 'ag-arrow')}${arrow('ag-arrow-agents', 'ag-arrow ag-arrow-agents')}</defs>${edges}${nodes}</svg>`;
+    return `<svg class="ag-net${sel ? ' has-sel' : ''}" viewBox="0 0 ${width} ${height}" role="group" aria-label="${esc(text.aria)}">${edges}${nodes}</svg>`;
+  }
+
+  /** La línea de tiempo como SVG: una fila por participante (su marca y su nombre a la izquierda, con su color) y cada
+      interacción como un trazo vertical de la fila de quien actúa (un punto de su color) a la de quien recibe (una
+      punta), en su momento, con el trazo de lo que hizo como en la red. Un trazo con commit lleva `data-sha` (quien lo
+      muestre lo usa para ir al grafo). `text`: { label(lane), event(e), tick(t), aria } ya traducidos; se escapa aquí.
+      `sel`: el participante elegido, si lo hay (sus trazos quedan encendidos y los demás tenues). */
+  function timelineSvg(tl, text, { width = 760, sel = null } = {}) {
+    const ROW = 30;
+    const LEFT = 168;
+    const RIGHT = 14;
+    const TOP = 10;
+    const AXIS = 22;
+    const height = TOP + tl.lanes.length * ROW + AXIS;
+    const span = Math.max(1, tl.t1 - tl.t0);
+    const pad = tl.t1 === tl.t0 ? 0.5 : 0;
+    const X = (t) => LEFT + (pad || (t - tl.t0) / span) * (width - LEFT - RIGHT);
+    const row = new Map(tl.lanes.map((l, i) => [l.key, i]));
+    const Y = (key) => TOP + row.get(key) * ROW + ROW / 2;
+    const lanes = tl.lanes
+      .map((l, i) => {
+        const y = TOP + i * ROW;
+        const m = mono(l);
+        const shape = l.agent ? `<rect class="ag-node ag-agent ag-s${l.slot}" x="6" y="${y + 6}" width="18" height="18" rx="5"/>` : `<circle class="ag-node ag-person ag-s${l.slot}" cx="15" cy="${y + 15}" r="9"/>`;
+        const on = sel && sel === l.key ? ' on' : '';
+        return `<g class="ag-lane${on}" data-key="${esc(l.key)}"><rect class="ag-lane-bg${i % 2 ? ' odd' : ''}" x="0" y="${y}" width="${width}" height="${ROW}"/><line class="ag-lane-line" x1="${LEFT}" x2="${width - RIGHT}" y1="${y + ROW / 2}" y2="${y + ROW / 2}"/>${shape}<text class="ag-mono" x="15" y="${y + (m.length > 1 ? 18.5 : 19)}" text-anchor="middle" style="font-size:${m.length > 1 ? 7.5 : 10}px">${esc(m)}</text><text class="ag-label ag-lane-name" x="32" y="${y + 19}">${esc(cut(text.label(l), 22))}</text><title>${esc(text.label(l))}</title></g>`;
+      })
+      .join('');
+    // las marcas del eje: el inicio, el final y dos en medio, cada una con su texto ya traducido
+    const ticks = (tl.t1 === tl.t0 ? [tl.t0] : [0, 1 / 3, 2 / 3, 1].map((f) => tl.t0 + f * span))
+      .map((t, i, all) => {
+        const x = X(t);
+        const anchor = all.length > 1 && i === 0 ? 'start' : all.length > 1 && i === all.length - 1 ? 'end' : 'middle';
+        return `<line class="ag-tick" x1="${r1(x)}" x2="${r1(x)}" y1="${TOP}" y2="${height - AXIS + 4}"/><text class="ag-axis" x="${r1(x)}" y="${height - 6}" text-anchor="${anchor}">${esc(text.tick(t))}</text>`;
+      })
+      .join('');
+    const events = tl.events
+      .map((e) => {
+        const x = X(e.time);
+        const y0 = Y(e.from);
+        const y1 = Y(e.to);
+        const dir = y1 > y0 ? 1 : -1;
+        const tipY = y1 - dir * 5;
+        const on = sel ? (e.from === sel || e.to === sel ? ' on' : ' off') : '';
+        const sha = e.sha || e.target;
+        const id = text.id ? text.id(e) : '';
+        return `<g class="ag-ev ag-s${e.slot} ag-k-${e.kind}${on}"${sha ? ` data-sha="${esc(sha)}"` : ''}${id ? ` data-ev="${esc(id)}"` : ''}><line class="ag-ev-hit" x1="${r1(x)}" x2="${r1(x)}" y1="${y0}" y2="${y1}"/><line class="ag-ev-line" x1="${r1(x)}" x2="${r1(x)}" y1="${r1(y0 + dir * 4)}" y2="${r1(tipY - dir * 5)}"/><circle class="ag-ev-dot" cx="${r1(x)}" cy="${y0}" r="3.6"/><path class="ag-ev-tip" d="${head(x, tipY, 0, dir, 6, 3.4)}"/><title>${esc(text.event(e))}</title></g>`;
+      })
+      .join('');
+    return `<svg class="ag-time${sel ? ' has-sel' : ''}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(text.aria)}">${lanes}${ticks}${events}</svg>`;
   }
 
   /** ?agents=1 (o solo ?agents): abrir el panel de interacciones al cargar el repo. 0, false, no u off lo apagan. */
@@ -470,5 +596,5 @@
   /** Un id de sesión, corto para mostrar: los últimos 6 caracteres (los primeros suelen repetirse entre sesiones). */
   const shortSession = (s) => (s ? String(s).slice(-6) : '');
 
-  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS, KNOWN: KNOWN.map((k) => k.id) };
+  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS, KNOWN: KNOWN.map((k) => k.id) };
 })(window.GB);

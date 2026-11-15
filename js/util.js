@@ -31,6 +31,7 @@ window.GB = window.GB || {};
   U.fmtDate = (ms) => GB.i18n.fmtDate(ms);
   U.fmtDateTime = (ms) => GB.i18n.fmtDateTime(ms);
   U.fmtNum = (n) => GB.i18n.fmtNum(n);
+  U.fmtUsd = (n) => GB.i18n.fmtUsd(n);
   U.dayKey = (ms) => {
     const d = new Date(ms);
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -172,13 +173,22 @@ window.GB = window.GB || {};
 
   /** Una organización o un usuario de GitHub entero: org:nombre, user:nombre, @nombre o la URL de su
       perfil (github.com/nombre, github.com/orgs/nombre). null si no es eso: un nombre suelto no
-      cuenta, para no confundirlo con un repo mal escrito. */
+      cuenta, para no confundirlo con un repo mal escrito. Con /prefijo* detrás (org:curso/tarea-1-*),
+      solo sus repos cuyo nombre empieza así: una tarea de GitHub Classroom, que crea un repo por
+      estudiante con el prefijo de la tarea. La estrella es obligatoria: org:a/b no dice si es el repo
+      a/b o los que empiezan con b. */
   U.parseOwner = (input) => {
     const s = String(input || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
-    const m = s.match(/^(?:org:|user:|@)(.+)$/i) || s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(?:orgs\/)?([^/]+)$/i);
+    const m = s.match(/^(?:org:|user:|@)([^/]+)(?:\/([\w.-]{0,100})\*)?$/i) || s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/(?:orgs\/)?([^/]+)$/i);
     // como GitHub: letras, números y guiones sueltos, sin guion al principio ni al final, hasta 39
-    return m && /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1]) ? { owner: m[1] } : null;
+    if (!m || !/^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(m[1])) return null;
+    return m[2] ? { owner: m[1], prefix: m[2] } : { owner: m[1] };
   };
+  /** La clave con que se guarda una organización seguida (y su lista): su nombre, o nombre/prefijo* si es una tarea. */
+  U.ownerKey = (who) => (who.prefix ? `${who.owner}/${who.prefix}*` : who.owner);
+  /** ¿El repo `name` del dueño de `who` entra en lo que sigue? Sin prefijo, todos; con él, los que empiezan así (sin
+      distinguir mayúsculas, como los nombres de GitHub). */
+  U.ownerMatch = (who, name) => !who.prefix || String(name || '').toLowerCase().startsWith(who.prefix.toLowerCase());
 
   /** Un grupo de GitLab entero: group:ruta (con subgrupos, `group:gitlab-org/ci-cd`) o la URL de su página
       (`gitlab.com/groups/ruta`, o la de un GitLab propio con `?gitlab=`). null si no es eso. */
@@ -200,10 +210,10 @@ window.GB = window.GB || {};
   U.ALIAS_MAX = 40;
   U.cleanAlias = (v) => (typeof v === 'string' ? [...v.replace(/\s+/g, ' ').trim()].slice(0, U.ALIAS_MAX).join('').trim() : '');
 
-  /** La clave del texto del indicador de estado. Un 404 del repo o la cuota agotada dicen lo que son, no
+  /** La clave del texto del indicador de estado. Un 404 del repo, la cuota agotada o un repo vacío dicen lo que son, no
       «Sin conexión» (en celular el indicador es lo único que se ve). null si el estado no existe. */
   const STATUS_KEYS = { loading: 'status.loading', live: 'status.live', limited: 'status.limited', paused: 'status.paused', error: 'status.error' };
-  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate' };
+  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate', auth: 'status.errorAuth', empty: 'status.errorEmpty' };
   U.statusKey = (s) => (s?.state === 'error' && STATUS_ERROR_KEYS[s.error?.kind]) || STATUS_KEYS[s?.state] || null;
 
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
@@ -232,9 +242,14 @@ window.GB = window.GB || {};
 
   /** Los tokens de la web. En `<usuario>.github.io` el origen lo comparten todos los proyectos del usuario, y un
       `localStorage` ahí lo lee cualquiera de ellos: el token vive en `sessionStorage` (se pierde al cerrar la
-      pestaña) y el que ya estuviera en `localStorage` pasa a la sesión y se borra. En otro origen sigue en `store`. */
+      pestaña) y el que ya estuviera en `localStorage` pasa a la sesión y se borra. Lo mismo en el panel de la
+      extensión de VS Code (su `vscode-session.js` pone `GBSessionSecrets`): el servidor local cambia de puerto, y
+      con él de origen, en cada sesión, así que un token en `localStorage` se quedaría en el disco, en un origen
+      que nadie vuelve a abrir. En otro origen sigue en `store`. */
   U.secret = {
-    shared: () => /\.github\.io$/i.test((typeof location !== 'undefined' && location.hostname) || ''),
+    shared: () =>
+      (typeof window !== 'undefined' && window.GBSessionSecrets === true) ||
+      /\.github\.io$/i.test((typeof location !== 'undefined' && location.hostname) || ''),
     get(key, fallback) {
       if (!U.secret.shared()) return U.store.get(key, fallback);
       try {
@@ -337,6 +352,21 @@ window.GB = window.GB || {};
   };
 
   U.ancestors = (commits, start) => U.reachable(commits, [start]);
+
+  /** Dónde se corta la historia cargada de una rama: bajando por el primer padre desde su cabeza `sha`, el
+      primer padre que no está cargado (de ahí sigue «Cargar más»). null si la cabeza no está o se llega a la
+      raíz del repo: no hay más que traer. */
+  U.historyCut = (commits, sha) => {
+    let c = sha ? commits.get(sha) : null;
+    for (let i = 0; c && i <= commits.size; i++) {
+      const p = c.parents[0];
+      if (!p) return null;
+      const next = commits.get(p);
+      if (!next) return p;
+      c = next;
+    }
+    return null;
+  };
 
   U.matches = (name, filter) => !filter || name.toLowerCase().includes(filter.toLowerCase());
 

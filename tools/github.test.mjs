@@ -45,6 +45,7 @@ function load(gh) {
   );
   vm.runInContext(code('agents.js'), ctx, { filename: 'agents.js' });
   vm.runInContext(code('sources/github.js'), ctx, { filename: 'sources/github.js' });
+  vm.runInContext(code('health.js'), ctx, { filename: 'health.js' }); // para ver lo que el panel de salud hace con lo cargado
   return ctx.GB;
 }
 
@@ -63,6 +64,7 @@ function fakeGitHub() {
     forks: null, // forks como los da /forks (si es null, 404)
     prCommits: null, // número de PR -> fecha ISO de su primer commit, como /pulls/:n/commits (si es null, 404)
     deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
+    deployStatuses: null, // id del despliegue -> estados como los da /statuses, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
     calls: [],
     base: 'https://api.github.com', // la API a la que responde; cualquier otro host falla, como si no llegara
@@ -131,6 +133,8 @@ function fakeGitHub() {
     if (prCommits) return gh.prCommits ? (gh.prCommits.has(Number(prCommits[1])) ? { body: [{ commit: { author: { date: gh.prCommits.get(Number(prCommits[1])) } } }] } : { status: 404, body: { message: 'Not Found' } }) : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/forks') return gh.forks ? { body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
+    const dst = p.match(/^\/repos\/o\/r\/deployments\/(\d+)\/statuses$/);
+    if (dst) return gh.deployStatuses?.has(Number(dst[1])) ? { body: gh.deployStatuses.get(Number(dst[1])).slice(0, Number(u.searchParams.get('per_page')) || 30) } : { status: 404, body: { message: 'Not Found' } };
     const runs = p.match(/^\/repos\/o\/r\/commits\/([^/]+)\/check-runs$/);
     if (runs) return gh.checks ? { body: { total_count: 0, check_runs: gh.checks.get(runs[1]) || [] } } : { status: 404, body: { message: 'Not Found' } };
     if (p.startsWith('/repos/o/r/compare/')) return { body: { total_commits: 1, ahead_by: 1, commits: [] } };
@@ -167,6 +171,8 @@ function fakeGitHub() {
   return gh;
 }
 
+const plain = (x) => JSON.parse(JSON.stringify(x));
+
 /** Fuente conectada a la API falsa (sin token, salvo que se pida); `cycle()` corre un ciclo de sondeo completo. */
 function connect(gh, token = '', apiUrl = '', marks = true) {
   const GB = load(gh);
@@ -180,7 +186,7 @@ function connect(gh, token = '', apiUrl = '', marks = true) {
     await src.loop();
     clearTimeout(src.timer); // el próximo ciclo lo corre la prueba
   };
-  return { src, updates, errors };
+  return { src, updates, errors, GB };
 }
 
 /** Las actividades que vienen de eventos del repo (en un arreglo de este contexto, no del de la app). */
@@ -345,6 +351,28 @@ test('la API de actividad sigue en uso tras un 502 suelto, y se deja con un 403'
   assert.equal(src.activityOk, false, 'un 403 sí: el token no puede leerla');
 });
 
+test('un repo vacío (409 «Git Repository is empty») se dice vacío y no se reintenta cada pocos segundos', async () => {
+  const gh = fakeGitHub();
+  const empty = { status: 409, body: { message: 'Git Repository is empty.' } };
+  gh.override = (path) => (path.startsWith('/repos/o/r/commits') || path.startsWith('/repos/o/r/branches') ? empty : null);
+  const { src, errors, GB } = connect(gh);
+  await src.cycle();
+  await src.cycle();
+  assert.equal(errors.length, 2);
+  assert.equal(errors[1].kind, 'empty');
+  assert.equal(errors[1].msg.key, 'err.empty');
+  assert.equal(GB.U.statusKey(src.status), 'status.errorEmpty');
+  assert.equal(src.running, true, 'sigue mirando: el primer push lo llena');
+  // sin token cada intento gasta unas 3 consultas de las 60 por hora: cada 5 minutos, no cada pocos segundos
+  assert.ok(src.status.nextAt - Date.now() >= 295000, `reintenta en ${src.status.nextAt - Date.now()} ms`);
+  assert.equal(src.failures, 0, 'no cuenta como fallo de red');
+  // un 409 cualquiera sigue siendo un error del servicio
+  gh.override = (path) => (path.startsWith('/repos/o/r/commits') || path.startsWith('/repos/o/r/branches') ? { status: 409, body: { message: 'Conflict' } } : null);
+  const other = connect(gh);
+  await other.src.cycle();
+  assert.equal(other.errors[0].kind, 'http');
+});
+
 test('un 5xx de GraphQL en la carga inicial no pasa a REST para siempre', async () => {
   const gh = fakeGitHub();
   gh.push('main', 'a1');
@@ -406,6 +434,39 @@ test('parseOwner reconoce org:, user:, @ y la URL de un perfil, y nada más', ()
   }
 });
 
+/* Una tarea de GitHub Classroom: un repo por estudiante en la organización del curso, con el prefijo de la tarea
+   (`tarea-1-ana`). org:curso/tarea-1-* sigue solo los de ese prefijo. */
+
+test('parseOwner reconoce una tarea: org:curso/prefijo*, también con @ y user:, y su clave guardada', () => {
+  const { U } = load(fakeGitHub());
+  const ok = [
+    ['org:curso/tarea-1-*', 'curso', 'tarea-1-'],
+    ['@curso/Tarea_1.b*', 'curso', 'Tarea_1.b'],
+    ['user:ana/practica-*', 'ana', 'practica-'],
+    [' org:curso/tarea-1-* ', 'curso', 'tarea-1-'],
+    ['org:curso/*', 'curso', ''], // sin prefijo: la organización entera
+  ];
+  for (const [input, owner, prefix] of ok) {
+    const who = U.parseOwner(input);
+    assert.equal(who?.owner, owner, input);
+    assert.equal(who?.prefix || '', prefix, input);
+  }
+  // la estrella es la que dice «empieza con»: sin ella, org:a/b no es nada (podría ser el repo a/b mal escrito)
+  for (const input of ['org:curso/tarea-1-', 'org:curso/tarea*1', 'org:curso/tarea 1*', 'org:curso/a/b*', 'org:curso/**', 'org:-curso/tarea*', 'org:curso/' + 'a'.repeat(101) + '*', 'github.com/curso/tarea-*']) {
+    assert.equal(U.parseOwner(input), null, input);
+  }
+  // la clave con que se guarda la organización seguida: la de siempre sin prefijo, dueño/prefijo* con él
+  assert.equal(U.ownerKey({ owner: 'acme' }), 'acme');
+  assert.equal(U.ownerKey({ owner: 'curso', prefix: 'tarea-1-' }), 'curso/tarea-1-*');
+  for (const key of ['acme', 'curso/tarea-1-*']) assert.equal(U.ownerKey(U.parseOwner('@' + key)), key, key);
+  // un repo es de la tarea si su nombre empieza con el prefijo, sin distinguir mayúsculas
+  const tarea = U.parseOwner('org:curso/Tarea-1-*');
+  assert.equal(U.ownerMatch(tarea, 'tarea-1-Ana'), true);
+  assert.equal(U.ownerMatch(tarea, 'tarea-10-ana'), false);
+  assert.equal(U.ownerMatch(tarea, 'tarea-2-ana'), false);
+  assert.equal(U.ownerMatch(U.parseOwner('org:curso'), 'lo-que-sea'), true, 'sin prefijo, todos');
+});
+
 /** Un repo como lo da /orgs/{org}/repos o /users/{u}/repos. */
 const listed = (name, more = {}) => ({ name, owner: { login: 'acme' }, fork: false, archived: false, disabled: false, private: false, pushed_at: '2026-10-01T00:00:00Z', ...more });
 
@@ -422,6 +483,40 @@ test('org:nombre: los repos de push más reciente, sin forks ni archivados, en u
   const q = new URL('https://api.github.com' + gh.calls[0]).searchParams;
   assert.equal(q.get('sort'), 'pushed');
   assert.equal(q.get('direction'), 'desc');
+});
+
+test('org:nombre con dos páginas de repos: la constelación se arma con la primera (hasta 100), sin pedir la segunda ni las ramas de nadie', async () => {
+  const gh = fakeGitHub();
+  const page = (from, n) => Array.from({ length: n }, (_, i) => listed(`r${from + i}`, { pushed_at: new Date(Date.UTC(2026, 9, 1) - (from + i) * 3600e3).toISOString() }));
+  gh.override = (path) => {
+    if (!path.startsWith('/orgs/acme/repos?')) return null;
+    const second = new URL('https://api.github.com' + path).searchParams.get('page') === '2';
+    return second ? { body: page(100, 30) } : { body: page(0, 100), headers: { Link: '<https://api.github.com/orgs/acme/repos?sort=pushed&direction=desc&per_page=100&type=all&page=2>; rel="next"' } };
+  };
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('acme');
+  assert.equal(list.length, 100);
+  assert.equal(list[0].pushedAt, '2026-10-01T00:00:00.000Z', 'cada repo trae su último push, para su galaxia');
+  assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/acme/repos'], 'una consulta: ni la segunda página ni las ramas de los repos sin pestaña');
+  assert.equal(new URL('https://api.github.com' + gh.calls[0]).searchParams.get('per_page'), '100');
+});
+
+test('org:curso/tarea-1-*: de una organización con dos tareas, solo los repos del prefijo pedido, con la misma consulta', async () => {
+  const gh = fakeGitHub();
+  const curso = (name, more = {}) => listed(name, { owner: { login: 'curso' }, ...more });
+  gh.override = (path) =>
+    path.startsWith('/orgs/curso/repos?')
+      ? { body: [curso('tarea-2-ana'), curso('tarea-1-ana'), curso('Tarea-1-Beto'), curso('tarea-10-caro'), curso('tarea-2-beto'), curso('proyecto'), curso('tarea-1-copia', { fork: true }), curso('tarea-1-vieja', { archived: true })] }
+      : null;
+  const GB = load(gh);
+  const list = await GB.GitHubSource.ownerRepos('curso', { prefix: 'tarea-1-' });
+  assert.deepEqual(Array.from(list, (r) => `${r.owner}/${r.name}`), ['curso/tarea-1-ana', 'curso/Tarea-1-Beto'], 'los de la tarea 1, en el orden de la lista, sin la 10 ni la 2');
+  assert.deepEqual(gh.calls.map((c) => c.split('?')[0]), ['/orgs/curso/repos'], 'una consulta, la de seguir la organización');
+  const all = await GB.GitHubSource.ownerRepos('curso');
+  assert.equal(all.length, 6, 'sin prefijo, la organización entera (sin el fork ni el archivado)');
+  const otra = await GB.GitHubSource.ownerRepos('curso', { prefix: 'tarea-2-' });
+  assert.deepEqual(Array.from(otra, (r) => r.name), ['tarea-2-ana', 'tarea-2-beto']);
+  assert.equal((await GB.GitHubSource.ownerRepos('curso', { prefix: 'examen-' })).length, 0, 'un prefijo sin repos: la lista vacía, sin error');
 });
 
 test('@usuario: si no es una organización, sus repos; si no existe, lo dice', async () => {
@@ -487,7 +582,7 @@ function fakeGraphQL(gh, ci, commit = {}) {
         all: { totalCount: 1 },
         pullRequests: ci.noPulls ? null : { // null: el token no puede leer PRs
           totalCount: 1,
-          nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] } }],
+          nodes: [{ number: 7, title: 'x', isDraft: false, url: 'u', headRefName: 'feat', baseRefName: 'main', isCrossRepository: false, createdAt: '2020-01-01T00:00:00Z', author: null, commits: { nodes: [{ commit: { statusCheckRollup: { state: ci.pr } } }] }, ...ci.prNode }],
         },
       });
     }
@@ -526,6 +621,29 @@ test('CI con GraphQL: estado en la rama por defecto y en los PRs, y un aviso al 
   ci.main = null; // sin checks: sin estado
   await src.cycle();
   assert.equal(src.data.ci.has('main'), false);
+});
+
+test('los PRs dicen a quiénes se les pidió revisión y quiénes están asignados (REST y GraphQL), para el Launchpad', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.pulls.push({
+    number: 3, state: 'open', title: 'PR 3', head: { ref: 'feat', repo: { full_name: 'o/r' } }, base: { ref: 'main' }, user: { login: 'ana' },
+    html_url: 'https://github.com/o/r/pull/3', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
+    requested_reviewers: [{ login: 'beto', type: 'User' }, null, { login: '' }, { login: 'Copilot', type: 'Bot' }], requested_teams: [{ slug: 'core' }], assignees: [{ login: 'carla' }],
+  });
+  const rest = connect(gh).src;
+  await rest.cycle();
+  assert.deepEqual(plain(rest.data.pulls.get(3).requested), ['beto'], 'sin los vacíos ni los bots; los equipos van aparte y no cuentan');
+  assert.deepEqual(plain(rest.data.pulls.get(3).assignees), ['carla']);
+
+  const g2 = fakeGitHub();
+  g2.push('main', 'a1');
+  fakeGraphQL(g2, { main: 'SUCCESS', pr: 'SUCCESS', prNode: { reviewRequests: { nodes: [{ requestedReviewer: { login: 'dani' } }, { requestedReviewer: {} }, { requestedReviewer: null }] }, assignees: { nodes: [{ login: 'eva' }] } } });
+  const gql = connect(g2, 'tok').src;
+  await gql.cycle();
+  assert.equal(gql.mode, 'graphql');
+  assert.deepEqual(plain(gql.data.pulls.get(7).requested), ['dani'], 'un equipo (sin login) no cuenta');
+  assert.deepEqual(plain(gql.data.pulls.get(7).assignees), ['eva']);
 });
 
 test('GraphQL: un token sin permiso de PRs deja la lista de PRs como desconocida, no como vacía', async () => {
@@ -664,6 +782,78 @@ test('tags y despliegues: sin la API, o apagados, el grafo sigue y no se gasta c
   await off.src.cycle();
   assert.equal(gh2.calls.filter((c) => c.startsWith('/repos/o/r/tags') || c.startsWith('/repos/o/r/deployments')).length, 0);
   assert.equal(off.src.data.tags.size, 0);
+});
+
+/* Estado de los despliegues: /deployments/:id/statuses, una consulta por entorno, solo con el panel de salud abierto. */
+
+test('estado de los despliegues: una consulta por entorno, solo al pedirla, y no más de una cada 15 minutos', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.push('main', 'a2', 'a1');
+  gh.deployments = [
+    { id: 30, sha: 'a2', ref: 'main', environment: 'production' },
+    { id: 20, sha: 'a1', ref: 'main', environment: 'staging' },
+    { id: 10, sha: 'a1', ref: 'main', environment: 'production' }, // más viejo: no se pregunta
+    { id: 5, sha: 'a1', ref: 'main', environment: 'preview' },
+  ];
+  gh.deployStatuses = new Map([
+    [30, [{ state: 'success' }, { state: 'in_progress' }]],
+    [20, [{ state: 'failure' }]],
+    [10, [{ state: 'success' }]],
+  ]); // el 5 da 404
+  const { src, errors, GB } = connect(gh);
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/deployments\/\d+\/statuses/.test(c));
+  assert.equal(asked().length, 0, 'sin abrir el panel no se consulta');
+  const T0 = Date.now();
+  assert.equal(await src.syncDeployStatuses(T0), true);
+  assert.equal(errors.length, 0);
+  assert.deepEqual(asked().map((c) => c.match(/deployments\/(\d+)/)[1]).sort(), ['20', '30', '5'], 'uno por entorno, el último de cada uno');
+  assert.ok(asked().every((c) => c.includes('per_page=1')), 'solo el estado más nuevo');
+  assert.equal(src.data.deployStatus.get(30).state, 'success');
+  assert.equal(src.data.deployStatus.get(20).state, 'failure');
+  assert.equal(src.data.deployStatus.get(5).state, null, 'el que falla queda sin estado');
+  // el panel de salud lo muestra: salió bien, falló o nada
+  const h = GB.health.compute(src.data, [], T0);
+  assert.deepEqual(Object.fromEntries(h.deploys.rows.map((r) => [r.env, r.status])), { production: 'ok', staging: 'failed', preview: null });
+  assert.equal(await src.syncDeployStatuses(T0 + 14 * 60000), false);
+  assert.equal(asked().length, 3, 'no se vuelve a preguntar hasta los 15 minutos');
+  gh.deployStatuses.set(30, [{ state: 'in_progress' }]);
+  assert.equal(await src.syncDeployStatuses(T0 + 15 * 60000), true);
+  assert.equal(asked().length, 6, 'a los 15 minutos, otra vez una por entorno');
+  assert.equal(GB.health.compute(src.data, [], T0).deploys.rows.find((r) => r.env === 'production').status, 'running');
+});
+
+test('estado de los despliegues: sin token pregunta menos, un despliegue nuevo se pregunta enseguida y el viejo se olvida', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.deployments = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, sha: 'a1', ref: 'main', environment: `env-${i}` }));
+  gh.deployStatuses = new Map(Array.from({ length: 9 }, (_, i) => [i + 1, [{ state: 'queued' }]]));
+  const { src } = connect(gh);
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/deployments\/\d+\/statuses/.test(c)).length;
+  const T0 = Date.now();
+  await src.syncDeployStatuses(T0);
+  assert.equal(asked(), 5, 'sin token, a lo sumo 5 por vez');
+  await src.syncDeployStatuses(T0 + 1000);
+  assert.equal(asked(), 8, 'los que faltaban, en la vez siguiente');
+  // un despliegue nuevo en env-0: se pregunta ya, y el que reemplazó se olvida
+  src.data.deploys.set('env-0', { id: 9, sha: 'a1', ref: 'main', at: '' });
+  await src.syncDeployStatuses(T0 + 2000);
+  assert.equal(asked(), 9);
+  assert.equal(src.data.deployStatus.has(1), false);
+  assert.equal(src.data.deployStatus.get(9).state, 'queued');
+  // dos aperturas del panel a la vez no repiten las consultas
+  src.data.deploys.set('env-1', { id: 10, sha: 'a1', ref: 'main', at: '' });
+  gh.deployStatuses.set(10, [{ state: 'success' }]);
+  await Promise.all([src.syncDeployStatuses(T0 + 2500), src.syncDeployStatuses(T0 + 2500)]);
+  assert.equal(asked(), 10);
+  assert.equal(src.data.deployStatus.get(10).state, 'success');
+  // sin despliegues (o con la carga apagada) no se gasta nada
+  src.data.deploys = new Map();
+  assert.equal(await src.syncDeployStatuses(T0 + 3000), false);
+  assert.equal(asked(), 10);
+  assert.equal(src.data.deployStatus.size, 0, 'y se olvida lo que ya no está');
 });
 
 /* GitHub Enterprise Server: la misma fuente contra otra URL base (https://host/api/v3 y /api/graphql). */
@@ -869,6 +1059,64 @@ test('forks: sin la API el grafo sigue y la lista queda vacía', async () => {
   assert.equal(on.src.data.forks.length, 0);
 });
 
+/* Líneas añadidas y borradas por semana: /stats/code_frequency, solo al abrir la salud, con ETag. */
+
+test('líneas por semana: una consulta al pedirlas (con ETag), el 202 queda «calculando» y se reintenta, el 204 queda vacío', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const wk = (d) => Math.floor((Date.now() - d * 864e5) / 1000);
+  let reply = { status: 202, body: {} };
+  const inm = [];
+  gh.override = (path, opts) => {
+    if (path !== '/repos/o/r/stats/code_frequency') return null;
+    inm.push(opts.headers?.['If-None-Match'] || null);
+    return reply;
+  };
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => c === '/repos/o/r/stats/code_frequency').length;
+  assert.equal(asked(), 0, 'sin abrir el panel no se consulta');
+  assert.equal(await src.syncCodeFrequency(), true);
+  assert.equal(errors.length, 0);
+  assert.equal(src.data.codeFreq.state, 'pending', 'GitHub lo está calculando');
+  assert.equal(await src.syncCodeFrequency(), false, 'calculando: no se vuelve a preguntar antes del minuto');
+  assert.equal(asked(), 1);
+  src.lastPoll.codeFreq = Date.now() - 61000;
+  reply = { status: 202, body: null }; // un 202 sin cuerpo tampoco es un fallo de red
+  assert.equal(await src.syncCodeFrequency(), true, 'con el 202, pasado el minuto se vuelve a preguntar al abrir otra vez');
+  assert.equal(src.data.codeFreq.state, 'pending');
+  src.lastPoll.codeFreq = Date.now() - 61000;
+  reply = { body: [[wk(10), 40, -12], [wk(2), 3, 0], ['x', 1, 1], [wk(1), 'mucho', -1]] };
+  const [a, b] = await Promise.all([src.syncCodeFrequency(), src.syncCodeFrequency()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
+  assert.equal(asked(), 3);
+  assert.equal(src.data.codeFreq.state, 'ok');
+  assert.deepEqual(JSON.parse(JSON.stringify(src.data.codeFreq.weeks.map((w) => [w.added, w.deleted]))), [[40, 12], [3, 0], [0, 1]], 'las borradas en positivo; una semana sin fecha no entra y una cifra rara cuenta 0');
+  assert.equal(src.data.codeFreq.weeks[0].time, wk(10) * 1000);
+  assert.equal(await src.syncCodeFrequency(), false, 'con la respuesta ya llegada, no se vuelve a preguntar hasta los 15 minutos');
+  assert.equal(asked(), 3);
+  src.lastPoll.codeFreq = Date.now() - 16 * 60000;
+  assert.equal(await src.syncCodeFrequency(), true);
+  assert.equal(asked(), 4);
+  assert.equal(src.data.codeFreq.weeks.length, 3, 'el 304 deja las mismas semanas');
+  assert.ok(inm.at(-1), 'la última consulta llevó el ETag (y la respuesta fue un 304)');
+  assert.ok(!inm[0], 'la primera no tenía ETag');
+  const urls = gh.urls.filter((u) => u.endsWith('/stats/code_frequency'));
+  assert.equal(urls.length, 4);
+  // 204: el repo está vacío; 422 (más de 10 000 commits) o 404: sin la línea y sin error
+  for (const r of [{ status: 204, body: null }, { status: 422, body: { message: 'too many' } }, { status: 404, body: { message: 'Not Found' } }]) {
+    const other = fakeGitHub();
+    other.push('main', 'a1');
+    other.override = (path) => (path === '/repos/o/r/stats/code_frequency' ? r : null);
+    const c = connect(other, 'tok');
+    await c.src.cycle();
+    await c.src.syncCodeFrequency();
+    assert.equal(c.errors.length, 0);
+    assert.equal((c.src.data.codeFreq?.weeks || []).length, 0, `con ${r.status} no hay semanas`);
+    assert.notEqual(c.src.data.codeFreq?.state, 'pending');
+  }
+});
+
 /* Tiempo de entrega desde el primer commit: una consulta de /pulls/:n/commits por PR, solo al pedirla. */
 
 test('primer commit de cada PR fusionado: una consulta por PR, una sola vez, y un PR que falla no corta a los demás', async () => {
@@ -925,6 +1173,7 @@ test('readFile: el archivo de la rama (texto UTF-8 y su sha), y uno que no exist
   assert.equal((await src.readFile({ path: 'big.bin', ref: 'main' })).tooLarge, true);
   assert.equal((await src.readFile({ path: 'logo.png', ref: 'dev' })).binary, true);
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), true, 'el feed de eventos trae las revisiones: la salud parte el tiempo de ciclo');
 });
 
 test('writeFile: un PUT a contents con el texto en base64, la rama y el sha; sin token ni lo intenta', async () => {
@@ -1024,22 +1273,65 @@ test('mapPull: un repo renombrado sigue marcando sus PRs de la misma repo (compa
   assert.equal(src.mapPull(pr({ full_name: 'o/r' }, undefined)).sameRepo, true, 'sin base.repo se cae al nombre escrito');
 });
 
-test('segunda cuenta: tokenFor da el token de la segunda solo a los repos de su dueño', () => {
+test('otras cuentas: tokenFor da a cada dueño su token, y a cualquier otro el principal', () => {
   const GB = load(fakeGitHub());
-  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('@Acme-Corp', ' tok-b '));
-  assert.deepEqual({ ...second }, { owner: 'Acme-Corp', token: 'tok-b' });
-  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', second), 'tok-b', 'el dueño no distingue mayúsculas');
-  assert.equal(GB.GitHubSource.tokenFor('o', 'tok-a', second), 'tok-a', 'otro dueño usa el principal');
-  assert.equal(GB.GitHubSource.tokenFor('o', '', second), '', 'sin principal, otro dueño va sin token (nunca con el de la segunda)');
-  assert.equal(GB.GitHubSource.tokenFor('acme-corp', 'tok-a', { owner: '', token: '' }), 'tok-a');
-  // sin dueño, sin token o con un dueño que no vale, no hay segunda cuenta
-  for (const [o, t] of [['', 'x'], ['acme', ''], ['../x', 'x'], ['a b', 'x']]) assert.equal(GB.GitHubSource.pack2(o, t), '', `${o}|${t}`);
-  for (const bad of ['', 'basura', '{"owner":"a"}', '{"owner":"a/b","token":"x"}']) assert.deepEqual({ ...GB.GitHubSource.unpack2(bad) }, { owner: '', token: '' }, bad);
+  const S = GB.GitHubSource;
+  const accounts = S.unpackAccounts(S.packAccounts([
+    { owner: '@Acme-Corp', token: ' tok-b ' },
+    { owner: 'beta', token: 'tok-c' },
+    { owner: 'Gamma', token: 'tok-d' },
+  ]));
+  assert.deepEqual(JSON.parse(JSON.stringify(accounts)), [
+    { owner: 'Acme-Corp', token: 'tok-b' },
+    { owner: 'beta', token: 'tok-c' },
+    { owner: 'Gamma', token: 'tok-d' },
+  ]);
+  assert.equal(S.tokenFor('acme-corp', 'tok-a', accounts), 'tok-b', 'el dueño no distingue mayúsculas');
+  assert.equal(S.tokenFor('BETA', 'tok-a', accounts), 'tok-c');
+  assert.equal(S.tokenFor('gamma', 'tok-a', accounts), 'tok-d');
+  assert.equal(S.tokenFor('o', 'tok-a', accounts), 'tok-a', 'un tercero usa el principal');
+  assert.equal(S.tokenFor('o', '', accounts), '', 'sin principal, un tercero va sin token (nunca con el de otra cuenta)');
+  assert.equal(S.tokenFor('', 'tok-a', accounts), 'tok-a', 'sin dueño, el principal');
+  assert.equal(S.tokenFor('acme-corp', 'tok-a', []), 'tok-a');
+  // sin dueño, sin token o con un dueño que no vale, esa cuenta no está; las demás sí
+  for (const [o, t] of [['', 'x'], ['acme', ''], ['../x', 'x'], ['a b', 'x'], ['acme', '   ']]) {
+    assert.equal(S.packAccounts([{ owner: o, token: t }]), '', `${o}|${t}`);
+    assert.deepEqual(JSON.parse(JSON.stringify(S.unpackAccounts(S.packAccounts([{ owner: o, token: t }, { owner: 'ok', token: 'y' }])))), [{ owner: 'ok', token: 'y' }], `${o}|${t} entre otras`);
+  }
+  for (const bad of ['', 'basura', '{"owner":"a"}', '{"owner":"a/b","token":"x"}', '[{"owner":"a","token":7}]', '7', 'null', '[null,"x"]']) assert.deepEqual([...S.unpackAccounts(bad)], [], bad);
 });
 
-test('segunda cuenta: cada repo manda solo su token a la API', async () => {
+test('otras cuentas: la segunda cuenta guardada pasa a ser la primera de la lista, y una sola se guarda como antes', () => {
   const GB = load(fakeGitHub());
-  const second = GB.GitHubSource.unpack2(GB.GitHubSource.pack2('o', 'tok-b'));
+  const S = GB.GitHubSource;
+  // lo que guardaba la segunda cuenta de antes: un objeto con su dueño y su token
+  const legacy = JSON.stringify({ owner: 'Acme', token: 'tok-b' });
+  assert.deepEqual(JSON.parse(JSON.stringify(S.unpackAccounts(legacy))), [{ owner: 'Acme', token: 'tok-b' }]);
+  assert.equal(S.tokenFor('acme', 'tok-a', S.unpackAccounts(legacy)), 'tok-b');
+  // una sola cuenta se guarda igual que antes: volver a una versión anterior no la pierde
+  assert.equal(S.packAccounts(S.unpackAccounts(legacy)), legacy);
+  // con más, la lista; la de antes sigue primera
+  const more = S.packAccounts([...S.unpackAccounts(legacy), { owner: 'beta', token: 'tok-c' }]);
+  assert.deepEqual(JSON.parse(more), [{ owner: 'Acme', token: 'tok-b' }, { owner: 'beta', token: 'tok-c' }]);
+});
+
+test('otras cuentas: hasta cinco, y un dueño repetido se queda con su primer token', () => {
+  const GB = load(fakeGitHub());
+  const S = GB.GitHubSource;
+  assert.equal(S.MAX_ACCOUNTS, 5);
+  const seven = Array.from({ length: 7 }, (_, i) => ({ owner: `o${i}`, token: `t${i}` }));
+  const kept = S.unpackAccounts(S.packAccounts(seven));
+  assert.deepEqual([...kept.map((a) => a.owner)], ['o0', 'o1', 'o2', 'o3', 'o4']);
+  assert.equal(S.tokenFor('o5', 'tok-a', kept), 'tok-a', 'la sexta no entra: su dueño va con el principal');
+  assert.equal(S.unpackAccounts(JSON.stringify(seven)).length, 5, 'lo guardado de más tampoco entra');
+  const dup = S.unpackAccounts(S.packAccounts([{ owner: 'Acme', token: 't1' }, { owner: 'acme', token: 't2' }, { owner: 'b', token: 't3' }]));
+  assert.deepEqual(JSON.parse(JSON.stringify(dup)), [{ owner: 'Acme', token: 't1' }, { owner: 'b', token: 't3' }]);
+  assert.equal(S.tokenFor('ACME', 'tok-a', dup), 't1');
+});
+
+test('otras cuentas: con tres dueños, cada repo manda solo su token a la API, y uno de un tercero el principal', async () => {
+  const S = load(fakeGitHub()).GitHubSource;
+  const accounts = S.unpackAccounts(S.packAccounts([{ owner: 'o', token: 'tok-b' }, { owner: 'p', token: 'tok-c' }, { owner: 'q', token: 'tok-d' }]));
   const gh = fakeGitHub();
   gh.push('main', 'a1');
   const sent = [];
@@ -1047,14 +1339,111 @@ test('segunda cuenta: cada repo manda solo su token a la API', async () => {
   gh.fetch = (url, opts = {}) => (sent.push([url, opts.headers?.Authorization]), fetch(url, opts));
   const GB2 = load(gh);
   const run = async (owner) => {
-    const src = new GB2.GitHubSource({ owner, name: 'r', token: GB2.GitHubSource.tokenFor(owner, 'tok-a', second) });
+    const src = new GB2.GitHubSource({ owner, name: 'r', token: GB2.GitHubSource.tokenFor(owner, 'tok-a', accounts) });
     src.running = true;
     await src.loop();
     clearTimeout(src.timer);
   };
-  await run('o');
-  await run('x');
-  assert.ok(sent.filter(([u]) => u.includes('/repos/o/')).every(([, a]) => a === 'Bearer tok-b'), 'el repo del dueño de la segunda va con la segunda');
-  assert.ok(sent.filter(([u]) => u.includes('/repos/x/')).length && sent.filter(([u]) => u.includes('/repos/x/')).every(([, a]) => a === 'Bearer tok-a'), 'el de otro dueño, con la principal');
+  for (const owner of ['o', 'p', 'q', 'x']) await run(owner);
+  const of = (owner) => sent.filter(([u]) => u.includes(`/repos/${owner}/`));
+  for (const [owner, tok] of [['o', 'tok-b'], ['p', 'tok-c'], ['q', 'tok-d'], ['x', 'tok-a']]) {
+    assert.ok(of(owner).length, `se consultó ${owner}`);
+    assert.ok(of(owner).every(([, a]) => a === `Bearer ${tok}`), `${owner} va solo con ${tok}: ${JSON.stringify(of(owner))}`);
+  }
   assert.ok(sent.every(([u]) => u.startsWith('https://api.github.com/')), 'ninguno sale a otro host');
+});
+
+/* «Cargar más» de la ficha de una rama: otra tanda de su historia (tantos commits como el tope), desde donde se cortó,
+   con una sola consulta y ninguna para las demás ramas. */
+
+/** Un repo con main de `n` commits (m1…mn) y una rama feat de 3 que sale de su cabeza; la fuente, con tope `depth`. */
+function longRepo(n, depth, token = '') {
+  const gh = fakeGitHub();
+  for (let i = 1; i <= n; i++) gh.commit('m' + i, i > 1 ? 'm' + (i - 1) : null);
+  gh.branches.set('main', 'm' + n);
+  gh.commit('f1', 'm' + n);
+  gh.commit('f2', 'f1');
+  gh.commit('f3', 'f2');
+  gh.branches.set('feat', 'f3');
+  const GB = load(gh);
+  const src = new GB.GitHubSource({ owner: 'o', name: 'r', token, depth });
+  const updates = [];
+  src.on('update', (u) => updates.push(u));
+  src.running = true;
+  src.cycle = async () => {
+    await src.loop();
+    clearTimeout(src.timer);
+  };
+  return { gh, src, updates, GB };
+}
+
+test('cargar más (REST): una consulta desde donde se cortó main, tantos commits como el tope, y nada para feat', async () => {
+  const { gh, src, updates, GB } = longRepo(40, 10);
+  await src.cycle();
+  const { commits } = src.data;
+  assert.equal(GB.U.historyCut(commits, gh.branches.get('main')), 'm30', 'main cargada hasta m31');
+  gh.calls.length = 0;
+  updates.length = 0;
+  assert.equal(await src.loadMore('main'), 10);
+  assert.deepEqual(gh.calls, ['/repos/o/r/commits?sha=m30&per_page=10'], 'una sola consulta, la de main desde su corte');
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' cargado');
+  assert.equal(commits.has('m20'), false, 'ni uno más que el tope');
+  assert.equal(GB.U.historyCut(commits, 'm40'), 'm20');
+  assert.equal(updates.length, 1, 'avisa para que el grafo los dibuje');
+  assert.equal(updates[0].calm, true, 'sin efectos de llegada: no es actividad nueva');
+  assert.equal(updates[0].activities.length, 0);
+  // el ciclo siguiente no los vuelve a borrar al recortar
+  await src.cycle();
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' sigue tras el ciclo');
+  // y aunque lleguen muchos commits nuevos y haya que recortar, lo traído (lo más viejo) no es lo que se va
+  let head = 'm40';
+  for (let i = 1; i <= 900; i++) {
+    const sha = 'n' + i;
+    commits.set(sha, { sha, parents: [head], message: 'n', author: { name: 'ana' }, date: Date.UTC(2027, 0, 1) + i * 1000, url: '' });
+    head = sha;
+  }
+  src.data.branches.get('main').sha = head;
+  src.gc();
+  assert.ok(commits.size < 900 + 30 + 3, 'gc recortó');
+  for (let i = 21; i <= 30; i++) assert.ok(commits.has('m' + i), 'm' + i + ' sigue tras recortar');
+});
+
+test('cargar más (GraphQL): una consulta de la historia de esa rama desde su corte, con el tope del repo', async () => {
+  const { gh, src } = longRepo(40, 10);
+  await src.cycle();
+  src.mode = 'graphql';
+  src.token = 'tok';
+  const sent = [];
+  gh.override = (path, opts) => {
+    if (path !== '/graphql') return null;
+    const { query } = JSON.parse(opts.body);
+    sent.push(query);
+    const m = query.match(/h0: object\(oid: "([^"]+)"\) \{ \.\.\. on Commit \{ history\(first: (\d+)\)/);
+    const nodes = [];
+    for (let i = Number(m[1].slice(1)), k = 0; i >= 1 && k < Number(m[2]); i--, k++) {
+      nodes.push({ oid: 'm' + i, url: 'u', committedDate: '2026-01-01T00:00:00Z', messageHeadline: 'c', author: null, parents: { nodes: i > 1 ? [{ oid: 'm' + (i - 1) }] : [] } });
+    }
+    return { body: { data: { rateLimit: { cost: 1, remaining: 4000, limit: 5000, resetAt: '2030-01-01T00:00:00Z' }, repository: { h0: { history: { nodes } } } } } };
+  };
+  gh.calls.length = 0;
+  assert.equal(await src.loadMore('feat'), 10, 'la ficha de feat trae lo que sigue de su historia (que baja por main)');
+  assert.equal(sent.length, 1);
+  assert.match(sent[0], /h0: object\(oid: "m30"\)/);
+  assert.match(sent[0], /history\(first: 10\)/);
+  assert.equal(/h1:/.test(sent[0]), false, 'solo esa rama');
+  assert.deepEqual(gh.calls, ['/graphql']);
+  assert.ok(src.data.commits.has('m21') && !src.data.commits.has('m20'));
+});
+
+test('cargar más: sin corte no consulta nada, y un corte que GitHub no devuelve es un error, no «no hay más»', async () => {
+  const { gh, src } = longRepo(5, 10);
+  await src.cycle();
+  gh.calls.length = 0;
+  assert.equal(await src.loadMore('main'), 0, 'main llega a su raíz');
+  assert.equal(await src.loadMore('no-existe'), 0);
+  assert.deepEqual(gh.calls, []);
+  const big = longRepo(30, 10);
+  await big.src.cycle();
+  big.gh.override = (path) => (path.startsWith('/repos/o/r/commits?') ? { status: 404, body: { message: 'No commit found' } } : null);
+  await assert.rejects(() => big.src.loadMore('main'));
 });

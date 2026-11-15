@@ -103,3 +103,50 @@ test('los commits de agente de la demo llevan sus trailers, y el filtro por ruta
   const auth = await src.commitsByPath('src/auth');
   for (const c of signed) if (!/auth/i.test(c.message.split('\n')[0])) assert.equal(auth.has(c.sha), false, c.message.split('\n')[0]);
 });
+
+test('cargar más: la historia de main de antes de la semilla llega de a 6, sin tocar otras ramas, y después no hay más', async () => {
+  const { src } = demo(7);
+  const { commits, branches } = src.data;
+  const cut = () => {
+    let c = commits.get(branches.get('main').sha);
+    while (c && c.parents[0] && commits.has(c.parents[0])) c = commits.get(c.parents[0]);
+    return c?.parents[0] || null;
+  };
+  assert.ok(cut(), 'la historia cargada de main se corta antes de su raíz');
+  const heads = JSON.stringify([...branches.values()].map((b) => [b.name, b.sha]));
+  const updates = [];
+  src.on('update', (u) => updates.push(u));
+  const before = commits.size;
+  assert.equal(await src.loadMore('main'), 6);
+  assert.equal(commits.size, before + 6);
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].calm, true);
+  assert.equal(await src.loadMore('develop'), 6, 'develop sale de main: su ficha trae lo que sigue');
+  assert.equal(cut(), null, 'con 12, main llega a su raíz');
+  assert.equal(await src.loadMore('main'), 0);
+  assert.equal(JSON.stringify([...branches.values()].map((b) => [b.name, b.sha])), heads, 'ninguna rama se movió');
+  assert.equal(src.hasMore('main'), false, 'sin historia guardada, la ficha no ofrece más');
+  // mucha actividad después: lo traído es lo más viejo, y recortar por fecha no lo vuelve a sacar
+  const loaded = [...src.kept];
+  assert.equal(loaded.length, 12);
+  for (let i = 0; i < 1500; i++) src.publish(src.actions() || []);
+  assert.ok(loaded.every((sha) => commits.has(sha)), 'lo traído con «Cargar más» sigue cargado tras 1500 publicaciones');
+});
+
+test('la historia de la demo trae PRs fusionados con su número y sus revisiones: la salud parte su tiempo de ciclo en etapas', () => {
+  for (const seed of [1, 7, 42, 2026, 31337]) {
+    const { src } = demo(seed);
+    assert.equal(src.givesReviews(), true);
+    const ctx = vm.createContext({ window: { GB: {} } });
+    vm.runInContext(code('health.js'), ctx, { filename: 'health.js' });
+    const acts = src.history.map((a) => ({ ...a }));
+    const merges = acts.filter((a) => a.kind === 'pr-merge');
+    assert.ok(merges.length >= 3 && merges.every((a) => Number.isInteger(a.number) && a.openedAt < a.time), `semilla ${seed}: los merges de la historia llevan su número y su apertura`);
+    const since = Math.min(...acts.map((a) => a.time));
+    assert.ok(merges.every((a) => a.openedAt >= since), `semilla ${seed}: ningún PR de la historia se abre antes de la actividad cargada`);
+    const c = ctx.window.GB.health.compute(src.data, acts, Math.max(...acts.map((a) => a.time)) + 60e3).cycle;
+    assert.equal(c.early, 0, `semilla ${seed}`);
+    assert.ok(c.open.n >= 2 && c.review.n >= 2 && c.merge.n >= 2, `semilla ${seed}: las tres etapas con al menos dos PRs: ${JSON.stringify(c)}`);
+    assert.ok(c.noReview >= 1, `semilla ${seed}: el de Dependabot se fusionó sin revisión`);
+  }
+});

@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, conocido, compararMedidas, escenarios, guardarInforme, leerBase, presupuestos } from './audit.mjs';
+import { BASE, CARGA_MAX, MARGEN_CUOTA, PRESUPUESTO, TIPOS, agrupar, clasesDeEstado, clave, comparar, conocido, compararMedidas, escenarios, guardarInforme, instrumentar, leerBase, presupuestos } from './audit.mjs';
 import { PRIORIDADES, SUBTIPOS } from './loop.mjs';
 
 const h = (tipo, escenario = 'escritorio-3d', donde = '#x', extra = {}) => ({ tipo, escenario, donde, ...extra });
@@ -123,10 +123,69 @@ describe('tools/audit.mjs', () => {
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d'));
   });
 
+  test('la puerta abre la práctica de git a 320 px en es, ar, de y ta (pendiente 5, iteración 267)', () => {
+    const es = escenarios().filter((x) => x.nombre.startsWith('practica-320-'));
+    assert.deepEqual(es.map((x) => x.nombre), ['practica-320-es', 'practica-320-ar', 'practica-320-de', 'practica-320-ta']);
+    for (const e of es) {
+      assert.ok(e.puerta && e.contexto.viewport.width === 320 && /[?&]practice=\d+/.test(e.url), e.nombre);
+      assert.equal(!!e.rtl, e.nombre === 'practica-320-ar');
+    }
+  });
+
   test('la completa mira 1.000 ramas en 3D a 320 px con la API simulada (pendiente 15)', () => {
     const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
     assert.ok(e && !e.puerta && e.contexto.viewport.width === 320 && e.github === 1000);
     assert.ok(!escenarios().some((x) => x.nombre === 'celular-320-3d-mil'));
+  });
+
+  test('el JavaScript por cuadro del 3D con 1.000 ramas se mide en tandas y --comparar lo vigila (pendiente 12, iteración 263)', () => {
+    // el escenario de 1.000 ramas guarda las dos medidas; una llamada sola daba 1,1 ms por la resolución del reloj
+    const e = escenarios({ completa: true }).find((x) => x.nombre === 'celular-320-3d-mil');
+    assert.match(e.mirar.toString(), /medirEscena/);
+    assert.match(e.mirar.toString(), /escena3dUs/);
+    assert.match(e.mirar.toString(), /etiquetas3dUs/);
+    const src = readFileSync(new URL('./audit.mjs', import.meta.url), 'utf8');
+    const ini = src.indexOf('function medirEscena()');
+    const cuerpo = src.slice(ini, src.indexOf('\n}\n', ini));
+    assert.match(cuerpo, /for \(let i = 0; i < 300; i\+\+\) f\(\)/, 'una tanda de 300 llamadas, no una sola');
+    assert.match(cuerpo, /g\.dirtyNodes = g\.dirtyEdges = true/, 'la escena sucia: el camino caro de stepScene');
+    assert.match(cuerpo, /P\.stepScene = orig/, 'la envoltura se quita al primer cuadro');
+    assert.match(cuerpo, /catch \{\s*ok\(null\)/, 'una excepción en la medida no cuelga la auditoría');
+    assert.match(e.mirar.toString(), /donde: 'medirEscena'/, 'sin medida, un hallazgo: la vigilancia no se apaga en silencio');
+    // subir es peor, como la carga
+    const d = compararMedidas({ escena3dUs: 80, etiquetas3dUs: 30 }, { escena3dUs: 100, etiquetas3dUs: 27 });
+    assert.deepEqual(
+      d.map((x) => [x.medida, x.peor]),
+      [
+        ['escena3dUs', 25],
+        ['etiquetas3dUs', -10],
+      ],
+    );
+  });
+
+  test('la carga cuenta los programas de WebGL que enlaza y --comparar lo vigila (pendiente 11, iteración 295)', () => {
+    // las tareas largas de la carga son casi todas la compilación de shaders del primer cuadro 3D, y su tiempo depende
+    // del equipo (895 ms en uno, 1.153 en otro con el mismo código); cuántos programas se enlazan, no
+    const proto = () => ({ linkProgram(p) { this.vistos.push(p); }, vistos: [] });
+    const gl1 = proto();
+    const gl2 = proto();
+    const win = { WebGLRenderingContext: { prototype: gl1 }, WebGL2RenderingContext: { prototype: gl2 } };
+    const doc = { addEventListener() {} };
+    // sombrea los tres globales del navegador que usa instrumentar; sin PerformanceObserver, su try lo salta
+    const corre = new Function('window', 'document', 'PerformanceObserver', `(${instrumentar.toString()})([])`);
+    corre(win, doc, undefined);
+    gl1.linkProgram('a');
+    gl2.linkProgram('b');
+    gl2.linkProgram('c');
+    assert.equal(win.__audit.programas, 3, 'cada linkProgram, de WebGL 1 o 2, cuenta uno');
+    assert.deepEqual([...gl1.vistos, ...gl2.vistos], ['a', 'b', 'c'], 'el enlace de verdad sigue ocurriendo');
+    corre({ ...win, WebGLRenderingContext: undefined, WebGL2RenderingContext: undefined, __audit: undefined }, doc, undefined); // sin WebGL, no lanza
+    // el escenario de la puerta mide el 3D, y medir('3d') guarda la cuenta
+    assert.match(escenarios().find((x) => x.nombre === 'escritorio-3d').mirar.toString(), /medir\('3d'\)/);
+    const src = readFileSync(new URL('./audit.mjs', import.meta.url), 'utf8');
+    assert.match(src, /medidas\.programas3d = m\.programas/, 'medir("3d") guarda la cuenta');
+    // subir es peor
+    assert.deepEqual(compararMedidas({ programas3d: 13 }, { programas3d: 15 }).map((x) => [x.medida, x.peor]), [['programas3d', 15]]);
   });
 
   test('la base del repo es válida: tipos conocidos de la puerta, escenarios de la puerta y la cuota', () => {

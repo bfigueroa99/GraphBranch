@@ -372,6 +372,7 @@ test('un repo vacío (409 «Git Repository is empty») se dice vacío y no se re
   const other = connect(gh);
   await other.src.cycle();
   assert.equal(other.errors[0].kind, 'http');
+  assert.equal(other.GB.U.statusKey(other.src.status), 'status.errorService', 'un 409 llegó: no es «Sin conexión»');
 });
 
 test('un 5xx de GraphQL en la carga inicial no pasa a REST para siempre', async () => {

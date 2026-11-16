@@ -43,6 +43,7 @@ GB.i18n.define('ta', {
   'status.errorRate': 'ஒதுக்கீடு தீர்ந்தது',
   'status.errorAuth': 'டோக்கன் செல்லாது',
   'status.errorEmpty': 'காலியான களஞ்சியம்',
+  'status.errorService': 'சேவைப் பிழை',
   'status.retryIn': 'மீண்டும் முயற்சி: {time} கழித்து',
   'status.stopped': 'நிறுத்தப்பட்டது',
   'status.resumeHint': 'தொடர மீண்டும் இயக்கவும்',

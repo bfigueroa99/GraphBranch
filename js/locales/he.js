@@ -43,6 +43,7 @@ GB.i18n.define('he', {
   'status.errorRate': 'המכסה נוצלה',
   'status.errorAuth': 'טוקן לא תקין',
   'status.errorEmpty': 'מאגר ריק',
+  'status.errorService': 'שגיאת שירות',
   'status.retryIn': 'ניסיון חוזר בעוד {time}',
   'status.stopped': 'נעצר',
   'status.resumeHint': 'לחץ על המשך כדי להמשיך',

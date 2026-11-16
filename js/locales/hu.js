@@ -43,6 +43,7 @@ GB.i18n.define('hu', {
   'status.errorRate': 'A keret elfogyott',
   'status.errorAuth': 'Érvénytelen token',
   'status.errorEmpty': 'Üres tároló',
+  'status.errorService': 'Szolgáltatáshiba',
   'status.retryIn': 'újrapróbálkozás {time} múlva',
   'status.stopped': 'leállítva',
   'status.resumeHint': 'folytasd a továbbhaladáshoz',

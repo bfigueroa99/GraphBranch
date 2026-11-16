@@ -43,6 +43,7 @@ GB.i18n.define('sk', {
   'status.errorRate': 'Limit vyčerpaný',
   'status.errorAuth': 'Neplatný token',
   'status.errorEmpty': 'Prázdny repozitár',
+  'status.errorService': 'Chyba služby',
   'status.retryIn': 'ďalší pokus o {time}',
   'status.stopped': 'zastavené',
   'status.resumeHint': 'pre pokračovanie stlačte Pokračovať',

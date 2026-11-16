@@ -43,6 +43,7 @@ GB.i18n.define('tr', {
   'status.errorRate': 'Kota doldu',
   'status.errorAuth': 'Geçersiz token',
   'status.errorEmpty': 'Boş depo',
+  'status.errorService': 'Hizmet hatası',
   'status.retryIn': '{time} sonra yeniden denenecek',
   'status.stopped': 'durduruldu',
   'status.resumeHint': 'devam etmek için sürdürün',

@@ -43,6 +43,7 @@ GB.i18n.define('fi', {
   'status.errorRate': 'Kiintiö täynnä',
   'status.errorAuth': 'Virheellinen token',
   'status.errorEmpty': 'Tyhjä repo',
+  'status.errorService': 'Palveluvirhe',
   'status.retryIn': 'yritetään uudelleen {time} kuluttua',
   'status.stopped': 'pysäytetty',
   'status.resumeHint': 'jatka painamalla Jatka',

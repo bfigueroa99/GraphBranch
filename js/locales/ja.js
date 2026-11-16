@@ -43,6 +43,7 @@ GB.i18n.define('ja', {
   'status.errorRate': '上限に達しました',
   'status.errorAuth': 'トークンが無効です',
   'status.errorEmpty': '空のリポジトリ',
+  'status.errorService': 'サービスエラー',
   'status.retryIn': '{time}後に再試行',
   'status.stopped': '停止中',
   'status.resumeHint': '再開すると更新を続けます',

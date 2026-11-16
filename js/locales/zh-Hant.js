@@ -43,6 +43,7 @@ GB.i18n.define('zh-Hant', {
   'status.errorRate': '配額已用盡',
   'status.errorAuth': '權杖無效',
   'status.errorEmpty': '空儲存庫',
+  'status.errorService': '服務出錯',
   'status.retryIn': '{time}後重試',
   'status.stopped': '已停止',
   'status.resumeHint': '按一下「繼續」以恢復更新',

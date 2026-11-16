@@ -43,6 +43,7 @@ GB.i18n.define('pl', {
   'status.errorRate': 'Limit wyczerpany',
   'status.errorAuth': 'Nieprawidłowy token',
   'status.errorEmpty': 'Puste repozytorium',
+  'status.errorService': 'Błąd usługi',
   'status.retryIn': 'ponowna próba za {time}',
   'status.stopped': 'zatrzymano',
   'status.resumeHint': 'wznów, aby kontynuować',

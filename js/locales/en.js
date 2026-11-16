@@ -48,6 +48,7 @@ GB.i18n.define('en', {
   'status.errorRate': 'Quota exhausted',
   'status.errorAuth': 'Invalid token',
   'status.errorEmpty': 'Empty repo',
+  'status.errorService': 'Service error',
   'status.retryIn': 'retrying in {time}',
   'status.stopped': 'stopped',
   'status.resumeHint': 'resume to continue',

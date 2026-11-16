@@ -43,6 +43,7 @@ GB.i18n.define('vi', {
   'status.errorRate': 'Hết hạn mức',
   'status.errorAuth': 'Token không hợp lệ',
   'status.errorEmpty': 'Repo trống',
+  'status.errorService': 'Lỗi dịch vụ',
   'status.retryIn': 'thử lại sau {time}',
   'status.stopped': 'đã dừng',
   'status.resumeHint': 'hãy tiếp tục để chạy lại',

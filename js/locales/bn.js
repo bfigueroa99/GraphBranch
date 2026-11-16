@@ -43,6 +43,7 @@ GB.i18n.define('bn', {
   'status.errorRate': 'কোটা শেষ',
   'status.errorAuth': 'টোকেন অবৈধ',
   'status.errorEmpty': 'খালি রিপো',
+  'status.errorService': 'সার্ভিসে ত্রুটি',
   'status.retryIn': '{time} পরে আবার চেষ্টা',
   'status.stopped': 'থেমে আছে',
   'status.resumeHint': 'চালিয়ে যেতে আবার চালু করুন',

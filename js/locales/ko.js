@@ -43,6 +43,7 @@ GB.i18n.define('ko', {
   'status.errorRate': '할당량 소진',
   'status.errorAuth': '토큰이 유효하지 않음',
   'status.errorEmpty': '빈 저장소',
+  'status.errorService': '서비스 오류',
   'status.retryIn': '{time} 후 재시도',
   'status.stopped': '중지됨',
   'status.resumeHint': '재개하면 계속 갱신됩니다',

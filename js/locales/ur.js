@@ -43,6 +43,7 @@ GB.i18n.define('ur', {
   'status.errorRate': 'کوٹا ختم',
   'status.errorAuth': 'ٹوکن غلط ہے',
   'status.errorEmpty': 'خالی ریپو',
+  'status.errorService': 'سروس میں خرابی',
   'status.retryIn': '{time} میں دوبارہ کوشش',
   'status.stopped': 'رک گیا',
   'status.resumeHint': 'آگے بڑھنے کے لیے “جاری رکھیں” دبائیں',

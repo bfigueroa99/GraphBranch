@@ -43,6 +43,7 @@ GB.i18n.define('da', {
   'status.errorRate': 'Kvote opbrugt',
   'status.errorAuth': 'Ugyldigt token',
   'status.errorEmpty': 'Tomt repo',
+  'status.errorService': 'Tjenestefejl',
   'status.retryIn': 'prøver igen om {time}',
   'status.stopped': 'stoppet',
   'status.resumeHint': 'genoptag for at fortsætte',

@@ -43,6 +43,7 @@ GB.i18n.define('ms', {
   'status.errorRate': 'Kuota habis',
   'status.errorAuth': 'Token tidak sah',
   'status.errorEmpty': 'Repo kosong',
+  'status.errorService': 'Ralat perkhidmatan',
   'status.retryIn': 'cuba semula dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'sambung semula untuk meneruskan',

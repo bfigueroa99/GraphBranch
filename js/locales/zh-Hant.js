@@ -535,6 +535,7 @@ GB.i18n.define('zh-Hant', {
   'health.cycleMerge': '從核准到合併：中位數 {median} · 已測量的 PR：{count}',
   'health.cycleSkipped': '未經審查即合併：{none} · 經審查但未核准即合併：{unapproved}',
   'health.cycleEarly': '在已載入的活動之前開啟、因審查可能缺漏而不計入各階段：{count}',
+  'health.cycleFetched': '在已載入的活動之前開啟、以從 GitHub 取得的審查計入各階段：{count}',
   'health.cycleNoReviews': '此來源不提供拉取請求的審查，因此無法將週期時間分階段。上方從開啟到合併的耗時仍會照常計算。',
   'health.scorecard': '安全性：OpenSSF Scorecard',
   'health.scorecardScore': '分數：{score} / 10，分析於 {date}',

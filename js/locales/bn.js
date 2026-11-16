@@ -535,6 +535,7 @@ GB.i18n.define('bn', {
   'health.cycleMerge': 'অনুমোদন থেকে মার্জ: মধ্যমা {median} · মাপা PR: {count}',
   'health.cycleSkipped': 'রিভিউ ছাড়া মার্জ: {none} · রিভিউ হয়েছে কিন্তু অনুমোদন ছাড়া মার্জ: {unapproved}',
   'health.cycleEarly': 'লোড করা কার্যকলাপের আগে খোলা, ধাপের বাইরে কারণ তাদের রিভিউ বাদ পড়তে পারে: {count}',
+  'health.cycleFetched': 'লোড করা কার্যকলাপের আগে খোলা, GitHub থেকে আনা রিভিউ দিয়ে মাপা: {count}',
   'health.cycleNoReviews': 'এই উৎস pull request-এর রিভিউ দেয় না, তাই সাইকেল টাইম ধাপে ভাগ করা যায় না। খোলা থেকে মার্জ হতে সময়, উপরে, এখনও মাপা হয়।',
   'health.scorecard': 'নিরাপত্তা: OpenSSF Scorecard',
   'health.scorecardScore': 'স্কোর: 10-এর মধ্যে {score}, বিশ্লেষণ {date}',

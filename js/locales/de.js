@@ -536,6 +536,7 @@ GB.i18n.define('de', {
   'health.cycleMerge': 'Von der Genehmigung bis zum Merge: Median {median} · gemessene PRs: {count}',
   'health.cycleSkipped': 'Ohne Review gemergt: {none} · mit Review, aber ohne Genehmigung gemergt: {unapproved}',
   'health.cycleEarly': 'Vor der geladenen Aktivität geöffnet, nicht in den Phasen, weil ihre Reviews fehlen können: {count}',
+  'health.cycleFetched': 'Vor der geladenen Aktivität geöffnet, mit ihren bei GitHub abgefragten Reviews gemessen: {count}',
   'health.cycleNoReviews': 'Diese Quelle liefert keine Reviews von Pull Requests, daher lässt sich die Zykluszeit nicht in Phasen aufteilen. Die Zeit von geöffnet bis gemergt (weiter oben) wird weiterhin gemessen.',
   'health.scorecard': 'Sicherheit: OpenSSF Scorecard',
   'health.scorecardScore': 'Wertung: {score} von 10, analysiert am {date}',

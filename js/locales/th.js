@@ -536,6 +536,7 @@ GB.i18n.define('th', {
   'health.cycleMerge': 'ตั้งแต่อนุมัติจนถึงรวม: ค่ามัธยฐาน {median} · PR ที่วัด: {count}',
   'health.cycleSkipped': 'รวมโดยไม่มีรีวิว: {none} · รีวิวแล้วแต่รวมโดยไม่มีการอนุมัติ: {unapproved}',
   'health.cycleEarly': 'เปิดก่อนกิจกรรมที่โหลดไว้ ไม่นับในขั้นเพราะรีวิวอาจขาดหาย: {count}',
+  'health.cycleFetched': 'เปิดก่อนกิจกรรมที่โหลดไว้ วัดด้วยรีวิวที่ดึงมาจาก GitHub: {count}',
   'health.cycleNoReviews': 'แหล่งนี้ไม่ให้ข้อมูลรีวิวของ pull request จึงแบ่งเวลารอบเป็นขั้นไม่ได้ ส่วนเวลาตั้งแต่เปิดจนถึงรวม ด้านบน ยังวัดอยู่',
   'health.scorecard': 'ความปลอดภัย: OpenSSF Scorecard',
   'health.scorecardScore': 'คะแนน: {score} จาก 10 วิเคราะห์เมื่อ {date}',

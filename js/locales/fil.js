@@ -536,6 +536,7 @@ GB.i18n.define('fil', {
   'health.cycleMerge': 'Mula sa pag-apruba hanggang sa pag-merge: median {median} · mga PR na nasukat: {count}',
   'health.cycleSkipped': 'Na-merge nang walang review: {none} · na-review at na-merge nang walang apruba: {unapproved}',
   'health.cycleEarly': 'Nabuksan bago ang na-load na aktibidad, wala sa mga yugto dahil maaaring kulang ang mga review nila: {count}',
+  'health.cycleFetched': 'Nabuksan bago ang na-load na aktibidad, sinukat gamit ang mga review nilang kinuha sa GitHub: {count}',
   'health.cycleNoReviews': 'Hindi nagbibigay ang source na ito ng mga review ng pull request, kaya hindi mahahati sa mga yugto ang cycle time. Nasusukat pa rin ang oras mula nabuksan hanggang na-merge, sa itaas.',
   'health.scorecard': 'Seguridad: OpenSSF Scorecard',
   'health.scorecardScore': 'Iskor: {score} sa 10, sinuri noong {date}',

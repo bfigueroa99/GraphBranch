@@ -592,6 +592,7 @@ GB.i18n.define('he', {
   'health.cycleMerge': 'מהאישור ועד המיזוג: חציון {median} · PRs שנמדדו: {count}',
   'health.cycleSkipped': 'מוזגו ללא סקירה: {none} · נסקרו ומוזגו ללא אישור: {unapproved}',
   'health.cycleEarly': 'נפתחו לפני הפעילות שנטענה, מחוץ לשלבים כי ייתכן שחסרות הסקירות שלהם: {count}',
+  'health.cycleFetched': 'נפתחו לפני הפעילות שנטענה, והסקירות שלהם נשלפו מ-GitHub ונמדדו: {count}',
   'health.cycleNoReviews': 'המקור הזה לא מספק את הסקירות של ה-pull requests, ולכן אי אפשר לחלק את זמן המחזור לשלבים. הזמן מפתיחה עד מיזוג, למעלה, עדיין נמדד.',
   'health.scorecard': 'אבטחה: OpenSSF Scorecard',
   'health.scorecardScore': 'ציון: {score} מתוך 10, נותח ב-{date}',

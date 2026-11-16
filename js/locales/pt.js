@@ -536,6 +536,7 @@ GB.i18n.define('pt', {
   'health.cycleMerge': 'Da aprovação à mesclagem: mediana {median} · PRs medidos: {count}',
   'health.cycleSkipped': 'Mesclados sem revisão: {none} · revisados e mesclados sem aprovação: {unapproved}',
   'health.cycleEarly': 'Abertos antes da atividade carregada, fora das etapas porque as revisões podem estar faltando: {count}',
+  'health.cycleFetched': 'Abertos antes da atividade carregada, medidos com as revisões consultadas no GitHub: {count}',
   'health.cycleNoReviews': 'Esta fonte não fornece as revisões dos pull requests, então o tempo de ciclo não pode ser dividido em etapas. O tempo de aberto a mesclado, acima, continua sendo medido.',
   'health.scorecard': 'Segurança: OpenSSF Scorecard',
   'health.scorecardScore': 'Pontuação: {score} de 10, analisado em {date}',

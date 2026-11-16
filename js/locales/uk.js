@@ -551,6 +551,7 @@ GB.i18n.define('uk', {
   'health.cycleMerge': 'Від схвалення до злиття: медіана {median} · виміряно PR: {count}',
   'health.cycleSkipped': 'Злиті без рев’ю: {none} · з рев’ю, але злиті без схвалення: {unapproved}',
   'health.cycleEarly': 'Відкриті раніше за завантажену активність, поза етапами, бо їхні рев’ю можуть бути відсутні: {count}',
+  'health.cycleFetched': 'Відкриті раніше за завантажену активність, виміряні за рев’ю, отриманими з GitHub: {count}',
   'health.cycleNoReviews': 'Це джерело не надає рев’ю pull request, тому час циклу не можна розбити на етапи. Час від відкриття до злиття, вище, і далі вимірюється.',
   'health.scorecard': 'Безпека: OpenSSF Scorecard',
   'health.scorecardScore': 'Оцінка: {score} з 10, аналіз від {date}',

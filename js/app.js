@@ -1969,8 +1969,9 @@
   }
 
   /** El tiempo de ciclo por etapas (ítem 217): la mediana de cada etapa de los PRs fusionados de las últimas 4 semanas,
-      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación y los abiertos antes de la actividad
-      cargada. Una fuente que no da revisiones lo dice; sin PRs fusionados, nada que mostrar. */
+      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación, los abiertos antes de la actividad
+      cargada que entraron con sus revisiones consultadas (ítem 223) y los que siguen fuera. Una fuente que no da
+      revisiones lo dice; sin PRs fusionados, nada que mostrar. */
   function cycleHtml(c, span) {
     const line = (id, text) => `<p class="hl-line" id="${id}">${U.esc(text)}</p>`;
     const body = !c
@@ -1979,6 +1980,7 @@
         ? `<p class="hl-none" id="hl-cycle-noreviews">${U.esc(t('health.cycleNoReviews'))}</p>`
         : [['open', 'health.cycleOpen'], ['review', 'health.cycleReview'], ['merge', 'health.cycleMerge']].map(([k, key]) => line('hl-cycle-' + k, t(key, { median: c[k].median != null ? span(c[k].median) : '—', count: U.fmtNum(c[k].n) }))).join('') +
           (c.noReview || c.noApproval ? line('hl-cycle-skipped', t('health.cycleSkipped', { none: U.fmtNum(c.noReview), unapproved: U.fmtNum(c.noApproval) })) : '') +
+          (c.fetched ? line('hl-cycle-fetched', t('health.cycleFetched', { count: U.fmtNum(c.fetched) })) : '') +
           (c.early ? line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
     return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
   }
@@ -2330,6 +2332,11 @@
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    }
+    if (asked.syncPrReviews) {
+      // tiempo de ciclo (ítem 223): las revisiones de los fusionados abiertos antes de la actividad cargada, que el feed no trajo
+      const early = GB.health.earlyMerges(feed.items.filter((a) => a.repo === active?.key), Date.now());
+      if (early.length) asked.syncPrReviews(early).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     }
     if (typeof el.health.showModal === 'function') el.health.showModal();
     else el.health.setAttribute('open', '');

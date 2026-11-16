@@ -535,6 +535,7 @@ GB.i18n.define('tr', {
   'health.cycleMerge': 'Onaydan birleştirmeye: medyan {median} · ölçülen PR: {count}',
   'health.cycleSkipped': 'İncelemesiz birleştirilen: {none} · incelenip onaysız birleştirilen: {unapproved}',
   'health.cycleEarly': 'Yüklenen etkinlikten önce açılan, incelemeleri eksik olabileceği için aşamalara katılmayan: {count}',
+  'health.cycleFetched': 'Yüklenen etkinlikten önce açılan, incelemeleri GitHub’dan alınarak ölçülen: {count}',
   'health.cycleNoReviews': 'Bu kaynak pull request incelemelerini vermiyor, bu yüzden döngü süresi aşamalara bölünemiyor. Açılıştan birleştirmeye geçen süre (yukarıda) ölçülmeye devam ediyor.',
   'health.scorecard': 'Güvenlik: OpenSSF Scorecard',
   'health.scorecardScore': 'Puan: 10 üzerinden {score}, {date} tarihinde analiz edildi',

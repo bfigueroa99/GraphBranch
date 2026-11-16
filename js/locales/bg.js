@@ -535,6 +535,7 @@ GB.i18n.define('bg', {
   'health.cycleMerge': 'От одобрението до сливането: медиана {median} · измерени PR: {count}',
   'health.cycleSkipped': 'Слети без преглед: {none} · прегледани и слети без одобрение: {unapproved}',
   'health.cycleEarly': 'Отворени преди заредената активност, извън етапите, защото прегледите им може да липсват: {count}',
+  'health.cycleFetched': 'Отворени преди заредената активност, измерени с прегледите им, взети от GitHub: {count}',
   'health.cycleNoReviews': 'Този източник не дава прегледите на pull request-ите, затова времето на цикъла не може да се раздели на етапи. Времето от отваряне до сливане, по-горе, продължава да се измерва.',
   'health.scorecard': 'Сигурност: OpenSSF Scorecard',
   'health.scorecardScore': 'Оценка: {score} от 10, анализ от {date}',

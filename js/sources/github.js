@@ -101,6 +101,19 @@
       .map((c) => ({ name: c.name, score: c.score, reason: reasonOf(c.reason) }));
     return { state: 'ok', score, date: Date.parse(body.date) || null, checks };
   };
+  /** Las revisiones de un PR como las da `/pulls/:n/reviews` (ítem 223), con su hora y su tipo como los del feed de
+      eventos: aprobada (`review-ok`), con cambios pedidos (`review-changes`) o de comentario, descartada incluida (`review`,
+      como la trae el feed). Una pendiente (sin enviar: solo la ve su autor) o sin una fecha que se entienda no cuenta. */
+  const reviewsOf = (list) => {
+    const out = [];
+    for (const r of list) {
+      const state = String(r?.state || '').toUpperCase();
+      const time = Date.parse(r?.submitted_at);
+      if (state === 'PENDING' || !(time > 0)) continue;
+      out.push({ kind: state === 'APPROVED' ? 'review-ok' : state === 'CHANGES_REQUESTED' ? 'review-changes' : 'review', time });
+    }
+    return out;
+  };
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
@@ -766,6 +779,36 @@
           const { data } = await this.api(`${this.base}/pulls/${n}/commits?per_page=1`);
           const c = Array.isArray(data) ? data[0]?.commit : null;
           known.set(n, Date.parse(c?.author?.date || c?.committer?.date) || null);
+        } catch (err) {
+          if (!SOFT.has(err.kind)) throw err;
+          known.set(n, null);
+        }
+      }
+      return todo.length > 0;
+    }
+
+    /** Las revisiones de los PRs fusionados que el feed no trajo enteros (ítem 223, `data.prReviews`): los de `numbers`,
+        que el panel de salud saca de `GB.health.earlyMerges` (abiertos antes de la actividad cargada). Una consulta por PR
+        (`/pulls/:n/reviews`, la primera página, de 100), solo cuando el panel las pide y una sola vez por PR, hasta 20 por
+        apertura con token y 8 sin él (como el primer commit del tiempo de entrega). Cada PR queda con sus revisiones
+        enviadas, con su hora y su tipo como los del feed, o null si la consulta falló (sigue fuera de las etapas); la
+        cuota o la red se avisan. Solo GitHub (y GitHub Enterprise Server): las fuentes que heredan de esta tienen otra
+        API. Nunca dos tandas a la vez. Devuelve si preguntó. */
+    syncPrReviews(numbers) {
+      if (this.host && this.host !== 'github') return Promise.resolve(false);
+      if (this.prReviewsAsk) return this.prReviewsAsk.then(() => false);
+      const ask = this.askPrReviews(numbers).finally(() => (this.prReviewsAsk = null));
+      this.prReviewsAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askPrReviews(numbers) {
+      const known = (this.data.prReviews ||= new Map());
+      const todo = [...new Set(numbers || [])].filter((n) => Number.isInteger(n) && n > 0 && !known.has(n)).slice(0, this.token ? 20 : 8); // sin token, la cuota es de 60 por hora
+      for (const n of todo) {
+        try {
+          const { data } = await this.api(`${this.base}/pulls/${n}/reviews?per_page=100`);
+          known.set(n, Array.isArray(data) ? reviewsOf(data) : null);
         } catch (err) {
           if (!SOFT.has(err.kind)) throw err;
           known.set(n, null);

@@ -535,6 +535,7 @@ GB.i18n.define('ja', {
   'health.cycleMerge': '承認からマージまで：中央値 {median} · 計測した PR：{count}',
   'health.cycleSkipped': 'レビューなしでマージ：{none} · レビュー済みで承認なしにマージ：{unapproved}',
   'health.cycleEarly': '読み込んだアクティビティより前にオープン（レビューが欠けている可能性があるためステージから除外）：{count}',
+  'health.cycleFetched': '読み込んだアクティビティより前にオープン（GitHub から取得したレビューで計測）：{count}',
   'health.cycleNoReviews': 'このソースはプルリクエストのレビューを提供しないため、サイクルタイムをステージに分けられません。オープンからマージまでの時間（上）は引き続き計測されます。',
   'health.scorecard': 'セキュリティ：OpenSSF Scorecard',
   'health.scorecardScore': 'スコア：{score} / 10（{date} に分析）',

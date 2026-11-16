@@ -1981,7 +1981,7 @@
         : [['open', 'health.cycleOpen'], ['review', 'health.cycleReview'], ['merge', 'health.cycleMerge']].map(([k, key]) => line('hl-cycle-' + k, t(key, { median: c[k].median != null ? span(c[k].median) : '—', count: U.fmtNum(c[k].n) }))).join('') +
           (c.noReview || c.noApproval ? line('hl-cycle-skipped', t('health.cycleSkipped', { none: U.fmtNum(c.noReview), unapproved: U.fmtNum(c.noApproval) })) : '') +
           (c.fetched ? line('hl-cycle-fetched', t('health.cycleFetched', { count: U.fmtNum(c.fetched) })) : '') +
-          (c.early ?line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
+          (c.early ? line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
     return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
   }
 

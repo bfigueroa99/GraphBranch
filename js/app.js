@@ -3489,6 +3489,7 @@
     ago: (ms) => U.timeAgo(ms),
     select: $('#constellation-order'),
     status: $('#constellation-status'),
+    plazo: { field: $('#constellation-due-field'), input: $('#constellation-due'), count: $('#constellation-late') },
     onGo(key) {
       const tab = tabs.find((x) => x.key === key);
       const ghost = !tab && constellationGhosts.get(key);
@@ -3520,6 +3521,8 @@
     constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
     // ?recent=30: solo los repos con algún commit en los últimos 30 días
     constellation.setRecent(GB.constellation.recentParam(new URLSearchParams(location.search)));
+    // ?plazo=2026-01-15: con una tarea de GitHub Classroom seguida, marca las entregas con push después de ese día
+    constellation.setDue(GB.constellation.dueParam(new URLSearchParams(location.search)) || '');
   } catch {
     /* sin query string */
   }
@@ -3533,6 +3536,10 @@
     // los repos sin pestaña de las organizaciones seguidas, de su lista ya pedida: ninguna consulta nueva
     const ghosts = GB.constellation.ghostItems(ownerLists, tabs.filter((x) => x.source).map((x) => x.key), keyOf);
     constellationGhosts = new Map(ghosts.map((g) => [g.key, g]));
+    // las entregas de las tareas seguidas (org:curso/tarea-1-*), con el último push de esa misma lista: el plazo las mide
+    const tasks = Object.fromEntries(Object.entries(ownerLists).filter(([k]) => U.parseOwner('@' + k)?.prefix));
+    const subs = GB.constellation.submissions(tasks, keyOf);
+    const asSub = (it) => (subs.has(it.key) ? { ...it, sub: true, pushed: subs.get(it.key) } : it);
     constellation.render(
       tabs
         .filter((x) => x.source)
@@ -3551,7 +3558,8 @@
           unread: x.unread,
           active: x === active,
         }))
-        .concat(ghosts),
+        .concat(ghosts)
+        .map(asSub),
     );
     if (typeof el.constellation.showModal === 'function') el.constellation.showModal();
     else el.constellation.setAttribute('open', '');

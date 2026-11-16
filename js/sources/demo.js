@@ -280,6 +280,11 @@
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
       ];
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
+      // un arreglo fusionado en main después de v1.4.0: lo que traería la versión siguiente (borrador de notas de la versión)
+      create('fix/cache-headers', 'main', 'api', C);
+      push('fix/cache-headers', C, S.cacheHeaders);
+      this.data.branches.get('fix/cache-headers').prTitle = S.cacheHeadersPr;
+      merge('fix/cache-headers', 'main', 33, M, true, [['review-ok', M, 0.5]]);
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);
       H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C), number: this.issueSeq }, step(5, 20)));

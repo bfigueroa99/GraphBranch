@@ -1945,7 +1945,7 @@
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
               actor: s.by || pr.user,
-              ...(s.merged ? { mergedBy: s.by || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana)
+              ...(s.merged ? { mergedBy: s.by || null, author: pr.user || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana); y quién lo abrió (notas de la versión)
               url: pr.url,
               number: pr.number,
               openedAt: pr.createdAt, // para la salud del repo: cuánto tardó en fusionarse
@@ -2168,6 +2168,7 @@
             return mk('pr-merge', {
               ...fields,
               branch: pr.base?.ref || null, // la rama del PR suele borrarse al fusionar; el merge vive en la base
+              author: pr.user?.login ? { login: pr.user.login, name: pr.user.login, avatar: pr.user.avatar_url || null } : null, // quién lo abrió (notas de la versión): el actor es quien lo fusionó
               openedAt: Date.parse(pr.created_at) || null, // para la salud del repo: cuánto tardó en fusionarse
               title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
             });

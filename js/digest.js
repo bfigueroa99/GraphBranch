@@ -369,5 +369,135 @@
     return canvas;
   }
 
-  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, imageLinesOrg, toCanvas, toCanvasOrg };
+  /* ---------- borrador de notas de la versión: lo fusionado en la rama por defecto desde su último tag ---------- */
+
+  const NOTES_MAX = 200; // PRs que se listan en el borrador (el total se dice igual)
+
+  /** Los commits cargados que alcanza `sha` (él incluido), siguiendo a todos los padres. */
+  function reach(commits, sha) {
+    const set = new Set();
+    const stack = [sha];
+    while (stack.length) {
+      const s = stack.pop();
+      if (set.has(s)) continue;
+      const c = commits.get(s);
+      if (!c) continue;
+      set.add(s);
+      for (const p of c.parents || []) stack.push(p);
+    }
+    return set;
+  }
+
+  const byVersion = (a, b) => String(a).localeCompare(String(b), 'en', { numeric: true });
+  const whoOf = (p) => (p?.login ? { name: String(p.login), at: true } : p?.name ? { name: String(p.name), at: false } : null);
+
+  /** El borrador de notas de la versión, con lo ya cargado y sin consultas: el último tag de la rama por defecto
+      (el del commit más nuevo que alcanza su punta; en un mismo commit, la versión más alta), los PRs fusionados en
+      ella después (de sus commits: «Merge pull request #N» y «Título (#N)»; y de la actividad «PR fusionado» en esa
+      rama, por su commit o, sin él, por la fecha), cada uno una vez, y quienes contribuyeron (los autores de los
+      commits de la versión y de sus PRs). Sin tags, todo lo cargado. null si la rama por defecto no está cargada. */
+  function releaseNotes(data, acts = [], text = (x) => x) {
+    const branch = data.repo?.defaultBranch;
+    const tip = branch && data.branches?.get(branch)?.sha;
+    if (!tip || !data.commits.has(tip)) return null;
+    const all = reach(data.commits, tip);
+
+    let tag = null;
+    for (const [sha, names] of data.tags || []) {
+      if (!all.has(sha) || !names?.length) continue;
+      const time = at(data.commits.get(sha).date);
+      const name = [...names].map(String).sort(byVersion).pop();
+      if (!tag || time > tag.time || (time === tag.time && byVersion(name, tag.name) > 0)) tag = { name, sha, time };
+    }
+    const before = tag ? reach(data.commits, tag.sha) : new Set();
+    const range = [...all].filter((s) => !before.has(s)).map((s) => data.commits.get(s));
+    // los PRs salen de los mensajes del primer padre (los commits que llegaron a la rama): «(#N)» en un commit de dentro
+    // de un PR puede ser un issue
+    const line = [];
+    for (let c = data.commits.get(tip); c && !before.has(c.sha) && line.length <= data.commits.size; c = data.commits.get(c.parents?.[0])) line.push(c);
+    const prNum = (c) => {
+      const head = String(c.message || '').split('\n')[0];
+      const m = /^Merge pull request #(\d+) from /.exec(head) || /\(#(\d+)\)\s*$/.exec(head);
+      return m ? +m[1] : null;
+    };
+    const older = new Set(); // PRs que ya están en el tag: no vuelven aunque la actividad los vea fusionarse después
+    for (const sha of before) {
+      const n = prNum(data.commits.get(sha));
+      if (n != null) older.add(n);
+    }
+
+    const prs = new Map(); // número -> { number, title, who, author, url, time }
+    for (const c of line) {
+      const [head, ...rest] = String(c.message || '').split('\n');
+      let m = /^Merge pull request #(\d+) from (\S+)/.exec(head);
+      if (m) {
+        const tipAuthor = c.parents?.[1] && data.commits.get(c.parents[1])?.author;
+        const body = rest.map((l) => l.trim()).find(Boolean);
+        prs.set(+m[1], { number: +m[1], title: body || m[2], who: whoOf(tipAuthor), url: null, time: at(c.date) });
+        continue;
+      }
+      m = /^(.*\S)\s+\(#(\d+)\)\s*$/.exec(head);
+      if (m && !prs.has(+m[2])) prs.set(+m[2], { number: +m[2], title: m[1], who: whoOf(c.author), url: null, time: at(c.date) });
+    }
+
+    const opener = new Map(); // número -> la actividad «PR abierto» más vieja (quien lo abrió)
+    for (const a of acts) {
+      if (a.kind !== 'pr-open' || a.number == null || !a.actor) continue;
+      const prev = opener.get(a.number);
+      if (!prev || a.time < prev.time) opener.set(a.number, a);
+    }
+    const seen = new Set();
+    for (const a of acts) {
+      if (a.kind !== 'pr-merge' || a.number == null || a.branch !== branch || seen.has(a.id ?? a)) continue;
+      seen.add(a.id ?? a);
+      const known = a.sha && data.commits.has(a.sha);
+      if (known ? !all.has(a.sha) || before.has(a.sha) : older.has(a.number) || (tag && !(at(a.time) > tag.time))) continue; // de antes del tag, o de otra historia
+      const prev = prs.get(a.number);
+      const title = text(a.detail) || prev?.title || text(a.title);
+      const url = a.url && /^https?:\/\//.test(a.url) ? a.url : prev?.url || null;
+      prs.set(a.number, { number: a.number, title, who: prev?.who || null, author: prev?.author || whoOf(a.author), url, time: prev?.time || at(a.time) });
+    }
+    // el autor: el que dice la actividad; si no, quien abrió el PR; si no, el de sus commits (la punta del PR o el aplastado)
+    for (const r of prs.values()) r.who = r.author || whoOf(opener.get(r.number)?.actor) || r.who;
+
+    const people = new Map(); // nombre -> { name, at, commits }
+    const add = (who, n) => {
+      if (!who) return;
+      const p = people.get(who.name) || { name: who.name, at: who.at, commits: 0 };
+      p.commits += n;
+      people.set(who.name, p);
+    };
+    for (const c of range) add(whoOf(c.author), 1);
+    const rows = [...prs.values()].sort((a, b) => b.time - a.time || b.number - a.number);
+    for (const r of rows) add(r.who, 0);
+    return {
+      branch,
+      tag,
+      tagsOut: !tag && [...(data.tags || [])].some(([, names]) => names?.length), // hay tags cargados, pero ninguno en la historia cargada de la rama
+      prs: { total: rows.length, rows: rows.slice(0, NOTES_MAX).map((r) => ({ number: r.number, title: String(r.title || ''), author: r.who?.name || null, at: !!r.who?.at, url: r.url, time: r.time })) },
+      people: { total: people.size, rows: [...people.values()].sort((a, b) => b.commits - a.commits || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) },
+    };
+  }
+
+  /** Markdown del borrador. `t`: { head, since, noTag, tagsOut, prs, people } ya traducidas. */
+  function toMarkdownNotes(n, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
+    const code = (s) => '`' + String(s).replace(/`/g, "'") + '`';
+    // una @ de afuera (un título, un nombre sin cuenta) no avisa a nadie al pegar el borrador en GitHub
+    const quiet = (s) => md(s).replace(/@/g, '@\u200b');
+    const person = (name, isAt) => (isAt ? '@' + md(name) : quiet(name));
+    const fill = (tpl, v) => String(tpl).replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m)); // de una pasada: lo que trae un tag no se vuelve a sustituir
+    const out = [`# ${md(fill(t.head, { repo }))}`, ''];
+    out.push(n.tag ? fill(t.since, { tag: md(n.tag.name), date: fmtDate(n.tag.time), branch: code(n.branch) }) : fill(n.tagsOut && t.tagsOut ? t.tagsOut : t.noTag, { branch: code(n.branch) }));
+    out.push('', `## ${t.prs} (${n.prs.total})`, '');
+    const link = (r, s) => (r.url && /^https?:\/\//.test(r.url) ? `[${s}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : s);
+    if (n.prs.rows.length) for (const r of n.prs.rows) out.push(`- ${link(r, `#${r.number} ${quiet(r.title)}`)}${r.author ? ` (${person(r.author, r.at)})` : ''}`);
+    else out.push(none);
+    if (n.prs.total > n.prs.rows.length) out.push(`- … +${n.prs.total - n.prs.rows.length}`);
+    out.push('', `## ${t.people} (${n.people.total})`, '');
+    if (n.people.rows.length) for (const p of n.people.rows) out.push(`- ${person(p.name, p.at)} (${p.commits})`);
+    else out.push(none);
+    return out.join('\n') + '\n';
+  }
+
+  GB.digest = { compute, toMarkdown, computeOrg, toMarkdownOrg, imageLines, imageLinesOrg, toCanvas, toCanvasOrg, releaseNotes, toMarkdownNotes };
 })(window.GB);

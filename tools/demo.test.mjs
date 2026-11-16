@@ -162,3 +162,18 @@ test('la demo trae un puntaje de OpenSSF Scorecard sin consultar nada: con fecha
   assert.ok(sc.checks.every((c) => /^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(c.name) && typeof c.reason === 'string' && c.reason), 'nombres como los de Scorecard y un motivo cada una');
   assert.ok(sc.checks.some((c) => c.score === -1), 'y una no concluyente, que la salud no cuenta como baja');
 });
+
+test('la demo trae un PR fusionado en main después de v1.4.0: el borrador de notas de la versión tiene qué mostrar sin token', () => {
+  for (const seed of [1, 7, 42]) {
+    const { src } = demo(seed);
+    const ctx = vm.createContext({ window: { GB: {} } });
+    vm.runInContext(code('digest.js'), ctx, { filename: 'digest.js' });
+    const acts = src.history.map((a) => ({ ...a, detail: typeof a.detail === 'string' ? a.detail : '', title: '' }));
+    const n = ctx.window.GB.digest.releaseNotes(src.data, acts);
+    assert.equal(n.tag?.name, 'v1.4.0', `semilla ${seed}`);
+    assert.deepEqual(Array.from(n.prs.rows, (r) => r.number), [33], `semilla ${seed}: solo el arreglo de después del tag, sin #31 ni #34`);
+    assert.equal(n.prs.rows[0].title, 'Send cache headers for static files');
+    assert.ok(n.prs.rows[0].author, 'con su autor');
+    assert.ok(n.people.total >= 1);
+  }
+});

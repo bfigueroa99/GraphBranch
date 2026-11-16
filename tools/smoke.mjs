@@ -917,6 +917,15 @@ if (seccion('Escritorio (1280×800)'))
     const pngPath = await png.path();
     const head = pngPath ? readFileSync(pngPath).subarray(0, 8).toString('hex') : '';
     if (head !== '89504e470d0a1a0a') throw new Error('la imagen del resumen no es un PNG: ' + head);
+    // el borrador de notas de la versión (ítem 220): la demo fusiona en main el #33 después del tag v1.4.0; los #31 y #34 son de antes
+    const notes = await page.evaluate(() => ({ md: document.querySelector('#notes-md')?.textContent || '', hidden: document.querySelector('#hl-notes')?.hidden, h3: document.querySelector('#hl-notes h3')?.textContent || '' }));
+    if (notes.hidden !== false || !notes.h3 || /notes\./.test(notes.h3)) throw new Error('notas de la versión: la sección no sale en la demo: ' + JSON.stringify(notes).slice(0, 200));
+    if (!/^# /.test(notes.md) || !/ v1\.4\.0 /.test(notes.md) || !/\n- #33 .+ \(@\w+\)\n/.test(notes.md) || /#3[14]\b/.test(notes.md) || !/\n- @\w+ \(\d+\)\n/.test(notes.md)) throw new Error('notas de la versión de la demo: ' + notes.md.slice(0, 400));
+    if (/undefined|NaN|notes\.|\{(tag|date|branch|repo)\}/.test(notes.md)) throw new Error('texto sin resolver en las notas de la versión: ' + notes.md.slice(0, 300));
+    const [nd] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#notes-save')]);
+    if (!/^graphbranch-.*-notas-.*\.md$/.test(nd.suggestedFilename())) throw new Error('nombre de las notas de la versión: ' + nd.suggestedFilename());
+    const ndPath = await nd.path();
+    if (ndPath && readFileSync(ndPath, 'utf8') !== notes.md) throw new Error('el .md de las notas de la versión no es el borrador que se ve');
     const states = await page.evaluate(() => ({
       groups: [...document.querySelectorAll('#hl-prstates .hl-sub')].map((d) => d.querySelector('h4').textContent.trim()),
       inGroups: document.querySelectorAll('#hl-prstates .hl-sub li').length,

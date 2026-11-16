@@ -332,6 +332,7 @@ test('modo lista: los PRs que solo salen de la página de abiertos no se consult
   const prs = Array.from(updates.at(-1).activities, (a) => `${a.kind} #${a.number}`).filter((k) => /^pr-/.test(k));
   assert.deepEqual(prs.sort(), ['pr-close #59', 'pr-merge #60']);
   assert.equal(updates.at(-1).activities.find((a) => a.kind === 'pr-merge').actor.login, 'beto');
+  assert.equal(updates.at(-1).activities.find((a) => a.kind === 'pr-merge').author.login, 'ana', 'quien abrió el PR, para las notas de la versión');
 });
 
 /* Un error pasajero del servidor (5xx) no apaga funciones para toda la sesión; uno que dice que la
@@ -699,6 +700,19 @@ test('los comentarios de un PR llevan su número para las interacciones; pedir r
   const d = src.mapEvent(ev('PullRequestEvent', { action: 'review_requested', number: 9, pull_request: { number: 9 } }, '4'));
   assert.equal(d.kind, 'review');
   assert.equal(d.request, true);
+});
+
+test('un PR fusionado por el feed lleva quién lo abrió (notas de la versión), no solo quién lo fusionó', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src } = connect(gh);
+  const ev = (payload, id) => ({ id, type: 'PullRequestEvent', actor: { login: 'beto', avatar_url: '' }, created_at: '2026-10-28T12:00:00Z', payload });
+  const m = src.mapEvent(ev({ action: 'closed', number: 7, pull_request: { number: 7, merged: true, title: 'X', base: { ref: 'main' }, user: { login: 'ana', avatar_url: 'https://avatars.githubusercontent.com/u/1' } } }, '1'));
+  assert.equal(m.kind, 'pr-merge');
+  assert.equal(m.actor.login, 'beto');
+  assert.equal(m.author.login, 'ana');
+  const sinUsuario = src.mapEvent(ev({ action: 'closed', number: 8, pull_request: { number: 8, merged: true, title: 'Y', base: { ref: 'main' } } }, '2'));
+  assert.equal(sinUsuario.author, null, 'sin el usuario del PR no se inventa: quien lo fusionó no es el autor');
 });
 
 test('CI sin token: los check-runs de la rama por defecto, una consulta por commit', async () => {

@@ -2052,6 +2052,7 @@
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-notes"><h3>${U.esc(t('notes.title'))}</h3><p class="hl-none">${U.esc(t('notes.help'))}</p><pre class="hl-digest" id="notes-md" tabindex="0" aria-label="${U.esc(t('notes.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="notes-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="notes-save">${U.esc(t('digest.save'))}</button></div><div id="notes-out" role="status" aria-live="polite"></div></section>` +
       orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     $('#hl-forks-toggle').addEventListener('change', (e) => {
@@ -2071,6 +2072,7 @@
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     setupCompare(data);
     setupDigest(data, acts);
+    setupNotes(data, acts);
     setupOrgDigest();
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
@@ -2238,7 +2240,7 @@
 
   /** Copiar y guardar un resumen como Markdown o como imagen: `id` es el prefijo de sus elementos y
       `image()` arma el canvas de la imagen. */
-  function wireDigest(id, text, name, image) {
+  function wireDigest(id, text, name, image, kind = 'semana') {
     const out = $(`#${id}-out`);
     $(`#${id}-md`).textContent = text;
     $(`#${id}-copy`).addEventListener('click', async () => {
@@ -2253,7 +2255,7 @@
         sel.addRange(range); // sin permiso del portapapeles: queda seleccionado para copiar a mano
       }
     });
-    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind: 'semana' })));
+    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind })));
     $(`#${id}-png`)?.addEventListener('click', () => {
       image().toBlob((b) => {
         if (!b) return;
@@ -2276,6 +2278,21 @@
     const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
     wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName, () =>
       GB.digest.toCanvas(document, d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none'), DIGEST_COLORS, rtl));
+  }
+
+  /** El borrador de notas de la versión (js/digest.js): los PRs fusionados en la rama por defecto desde su último
+      tag y quienes contribuyeron, con lo ya cargado; se copia o se baja como .md, sin publicar nada. Sin la rama por
+      defecto cargada, la sección no sale. */
+  function setupNotes(data, acts) {
+    const n = GB.digest.releaseNotes(data, acts, GB.i18n.text);
+    if (!n) {
+      $('#hl-notes').hidden = true;
+      return;
+    }
+    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
+    const label = (k) => t('notes.' + k);
+    const labels = { head: label('head'), since: label('since'), noTag: label('noTag'), tagsOut: label('tagsOut'), prs: label('prs'), people: label('people') };
+    wireDigest('notes', GB.digest.toMarkdownNotes(n, repoName, labels, GB.i18n.fmtDate, t('health.none')), repoName, null, 'notas');
   }
 
   /** El de toda la organización: los repos abiertos de la misma organización seguida, sin consultas nuevas. */

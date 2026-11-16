@@ -43,6 +43,7 @@ GB.i18n.define('fil', {
   'status.errorRate': 'Naubos ang quota',
   'status.errorAuth': 'Di-wastong token',
   'status.errorEmpty': 'Walang laman na repo',
+  'status.errorService': 'Error sa serbisyo',
   'status.retryIn': 'susubukan muli sa loob ng {time}',
   'status.stopped': 'huminto',
   'status.resumeHint': 'ituloy para magpatuloy',

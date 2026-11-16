@@ -43,6 +43,7 @@ GB.i18n.define('hi', {
   'status.errorRate': 'कोटा समाप्त',
   'status.errorAuth': 'टोकन अमान्य',
   'status.errorEmpty': 'खाली रिपो',
+  'status.errorService': 'सेवा त्रुटि',
   'status.retryIn': 'फिर कोशिश: {time} बाद',
   'status.stopped': 'बंद',
   'status.resumeHint': 'जारी रखने के लिए फिर शुरू करें',

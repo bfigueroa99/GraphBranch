@@ -43,6 +43,7 @@ GB.i18n.define('nb', {
   'status.errorRate': 'Kvoten er brukt opp',
   'status.errorAuth': 'Ugyldig token',
   'status.errorEmpty': 'Tomt repo',
+  'status.errorService': 'Tjenestefeil',
   'status.retryIn': 'prøver igjen om {time}',
   'status.stopped': 'stoppet',
   'status.resumeHint': 'fortsett for å gå videre',

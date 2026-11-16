@@ -43,6 +43,7 @@ GB.i18n.define('id', {
   'status.errorRate': 'Kuota habis',
   'status.errorAuth': 'Token tidak valid',
   'status.errorEmpty': 'Repo kosong',
+  'status.errorService': 'Kesalahan layanan',
   'status.retryIn': 'mencoba lagi dalam {time}',
   'status.stopped': 'dihentikan',
   'status.resumeHint': 'lanjutkan untuk meneruskan',

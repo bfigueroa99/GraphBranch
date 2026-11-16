@@ -43,6 +43,7 @@ GB.i18n.define('fa', {
   'status.errorRate': 'سهمیه تمام شد',
   'status.errorAuth': 'توکن نامعتبر',
   'status.errorEmpty': 'مخزن خالی',
+  'status.errorService': 'خطای سرویس',
   'status.retryIn': 'تلاش دوباره پس از {time}',
   'status.stopped': 'متوقف شد',
   'status.resumeHint': 'برای ادامه، دکمه «ادامه» را بزنید',

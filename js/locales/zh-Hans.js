@@ -43,6 +43,7 @@ GB.i18n.define('zh-Hans', {
   'status.errorRate': '配额已用尽',
   'status.errorAuth': '令牌无效',
   'status.errorEmpty': '空仓库',
+  'status.errorService': '服务出错',
   'status.retryIn': '{time}后重试',
   'status.stopped': '已停止',
   'status.resumeHint': '点击“继续”恢复更新',

@@ -43,6 +43,7 @@ GB.i18n.define('ro', {
   'status.errorRate': 'Cotă epuizată',
   'status.errorAuth': 'Token invalid',
   'status.errorEmpty': 'Repo gol',
+  'status.errorService': 'Eroare a serviciului',
   'status.retryIn': 'reîncercare în {time}',
   'status.stopped': 'oprit',
   'status.resumeHint': 'reluați pentru a continua',

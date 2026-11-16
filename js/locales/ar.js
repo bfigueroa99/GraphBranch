@@ -43,6 +43,7 @@ GB.i18n.define('ar', {
   'status.errorRate': 'انتهت الحصة',
   'status.errorAuth': 'الرمز غير صالح',
   'status.errorEmpty': 'مستودع فارغ',
+  'status.errorService': 'خطأ في الخدمة',
   'status.retryIn': 'إعادة المحاولة بعد {time}',
   'status.stopped': 'متوقف',
   'status.resumeHint': 'استأنف للمتابعة',

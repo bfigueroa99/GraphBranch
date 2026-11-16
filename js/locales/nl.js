@@ -43,6 +43,7 @@ GB.i18n.define('nl', {
   'status.errorRate': 'Limiet bereikt',
   'status.errorAuth': 'Ongeldig token',
   'status.errorEmpty': 'Lege repo',
+  'status.errorService': 'Servicefout',
   'status.retryIn': 'opnieuw proberen over {time}',
   'status.stopped': 'gestopt',
   'status.resumeHint': 'hervat om door te gaan',

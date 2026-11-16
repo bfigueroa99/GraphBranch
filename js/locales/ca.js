@@ -43,6 +43,7 @@ GB.i18n.define('ca', {
   'status.errorRate': 'Quota esgotada',
   'status.errorAuth': 'Token no vàlid',
   'status.errorEmpty': 'Repo buit',
+  'status.errorService': 'Error del servei',
   'status.retryIn': 'reintent en {time}',
   'status.stopped': 'aturat',
   'status.resumeHint': 'reprèn per continuar',

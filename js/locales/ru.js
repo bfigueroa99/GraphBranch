@@ -43,6 +43,7 @@ GB.i18n.define('ru', {
   'status.errorRate': 'Лимит исчерпан',
   'status.errorAuth': 'Недействительный токен',
   'status.errorEmpty': 'Пустой репозиторий',
+  'status.errorService': 'Ошибка сервиса',
   'status.retryIn': 'повтор через {time}',
   'status.stopped': 'остановлено',
   'status.resumeHint': 'возобновите, чтобы продолжить',

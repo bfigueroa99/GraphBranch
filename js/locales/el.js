@@ -43,6 +43,7 @@ GB.i18n.define('el', {
   'status.errorRate': 'Εξαντλήθηκε το όριο',
   'status.errorAuth': 'Μη έγκυρο token',
   'status.errorEmpty': 'Κενό αποθετήριο',
+  'status.errorService': 'Σφάλμα υπηρεσίας',
   'status.retryIn': 'νέα προσπάθεια σε {time}',
   'status.stopped': 'σταματημένο',
   'status.resumeHint': 'πατήστε Συνέχιση για να προχωρήσετε',

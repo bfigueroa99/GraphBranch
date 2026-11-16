@@ -43,6 +43,7 @@ GB.i18n.define('th', {
   'status.errorRate': 'โควตาหมด',
   'status.errorAuth': 'โทเคนไม่ถูกต้อง',
   'status.errorEmpty': 'รีโพว่างเปล่า',
+  'status.errorService': 'บริการขัดข้อง',
   'status.retryIn': 'ลองใหม่ใน {time}',
   'status.stopped': 'หยุดแล้ว',
   'status.resumeHint': 'กดดำเนินการต่อเพื่อใช้งานต่อ',

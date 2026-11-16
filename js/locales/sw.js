@@ -43,6 +43,7 @@ GB.i18n.define('sw', {
   'status.errorRate': 'Kiwango kimeisha',
   'status.errorAuth': 'Tokeni si halali',
   'status.errorEmpty': 'Repo tupu',
+  'status.errorService': 'Hitilafu ya huduma',
   'status.retryIn': 'itajaribu tena baada ya {time}',
   'status.stopped': 'imesimama',
   'status.resumeHint': 'bofya Endelea ili kuendelea',

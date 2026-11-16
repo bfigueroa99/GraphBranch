@@ -43,6 +43,7 @@ GB.i18n.define('de', {
   'status.errorRate': 'Kontingent erschöpft',
   'status.errorAuth': 'Token ungültig',
   'status.errorEmpty': 'Leeres Repo',
+  'status.errorService': 'Dienstfehler',
   'status.retryIn': 'neuer Versuch in {time}',
   'status.stopped': 'angehalten',
   'status.resumeHint': 'zum Fortfahren fortsetzen',

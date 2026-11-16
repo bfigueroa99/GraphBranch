@@ -43,6 +43,7 @@ GB.i18n.define('it', {
   'status.errorRate': 'Quota esaurita',
   'status.errorAuth': 'Token non valido',
   'status.errorEmpty': 'Repo vuoto',
+  'status.errorService': 'Errore del servizio',
   'status.retryIn': 'nuovo tentativo tra {time}',
   'status.stopped': 'fermo',
   'status.resumeHint': 'riprendi per continuare',

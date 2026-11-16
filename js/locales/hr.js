@@ -43,6 +43,7 @@ GB.i18n.define('hr', {
   'status.errorRate': 'Kvota iskorištena',
   'status.errorAuth': 'Nevažeći token',
   'status.errorEmpty': 'Prazan repozitorij',
+  'status.errorService': 'Pogreška usluge',
   'status.retryIn': 'ponovni pokušaj za {time}',
   'status.stopped': 'zaustavljeno',
   'status.resumeHint': 'pokrenite ponovno za nastavak',

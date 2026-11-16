@@ -43,6 +43,7 @@ GB.i18n.define('fr', {
   'status.errorRate': 'Quota épuisé',
   'status.errorAuth': 'Jeton invalide',
   'status.errorEmpty': 'Dépôt vide',
+  'status.errorService': 'Erreur du service',
   'status.retryIn': 'nouvel essai dans {time}',
   'status.stopped': 'arrêté',
   'status.resumeHint': 'reprenez pour continuer',

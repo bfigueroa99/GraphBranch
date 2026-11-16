@@ -549,3 +549,120 @@ test('quién cerró más issues: cuenta los issues cerrados de la semana por qui
   assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién cerró más/);
   assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién cerró más/.test(l.text)));
 });
+
+/* ---------- borrador de notas de la versión (releaseNotes, toMarkdownNotes) ---------- */
+
+const { releaseNotes, toMarkdownNotes } = ctx.window.GB.digest;
+const NOTES_T = { head: 'Notas de {repo}', since: 'Desde {tag} ({date}) en {branch}', noTag: 'Sin tags en {branch}', prs: 'PRs fusionados', people: 'Quienes contribuyeron' };
+
+/** Un repo con un tag v1.0 en la rama por defecto y, después, dos PRs (uno con commit de merge y uno aplastado),
+    uno fusionado en otra rama, otro de antes del tag y un tag más nuevo que no está en la rama por defecto. */
+function tagged() {
+  const cm = (sha, d, parents, login, message) => [sha, { sha, date: ago(d), parents, message, author: { login, name: login } }];
+  return {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([
+      cm('a', 30, [], 'ana', 'init'),
+      cm('h1', 25, ['a'], 'beto', 'arregla algo viejo'),
+      cm('m1', 24, ['a', 'h1'], 'ana', 'Merge pull request #3 from acme/viejo'), // antes del tag: no entra
+      cm('t', 20, ['m1'], 'ana', 'versión 1.0'), // v1.0
+      cm('f1', 10, ['t'], 'carla', 'feat: login'),
+      cm('f2', 9, ['f1'], 'dani', 'feat: login, pruebas'),
+      cm('m2', 8, ['t', 'f2'], 'ana', 'Merge pull request #12 from acme/login\n\nInicio de sesión con GitHub'),
+      cm('s', 5, ['m2'], 'eva', 'Arregla el tema oscuro (#15)'),
+      cm('d1', 4, ['t'], 'fede', 'Merge pull request #20 from acme/otra'), // en develop, no en main
+      cm('x', 3, ['d1'], 'fede', 'algo de develop'),
+    ]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 's' }],
+      ['develop', { name: 'develop', sha: 'x' }],
+    ]),
+    tags: new Map([
+      ['t', ['v1.0']],
+      ['x', ['v2.0-beta']], // más nuevo, pero fuera de la rama por defecto
+    ]),
+  };
+}
+
+test('notas de la versión: los PRs fusionados en la rama por defecto desde su último tag, cada uno una vez y con su autor', () => {
+  const acts = [
+    // el mismo #12 llega también por la actividad, con su URL: no se repite y suma la URL
+    { id: 'p12', kind: 'pr-merge', time: ago(8), number: 12, detail: 'Inicio de sesión con GitHub', url: 'https://github.com/acme/app/pull/12', branch: 'main', sha: 'm2', actor: { login: 'ana' } },
+    // #3 se fusionó antes del tag: su commit está detrás de v1.0
+    { id: 'p3', kind: 'pr-merge', time: ago(24), number: 3, detail: 'viejo', branch: 'main', sha: 'm1', actor: { login: 'ana' } },
+    // #20 se fusionó en develop: no es de esta versión
+    { id: 'p20', kind: 'pr-merge', time: ago(4), number: 20, detail: 'otra', branch: 'develop', actor: { login: 'fede' } },
+    // #18 se fusionó en main después del tag y su commit no está cargado: entra por la fecha, con su autor
+    { id: 'p18', kind: 'pr-merge', time: ago(2), number: 18, detail: 'Traducciones', branch: 'main', actor: { login: 'ana' }, author: { login: 'gabi', name: 'gabi' } },
+    // #9: fusionado en main antes de la fecha del tag y sin commit cargado: no entra
+    { id: 'p9', kind: 'pr-merge', time: ago(21), number: 9, detail: 'antes', branch: 'main', actor: { login: 'ana' } },
+    { id: 'o18', kind: 'pr-open', time: ago(6), number: 18, actor: { login: 'otra' } },
+  ];
+  const n = releaseNotes(tagged(), acts);
+  assert.equal(n.branch, 'main');
+  assert.deepEqual({ ...n.tag }, { name: 'v1.0', sha: 't', time: ago(20) });
+  assert.deepEqual([...n.prs.rows].map((r) => r.number), [18, 15, 12], 'del más nuevo al más viejo, sin #3, #9 ni #20');
+  assert.equal(n.prs.total, 3);
+  const by = Object.fromEntries(n.prs.rows.map((r) => [r.number, r]));
+  assert.equal(by[12].title, 'Inicio de sesión con GitHub');
+  assert.equal(by[12].author, 'dani', 'el autor de un merge es quien firmó la punta del PR, no quien lo fusionó');
+  assert.equal(by[12].url, 'https://github.com/acme/app/pull/12');
+  assert.equal(by[15].title, 'Arregla el tema oscuro');
+  assert.equal(by[15].author, 'eva');
+  assert.equal(by[18].author, 'gabi', 'el autor que trae la actividad manda sobre quien lo abrió');
+  // quienes contribuyeron: los autores de los commits de la versión y de sus PRs, sin los de antes del tag ni los de develop
+  assert.deepEqual([...n.people.rows].map((r) => r.name), ['ana', 'carla', 'dani', 'eva', 'gabi']);
+  assert.equal(n.people.rows.find((r) => r.name === 'gabi').commits, 0);
+});
+
+test('notas de la versión: sin autor en la actividad sirve quien abrió el PR; sin tags, todo lo cargado; sin rama por defecto, nada', () => {
+  const data = tagged();
+  const acts = [
+    { id: 'p18', kind: 'pr-merge', time: ago(2), number: 18, detail: 'Traducciones', branch: 'main', actor: { login: 'ana' } },
+    { id: 'o18b', kind: 'pr-open', time: ago(3), number: 18, actor: { login: 'reabre' } },
+    { id: 'o18', kind: 'pr-open', time: ago(6), number: 18, actor: { login: 'gabi' } },
+  ];
+  assert.equal(releaseNotes(data, acts).prs.rows[0].author, 'gabi', 'quien lo abrió primero');
+
+  data.tags = new Map();
+  const all = releaseNotes(data, []);
+  assert.equal(all.tag, null);
+  assert.deepEqual([...all.prs.rows].map((r) => r.number), [15, 12, 3]);
+
+  // dos tags en la rama: manda el del commit más nuevo; en el mismo commit, la versión más alta
+  data.tags = new Map([['t', ['v1.0']], ['m1', ['v0.9']], ['m2', ['v1.1', 'v1.10', 'v1.9']]]);
+  const last = releaseNotes(data, []);
+  assert.equal(last.tag.name, 'v1.10');
+  assert.deepEqual([...last.prs.rows].map((r) => r.number), [15]);
+
+  assert.equal(releaseNotes({ ...tagged(), repo: { defaultBranch: 'nada' } }, []), null);
+  assert.equal(releaseNotes({ ...tagged(), repo: {} }, []), null);
+});
+
+test('notas de la versión en Markdown: encabezado, desde qué tag, cada PR con número, título, autor y enlace, y quienes contribuyeron', () => {
+  const acts = [{ id: 'p12', kind: 'pr-merge', time: ago(8), number: 12, detail: 'Inicio de *sesión* [GitHub]', url: 'https://github.com/acme/app/pull/12', branch: 'main', sha: 'm2' }];
+  const md = toMarkdownNotes(releaseNotes(tagged(), acts), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  const lines = md.split('\n');
+  assert.equal(lines[0], '# Notas de acme/app');
+  assert.ok(md.includes('Desde v1.0 (2026-09-24) en `main`'), md);
+  assert.ok(md.includes('## PRs fusionados (2)'), md);
+  assert.ok(md.includes('- [#12 Inicio de \\*sesión\\* \\[GitHub\\]](https://github.com/acme/app/pull/12) (@dani)'), md);
+  assert.ok(md.includes('- #15 Arregla el tema oscuro (@eva)'), md);
+  assert.ok(md.indexOf('#15') < md.indexOf('#12'));
+  assert.ok(md.includes('## Quienes contribuyeron (4)'), md);
+  assert.ok(md.includes('- @ana (1)') && md.includes('- @carla (1)'), md);
+
+  const empty = tagged();
+  empty.branches.get('main').sha = 't';
+  const none = toMarkdownNotes(releaseNotes(empty, []), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  assert.ok(none.includes('## PRs fusionados (0)\n\n—'), none);
+  const noTag = toMarkdownNotes(releaseNotes({ ...tagged(), tags: undefined }, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(noTag.includes('Sin tags en `main`'), noTag);
+  // un nombre sin cuenta va sin @, y un nombre de rama con ` no rompe el código
+  const odd = tagged();
+  odd.repo.defaultBranch = 'ma`in';
+  odd.branches.set('ma`in', odd.branches.get('main'));
+  odd.commits.get('s').author = { name: 'Eva Pérez', login: null };
+  const oddMd = toMarkdownNotes(releaseNotes(odd, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(oddMd.includes("`ma'in`") && oddMd.includes('(Eva Pérez)') && oddMd.includes('- Eva Pérez (1)'), oddMd);
+});

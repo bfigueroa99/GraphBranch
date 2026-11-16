@@ -767,6 +767,8 @@ GB.i18n.define('bg', {
   'diff.blameOf': 'Последни промени в {path}',
   'diff.blameNone': 'Никой по-ранен къмит не е променял този файл.',
   'diff.blameLines': 'Редове {from}–{to}',
+  'diff.owners': 'Собственици: {owners}',
+  'diff.ownersFrom': 'Според {file} в клона по подразбиране',
   'diff.tooLong': 'Показани са само първите {n} реда.',
   'diff.lines': '{add} добавени, {del} премахнати',
   'diff.mode': 'Как се показват промените',

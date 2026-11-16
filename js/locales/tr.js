@@ -767,6 +767,8 @@ GB.i18n.define('tr', {
   'diff.blameOf': '{path} dosyasının son değişiklikleri',
   'diff.blameNone': 'Daha önceki hiçbir commit bu dosyaya dokunmadı.',
   'diff.blameLines': 'Satır {from}–{to}',
+  'diff.owners': 'Sahipler: {owners}',
+  'diff.ownersFrom': 'Varsayılan daldaki {file} dosyasına göre',
   'diff.tooLong': 'Yalnızca ilk {n} satır gösteriliyor.',
   'diff.lines': '{add} eklendi, {del} kaldırıldı',
   'diff.mode': 'Değişikliklerin gösterimi',

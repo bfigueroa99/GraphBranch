@@ -767,6 +767,8 @@ GB.i18n.define('ms', {
   'diff.blameOf': 'Perubahan terkini pada {path}',
   'diff.blameNone': 'Tiada commit terdahulu yang mengubah fail ini.',
   'diff.blameLines': 'Baris {from}–{to}',
+  'diff.owners': 'Pemilik: {owners}',
+  'diff.ownersFrom': 'Menurut {file} pada cabang lalai',
   'diff.tooLong': 'Hanya {n} baris pertama dipaparkan.',
   'diff.lines': '{add} ditambah, {del} dibuang',
   'diff.mode': 'Cara perubahan dipaparkan',

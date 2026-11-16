@@ -824,6 +824,8 @@ GB.i18n.define('he', {
   'diff.blameOf': 'השינויים האחרונים ב-{path}',
   'diff.blameNone': 'אף קומיט קודם לא שינה את הקובץ הזה.',
   'diff.blameLines': 'שורות {from}–{to}',
+  'diff.owners': 'בעלים: {owners}',
+  'diff.ownersFrom': 'לפי {file} בענף ברירת המחדל',
   'diff.tooLong': 'מוצגות רק {n} השורות הראשונות.',
   'diff.lines': '{add} נוספו, {del} הוסרו',
   'diff.mode': 'איך מוצגים השינויים',

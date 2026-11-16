@@ -767,6 +767,8 @@ GB.i18n.define('zh-Hant', {
   'diff.blameOf': '{path} 的最近變更',
   'diff.blameNone': '此前沒有提交改過這個檔案。',
   'diff.blameLines': '第 {from}–{to} 行',
+  'diff.owners': '負責人：{owners}',
+  'diff.ownersFrom': '依據預設分支上的 {file}',
   'diff.tooLong': '僅顯示前 {n} 行。',
   'diff.lines': '新增 {add} 行，刪除 {del} 行',
   'diff.mode': '變更的顯示方式',

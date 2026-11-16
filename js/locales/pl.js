@@ -778,6 +778,8 @@ GB.i18n.define('pl', {
   'diff.blameOf': 'Ostatnie zmiany w {path}',
   'diff.blameNone': 'Żaden wcześniejszy commit nie zmieniał tego pliku.',
   'diff.blameLines': 'Wiersze {from}–{to}',
+  'diff.owners': 'Właściciele: {owners}',
+  'diff.ownersFrom': 'Według {file} w gałęzi domyślnej',
   'diff.tooLong': 'Pokazano tylko pierwsze {n} wierszy.',
   'diff.lines': 'dodane: {add}, usunięte: {del}',
   'diff.mode': 'Sposób wyświetlania zmian',

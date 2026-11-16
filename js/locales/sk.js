@@ -778,6 +778,8 @@ GB.i18n.define('sk', {
   'diff.blameOf': 'Posledné zmeny súboru {path}',
   'diff.blameNone': 'Tento súbor predtým žiadny commit nemenil.',
   'diff.blameLines': 'Riadky {from}–{to}',
+  'diff.owners': 'Vlastníci: {owners}',
+  'diff.ownersFrom': 'Podľa {file} v predvolenej vetve',
   'diff.tooLong': 'Zobrazuje sa len prvých {n} riadkov.',
   'diff.lines': 'pridané: {add}, odstránené: {del}',
   'diff.mode': 'Spôsob zobrazenia zmien',

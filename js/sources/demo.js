@@ -175,6 +175,25 @@
       return [...log].reverse().map((e, i) => ({ ...e, from: i * size + 1, to: Math.min(total, (i + 1) * size) }));
     }
 
+    /** El CODEOWNERS de la demo (en `.github/`, como lo busca GitHub): todo archivo que inventan sus cambios tiene dueño. */
+    codeOwners() {
+      const text = [
+        '# Dueños del código de la demo: el último patrón que coincide manda',
+        '*                     @vrojas',
+        '/src/                 @msoto @demo/frontend',
+        '/src/api/             @cfuentes @demo/backend',
+        '/src/auth/            @dmunoz @demo/seguridad',
+        '*.css                 @demo/diseno',
+        '/tests/               @jperez',
+        '/docs/                @taraya',
+        '/README.md            @taraya @vrojas',
+        '/.github/             @demo/plataforma',
+        'package*.json         @demo/plataforma',
+        '/vite.config.ts       @demo/plataforma',
+      ].join('\n');
+      return new Promise((resolve) => setTimeout(() => resolve({ path: '.github/CODEOWNERS', text }), 120));
+    }
+
     createBranch(name, from, scope, time) {
       const base = this.data.branches.get(from);
       this.data.branches.set(name, {

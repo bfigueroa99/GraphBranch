@@ -767,6 +767,8 @@ GB.i18n.define('bn', {
   'diff.blameOf': '{path}-এর সাম্প্রতিক পরিবর্তন',
   'diff.blameNone': 'এর আগে কোনো কমিট এই ফাইল বদলায়নি।',
   'diff.blameLines': 'লাইন {from}–{to}',
+  'diff.owners': 'মালিক: {owners}',
+  'diff.ownersFrom': 'ডিফল্ট ব্রাঞ্চের {file} অনুযায়ী',
   'diff.tooLong': 'শুধু প্রথম {n} লাইন দেখানো হচ্ছে।',
   'diff.lines': '{add} যোগ, {del} বাদ',
   'diff.mode': 'পরিবর্তনগুলো কীভাবে দেখানো হবে',

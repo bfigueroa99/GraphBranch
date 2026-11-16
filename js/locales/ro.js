@@ -775,6 +775,8 @@ GB.i18n.define('ro', {
   'diff.blameOf': 'Ultimele modificări ale {path}',
   'diff.blameNone': 'Niciun commit anterior nu a modificat acest fișier.',
   'diff.blameLines': 'Liniile {from}–{to}',
+  'diff.owners': 'Proprietari: {owners}',
+  'diff.ownersFrom': 'Conform {file} din ramura implicită',
   'diff.tooLong': 'Se afișează doar primele {n} rânduri.',
   'diff.lines': '{add} adăugate, {del} eliminate',
   'diff.mode': 'Cum sunt afișate modificările',

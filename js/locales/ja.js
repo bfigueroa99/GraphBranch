@@ -767,6 +767,8 @@ GB.i18n.define('ja', {
   'diff.blameOf': '{path} の最近の変更',
   'diff.blameNone': 'これより前にこのファイルを変更したコミットはありません。',
   'diff.blameLines': '{from}–{to} 行目',
+  'diff.owners': 'オーナー: {owners}',
+  'diff.ownersFrom': 'デフォルトブランチの {file} による',
   'diff.tooLong': '最初の {n} 行のみ表示しています。',
   'diff.lines': '追加 {add}、削除 {del}',
   'diff.mode': '変更の表示方法',

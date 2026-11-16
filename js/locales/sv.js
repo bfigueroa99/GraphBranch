@@ -767,6 +767,8 @@ GB.i18n.define('sv', {
   'diff.blameOf': 'Senaste ändringarna i {path}',
   'diff.blameNone': 'Ingen tidigare commit har ändrat den här filen.',
   'diff.blameLines': 'Rad {from}–{to}',
+  'diff.owners': 'Ägare: {owners}',
+  'diff.ownersFrom': 'Enligt {file} på standardgrenen',
   'diff.tooLong': 'Bara de första {n} raderna visas.',
   'diff.lines': '{add} tillagda, {del} borttagna',
   'diff.mode': 'Hur ändringarna visas',

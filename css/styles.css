@@ -5042,6 +5042,18 @@ html.embed-hide-clock .g3-day {
   direction: ltr;
   text-align: left;
 }
+.df-fhead:has(.df-owners) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* los dueños del archivo (CODEOWNERS), en su propia línea bajo la ruta */
+.df-owners {
+  flex: 1 0 100%;
+  padding-inline-start: 14px;
+  color: var(--ink-3);
+  font: 11.5px var(--font-ui);
+  overflow-wrap: anywhere;
+}
 .df-from {
   color: var(--ink-3);
 }

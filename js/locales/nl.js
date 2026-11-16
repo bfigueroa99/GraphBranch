@@ -768,6 +768,8 @@ GB.i18n.define('nl', {
   'diff.blameOf': 'Laatste wijzigingen aan {path}',
   'diff.blameNone': 'Geen eerdere commit heeft dit bestand aangeraakt.',
   'diff.blameLines': 'Regels {from}–{to}',
+  'diff.owners': 'Eigenaren: {owners}',
+  'diff.ownersFrom': 'Volgens {file} op de standaardbranch',
   'diff.tooLong': 'Alleen de eerste {n} regels worden getoond.',
   'diff.lines': '{add} toegevoegd, {del} verwijderd',
   'diff.mode': 'Hoe de wijzigingen worden getoond',

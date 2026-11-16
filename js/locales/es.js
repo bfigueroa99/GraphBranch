@@ -790,6 +790,7 @@ GB.i18n.define('es', {
   'notes.head': 'Notas de la versión de {repo} (borrador)',
   'notes.since': 'Desde {tag} ({date}) en {branch}',
   'notes.noTag': 'Sin tags en {branch}: todo lo cargado',
+  'notes.tagsOut': 'Ningún tag cargado está en la historia cargada de {branch}: todo lo cargado',
   'notes.prs': 'Pull requests fusionados',
   'notes.people': 'Quienes contribuyeron',
   'digest.copied': 'Copiado.',

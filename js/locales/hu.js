@@ -790,6 +790,7 @@ GB.i18n.define('hu', {
   'notes.head': '{repo} kiadási megjegyzései (vázlat)',
   'notes.since': '{tag} ({date}) óta a(z) {branch} ágon',
   'notes.noTag': 'Nincs címke a(z) {branch} ágon: minden betöltött adat',
+  'notes.tagsOut': 'Egyik betöltött címke sincs a(z) {branch} betöltött előzményeiben: minden betöltött adat',
   'notes.prs': 'Beolvasztott pull requestek',
   'notes.people': 'Közreműködők',
   'digest.copied': 'Másolva.',

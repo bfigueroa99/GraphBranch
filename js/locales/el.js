@@ -790,6 +790,7 @@ GB.i18n.define('el', {
   'notes.head': 'Σημειώσεις έκδοσης του {repo} (πρόχειρο)',
   'notes.since': 'Από {tag} ({date}) στο {branch}',
   'notes.noTag': 'Χωρίς ετικέτες στο {branch}: όλα όσα φορτώθηκαν',
+  'notes.tagsOut': 'Καμία φορτωμένη ετικέτα δεν είναι στο φορτωμένο ιστορικό του {branch}: όλα όσα φορτώθηκαν',
   'notes.prs': 'Συγχωνευμένα pull requests',
   'notes.people': 'Συνεισφέροντες',
   'digest.copied': 'Αντιγράφηκε.',

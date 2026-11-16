@@ -798,6 +798,7 @@ GB.i18n.define('ro', {
   'notes.head': 'Note de versiune pentru {repo} (ciornă)',
   'notes.since': 'De la {tag} ({date}) pe {branch}',
   'notes.noTag': 'Fără taguri pe {branch}: tot ce este încărcat',
+  'notes.tagsOut': 'Niciun tag încărcat nu este în istoricul încărcat al {branch}: tot ce este încărcat',
   'notes.prs': 'Pull request-uri îmbinate',
   'notes.people': 'Contribuitori',
   'digest.copied': 'Copiat.',

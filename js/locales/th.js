@@ -791,6 +791,7 @@ GB.i18n.define('th', {
   'notes.head': 'บันทึกประจำรุ่นของ {repo} (ร่าง)',
   'notes.since': 'ตั้งแต่ {tag} ({date}) บน {branch}',
   'notes.noTag': 'ไม่มีแท็กบน {branch}: ทุกอย่างที่โหลดไว้',
+  'notes.tagsOut': 'ไม่มีแท็กที่โหลดไว้อยู่ในประวัติที่โหลดไว้ของ {branch}: ทุกอย่างที่โหลดไว้',
   'notes.prs': 'pull request ที่ผสานแล้ว',
   'notes.people': 'ผู้มีส่วนร่วม',
   'digest.copied': 'คัดลอกแล้ว',

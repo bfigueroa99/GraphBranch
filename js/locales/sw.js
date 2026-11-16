@@ -790,6 +790,7 @@ GB.i18n.define('sw', {
   'notes.head': 'Maelezo ya toleo ya {repo} (rasimu)',
   'notes.since': 'Tangu {tag} ({date}) kwenye {branch}',
   'notes.noTag': 'Hakuna lebo kwenye {branch}: kila kilichopakiwa',
+  'notes.tagsOut': 'Hakuna lebo iliyopakiwa katika historia iliyopakiwa ya {branch}: kila kilichopakiwa',
   'notes.prs': 'Pull request zilizounganishwa',
   'notes.people': 'Waliochangia',
   'digest.copied': 'Imenakiliwa.',

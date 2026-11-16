@@ -798,6 +798,7 @@ GB.i18n.define('hr', {
   'notes.head': 'Bilješke o izdanju za {repo} (nacrt)',
   'notes.since': 'Od {tag} ({date}) na {branch}',
   'notes.noTag': 'Nema oznaka na {branch}: sve učitano',
+  'notes.tagsOut': 'Nijedna učitana oznaka nije u učitanoj povijesti grane {branch}: sve učitano',
   'notes.prs': 'Spojeni pull requestovi',
   'notes.people': 'Suradnici',
   'digest.copied': 'Kopirano.',

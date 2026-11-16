@@ -790,6 +790,7 @@ GB.i18n.define('ca', {
   'notes.head': 'Notes de la versió de {repo} (esborrany)',
   'notes.since': 'Des de {tag} ({date}) a {branch}',
   'notes.noTag': 'Sense tags a {branch}: tot el que s’ha carregat',
+  'notes.tagsOut': 'Cap tag carregat no és a l’historial carregat de {branch}: tot el que s’ha carregat',
   'notes.prs': 'Pull requests fusionades',
   'notes.people': 'Qui hi ha contribuït',
   'digest.copied': 'Copiat.',

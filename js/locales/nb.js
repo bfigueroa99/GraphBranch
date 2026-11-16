@@ -790,6 +790,7 @@ GB.i18n.define('nb', {
   'notes.head': 'Versjonsmerknader for {repo} (utkast)',
   'notes.since': 'Siden {tag} ({date}) på {branch}',
   'notes.noTag': 'Ingen tagger på {branch}: alt som er lastet inn',
+  'notes.tagsOut': 'Ingen innlastet tagg er i den innlastede historikken til {branch}: alt som er lastet inn',
   'notes.prs': 'Flettede pull requests',
   'notes.people': 'Bidragsytere',
   'digest.copied': 'Kopiert.',

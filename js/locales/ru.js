@@ -806,6 +806,7 @@ GB.i18n.define('ru', {
   'notes.head': 'Заметки к выпуску {repo} (черновик)',
   'notes.since': 'С {tag} ({date}) в {branch}',
   'notes.noTag': 'В {branch} нет тегов: всё загруженное',
+  'notes.tagsOut': 'Ни один загруженный тег не входит в загруженную историю {branch}: всё загруженное',
   'notes.prs': 'Слитые pull request’ы',
   'notes.people': 'Участники',
   'digest.copied': 'Скопировано.',

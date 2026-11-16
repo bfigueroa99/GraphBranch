@@ -790,6 +790,7 @@ GB.i18n.define('hi', {
   'notes.head': '{repo} के रिलीज़ नोट्स (मसौदा)',
   'notes.since': '{tag} ({date}) से {branch} पर',
   'notes.noTag': '{branch} पर कोई टैग नहीं: जो कुछ लोड हुआ',
+  'notes.tagsOut': 'कोई भी लोड किया गया टैग {branch} के लोड किए गए इतिहास में नहीं है: जो कुछ लोड हुआ',
   'notes.prs': 'मर्ज हुए pull requests',
   'notes.people': 'योगदानकर्ता',
   'digest.copied': 'कॉपी हो गया।',

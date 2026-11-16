@@ -790,6 +790,7 @@ GB.i18n.define('da', {
   'notes.head': 'Udgivelsesnoter for {repo} (udkast)',
   'notes.since': 'Siden {tag} ({date}) på {branch}',
   'notes.noTag': 'Ingen tags på {branch}: alt indlæst',
+  'notes.tagsOut': 'Ingen indlæst tag er i den indlæste historik for {branch}: alt indlæst',
   'notes.prs': 'Flettede pull requests',
   'notes.people': 'Bidragydere',
   'digest.copied': 'Kopieret.',

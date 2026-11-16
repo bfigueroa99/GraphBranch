@@ -833,6 +833,7 @@ GB.i18n.define('ur', {
   'notes.head': '{repo} کے ریلیز نوٹس (مسودہ)',
   'notes.since': '{tag} ({date}) سے {branch} پر',
   'notes.noTag': '{branch} پر کوئی ٹیگ نہیں: سب کچھ جو لوڈ ہوا',
+  'notes.tagsOut': 'کوئی لوڈ شدہ ٹیگ {branch} کی لوڈ شدہ تاریخ میں نہیں: سب کچھ جو لوڈ ہوا',
   'notes.prs': 'ضم شدہ pull requests',
   'notes.people': 'حصہ ڈالنے والے',
   'digest.copied': 'کاپی ہو گیا۔',

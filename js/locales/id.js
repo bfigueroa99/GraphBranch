@@ -790,6 +790,7 @@ GB.i18n.define('id', {
   'notes.head': 'Catatan rilis {repo} (draf)',
   'notes.since': 'Sejak {tag} ({date}) di {branch}',
   'notes.noTag': 'Tidak ada tag di {branch}: semua yang dimuat',
+  'notes.tagsOut': 'Tidak ada tag yang dimuat dalam riwayat {branch} yang dimuat: semua yang dimuat',
   'notes.prs': 'Pull request yang digabungkan',
   'notes.people': 'Kontributor',
   'digest.copied': 'Tersalin.',

@@ -791,6 +791,7 @@ GB.i18n.define('fil', {
   'notes.head': 'Release notes ng {repo} (draft)',
   'notes.since': 'Mula {tag} ({date}) sa {branch}',
   'notes.noTag': 'Walang tag sa {branch}: lahat ng na-load',
+  'notes.tagsOut': 'Walang na-load na tag sa na-load na history ng {branch}: lahat ng na-load',
   'notes.prs': 'Mga na-merge na pull request',
   'notes.people': 'Mga nag-ambag',
   'digest.copied': 'Nakopya.',

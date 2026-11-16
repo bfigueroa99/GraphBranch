@@ -2291,7 +2291,7 @@
     }
     const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
     const label = (k) => t('notes.' + k);
-    const labels = { head: label('head'), since: label('since'), noTag: label('noTag'), prs: label('prs'), people: label('people') };
+    const labels = { head: label('head'), since: label('since'), noTag: label('noTag'), tagsOut: label('tagsOut'), prs: label('prs'), people: label('people') };
     wireDigest('notes', GB.digest.toMarkdownNotes(n, repoName, labels, GB.i18n.fmtDate, t('health.none')), repoName, null, 'notas');
   }
 

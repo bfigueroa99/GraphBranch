@@ -666,3 +666,33 @@ test('notas de la versión en Markdown: encabezado, desde qué tag, cada PR con 
   const oddMd = toMarkdownNotes(releaseNotes(odd, []), 'acme/app', NOTES_T, undefined, '—');
   assert.ok(oddMd.includes("`ma'in`") && oddMd.includes('(Eva Pérez)') && oddMd.includes('- Eva Pérez (1)'), oddMd);
 });
+
+test('notas de la versión: un PR que ya está en el tag no vuelve por la actividad; solo cuentan los mensajes del primer padre; lo cortado se dice', () => {
+  const data = tagged();
+  // el sondeo vio el merge del #3 después de etiquetar (sin su commit en la actividad): su commit está detrás del tag
+  const late = [{ id: 'p3', kind: 'pr-merge', time: ago(1), number: 3, detail: 'viejo', branch: 'main' }];
+  assert.deepEqual([...releaseNotes(data, late).prs.rows].map((r) => r.number), [15, 12]);
+  // un commit dentro de la rama del PR con «(#45)» (un issue) no es un PR fusionado en main
+  data.commits.get('f1').message = 'Arregla el login (#45)';
+  assert.deepEqual([...releaseNotes(data, []).prs.rows].map((r) => r.number), [15, 12]);
+  // tags cargados, pero ninguno en la historia cargada de main: lo dice aparte
+  const out = tagged();
+  out.tags = new Map([['x', ['v2.0-beta']]]);
+  const n = releaseNotes(out, []);
+  assert.equal(n.tag, null);
+  assert.equal(n.tagsOut, true);
+  assert.ok(toMarkdownNotes(n, 'acme/app', { ...NOTES_T, tagsOut: 'Ningún tag en lo cargado de {branch}' }, undefined, '—').includes('Ningún tag en lo cargado de `main`'));
+  assert.equal(releaseNotes({ ...tagged(), tags: new Map() }, []).tagsOut, false, 'sin tags cargados es «sin tags»');
+  // un tag con $' o {branch} en el nombre no se sustituye otra vez
+  const odd = tagged();
+  odd.tags = new Map([['t', ["v1$'{branch}"]]]);
+  const md = toMarkdownNotes(releaseNotes(odd, []), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  assert.ok(md.includes("Desde v1$'\\{branch\\} (2026-09-24) en `main`"), md);
+  // más PRs que los que se listan: una línea dice cuántos faltan; una @ de afuera no menciona a nadie
+  const many = tagged();
+  for (let i = 0; i < 205; i++) many.commits.set('q' + i, { sha: 'q' + i, date: ago(1), parents: [i ? 'q' + (i - 1) : 's'], message: `Cambio ${i} de @alguien (#${100 + i})`, author: { name: 'x @bob', login: null } });
+  many.branches.get('main').sha = 'q204';
+  const big = toMarkdownNotes(releaseNotes(many, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(big.includes('## PRs fusionados (207)') && big.includes('\n- … +7\n'), big.slice(0, 300));
+  assert.ok(!/@alguien|@bob/.test(big), 'una @ de un título o de un nombre sin cuenta no queda como mención');
+});

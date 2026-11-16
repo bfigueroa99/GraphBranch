@@ -889,6 +889,7 @@ GB.i18n.define('ar', {
   'notes.head': 'ملاحظات إصدار {repo} (مسودة)',
   'notes.since': 'منذ {tag} ({date}) على {branch}',
   'notes.noTag': 'لا وسوم على {branch}: كل ما تم تحميله',
+  'notes.tagsOut': 'لا يوجد وسم محمَّل في السجل المحمَّل لـ {branch}: كل ما تم تحميله',
   'notes.prs': 'طلبات السحب المدمجة',
   'notes.people': 'المساهمون',
   'digest.copied': 'تم النسخ.',

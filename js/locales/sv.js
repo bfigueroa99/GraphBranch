@@ -790,6 +790,7 @@ GB.i18n.define('sv', {
   'notes.head': 'Versionsinformation för {repo} (utkast)',
   'notes.since': 'Sedan {tag} ({date}) på {branch}',
   'notes.noTag': 'Inga taggar på {branch}: allt inläst',
+  'notes.tagsOut': 'Ingen inläst tagg finns i den inlästa historiken för {branch}: allt inläst',
   'notes.prs': 'Sammanslagna pull requests',
   'notes.people': 'Bidragsgivare',
   'digest.copied': 'Kopierat.',

@@ -796,6 +796,7 @@ GB.i18n.define('en', {
   'notes.head': 'Release notes for {repo} (draft)',
   'notes.since': 'Since {tag} ({date}) on {branch}',
   'notes.noTag': 'No tags on {branch}: everything loaded',
+  'notes.tagsOut': 'No loaded tag is in the loaded history of {branch}: everything loaded',
   'notes.prs': 'Merged pull requests',
   'notes.people': 'Contributors',
   'digest.copied': 'Copied.',

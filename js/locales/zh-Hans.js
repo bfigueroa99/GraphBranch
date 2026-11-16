@@ -790,6 +790,7 @@ GB.i18n.define('zh-Hans', {
   'notes.head': '{repo} 的版本说明（草稿）',
   'notes.since': '自 {tag}（{date}）起，{branch} 分支',
   'notes.noTag': '{branch} 上没有标签：所有已加载内容',
+  'notes.tagsOut': '已加载的标签都不在 {branch} 已加载的历史中：所有已加载内容',
   'notes.prs': '已合并的拉取请求',
   'notes.people': '贡献者',
   'digest.copied': '已复制。',

@@ -791,6 +791,7 @@ GB.i18n.define('it', {
   'notes.head': 'Note di rilascio di {repo} (bozza)',
   'notes.since': 'Da {tag} ({date}) su {branch}',
   'notes.noTag': 'Nessun tag su {branch}: tutto ciò che è caricato',
+  'notes.tagsOut': 'Nessun tag caricato è nella cronologia caricata di {branch}: tutto ciò che è caricato',
   'notes.prs': 'Pull request unite',
   'notes.people': 'Chi ha contribuito',
   'digest.copied': 'Copiato.',

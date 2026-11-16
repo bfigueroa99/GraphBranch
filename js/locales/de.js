@@ -791,6 +791,7 @@ GB.i18n.define('de', {
   'notes.head': 'Versionshinweise für {repo} (Entwurf)',
   'notes.since': 'Seit {tag} ({date}) auf {branch}',
   'notes.noTag': 'Keine Tags auf {branch}: alles Geladene',
+  'notes.tagsOut': 'Kein geladener Tag liegt im geladenen Verlauf von {branch}: alles Geladene',
   'notes.prs': 'Gemergte Pull Requests',
   'notes.people': 'Beitragende',
   'digest.copied': 'Kopiert.',

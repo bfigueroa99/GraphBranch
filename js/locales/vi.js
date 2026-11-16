@@ -790,6 +790,7 @@ GB.i18n.define('vi', {
   'notes.head': 'Ghi chú phát hành của {repo} (bản nháp)',
   'notes.since': 'Từ {tag} ({date}) trên {branch}',
   'notes.noTag': 'Không có thẻ trên {branch}: mọi thứ đã tải',
+  'notes.tagsOut': 'Không thẻ đã tải nào nằm trong lịch sử đã tải của {branch}: mọi thứ đã tải',
   'notes.prs': 'Pull request đã hợp nhất',
   'notes.people': 'Người đóng góp',
   'digest.copied': 'Đã sao chép.',

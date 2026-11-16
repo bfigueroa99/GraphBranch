@@ -801,6 +801,7 @@ GB.i18n.define('sk', {
   'notes.head': 'Poznámky k vydaniu {repo} (koncept)',
   'notes.since': 'Od {tag} ({date}) vo vetve {branch}',
   'notes.noTag': 'Vo vetve {branch} nie sú tagy: všetko načítané',
+  'notes.tagsOut': 'Žiadny načítaný tag nie je v načítanej histórii vetvy {branch}: všetko načítané',
   'notes.prs': 'Zlúčené pull requesty',
   'notes.people': 'Prispievatelia',
   'digest.copied': 'Skopírované.',

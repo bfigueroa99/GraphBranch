@@ -847,6 +847,7 @@ GB.i18n.define('he', {
   'notes.head': 'הערות גרסה של {repo} (טיוטה)',
   'notes.since': 'מאז {tag} ({date}) ב-{branch}',
   'notes.noTag': 'אין תגים ב-{branch}: כל מה שנטען',
+  'notes.tagsOut': 'אף תג שנטען אינו בהיסטוריה שנטענה של {branch}: כל מה שנטען',
   'notes.prs': 'בקשות משיכה שמוזגו',
   'notes.people': 'תורמים',
   'digest.copied': 'הועתק.',

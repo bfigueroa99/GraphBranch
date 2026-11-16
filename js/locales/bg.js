@@ -790,6 +790,7 @@ GB.i18n.define('bg', {
   'notes.head': 'Бележки към версията на {repo} (чернова)',
   'notes.since': 'От {tag} ({date}) в {branch}',
   'notes.noTag': 'Няма тагове в {branch}: всичко заредено',
+  'notes.tagsOut': 'Нито един зареден таг не е в заредената история на {branch}: всичко заредено',
   'notes.prs': 'Слети pull request-и',
   'notes.people': 'Допринесли',
   'digest.copied': 'Копирано.',

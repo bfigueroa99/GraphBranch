@@ -790,6 +790,7 @@ GB.i18n.define('ko', {
   'notes.head': '{repo} 릴리스 노트 (초안)',
   'notes.since': '{branch}의 {tag} ({date}) 이후',
   'notes.noTag': '{branch}에 태그 없음: 불러온 전체',
+  'notes.tagsOut': '불러온 태그가 {branch}의 불러온 기록에 없음: 불러온 전체',
   'notes.prs': '병합된 pull request',
   'notes.people': '기여자',
   'digest.copied': '복사했습니다.',

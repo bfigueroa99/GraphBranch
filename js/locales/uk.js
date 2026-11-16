@@ -806,6 +806,7 @@ GB.i18n.define('uk', {
   'notes.head': 'Нотатки до випуску {repo} (чернетка)',
   'notes.since': 'Від {tag} ({date}) у {branch}',
   'notes.noTag': 'У {branch} немає тегів: усе завантажене',
+  'notes.tagsOut': 'Жоден завантажений тег не входить до завантаженої історії {branch}: усе завантажене',
   'notes.prs': 'Злиті pull request’и',
   'notes.people': 'Учасники',
   'digest.copied': 'Скопійовано.',

@@ -790,6 +790,7 @@ GB.i18n.define('ms', {
   'notes.head': 'Nota keluaran {repo} (draf)',
   'notes.since': 'Sejak {tag} ({date}) di {branch}',
   'notes.noTag': 'Tiada tag di {branch}: semua yang dimuatkan',
+  'notes.tagsOut': 'Tiada tag yang dimuatkan dalam sejarah {branch} yang dimuatkan: semua yang dimuatkan',
   'notes.prs': 'Pull request yang digabungkan',
   'notes.people': 'Penyumbang',
   'digest.copied': 'Disalin.',

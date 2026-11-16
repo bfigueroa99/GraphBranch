@@ -801,6 +801,7 @@ GB.i18n.define('cs', {
   'notes.head': 'Poznámky k vydání {repo} (koncept)',
   'notes.since': 'Od {tag} ({date}) ve větvi {branch}',
   'notes.noTag': 'Ve větvi {branch} nejsou tagy: vše načtené',
+  'notes.tagsOut': 'Žádný načtený tag není v načtené historii větve {branch}: vše načtené',
   'notes.prs': 'Sloučené pull requesty',
   'notes.people': 'Přispěvatelé',
   'digest.copied': 'Zkopírováno.',

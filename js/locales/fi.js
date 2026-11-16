@@ -790,6 +790,7 @@ GB.i18n.define('fi', {
   'notes.head': 'Julkaisutiedot: {repo} (luonnos)',
   'notes.since': '{tag} ({date}) alkaen haarassa {branch}',
   'notes.noTag': 'Haarassa {branch} ei ole tageja: kaikki ladattu',
+  'notes.tagsOut': 'Yksikään ladattu tagi ei ole haaran {branch} ladatussa historiassa: kaikki ladattu',
   'notes.prs': 'Yhdistetyt pull requestit',
   'notes.people': 'Osallistujat',
   'digest.copied': 'Kopioitu.',

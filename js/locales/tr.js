@@ -790,6 +790,7 @@ GB.i18n.define('tr', {
   'notes.head': '{repo} sürüm notları (taslak)',
   'notes.since': '{tag} ({date}) sonrası, {branch} dalında',
   'notes.noTag': '{branch} dalında etiket yok: yüklenenlerin tümü',
+  'notes.tagsOut': 'Yüklenen etiketlerin hiçbiri {branch} dalının yüklenen geçmişinde değil: yüklenenlerin tümü',
   'notes.prs': 'Birleştirilen pull request’ler',
   'notes.people': 'Katkıda bulunanlar',
   'digest.copied': 'Kopyalandı.',

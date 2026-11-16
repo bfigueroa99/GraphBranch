@@ -791,6 +791,7 @@ GB.i18n.define('nl', {
   'notes.head': 'Release notes van {repo} (concept)',
   'notes.since': 'Sinds {tag} ({date}) op {branch}',
   'notes.noTag': 'Geen tags op {branch}: alles wat geladen is',
+  'notes.tagsOut': 'Geen geladen tag staat in de geladen geschiedenis van {branch}: alles wat geladen is',
   'notes.prs': 'Gemergede pull requests',
   'notes.people': 'Bijdragers',
   'digest.copied': 'Gekopieerd.',

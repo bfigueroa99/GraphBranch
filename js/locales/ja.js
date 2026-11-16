@@ -790,6 +790,7 @@ GB.i18n.define('ja', {
   'notes.head': '{repo} のリリースノート（下書き）',
   'notes.since': '{branch} の {tag}（{date}）以降',
   'notes.noTag': '{branch} にタグがありません: 読み込んだすべて',
+  'notes.tagsOut': '読み込んだタグはどれも {branch} の読み込んだ履歴にありません: 読み込んだすべて',
   'notes.prs': 'マージされた pull request',
   'notes.people': '貢献者',
   'digest.copied': 'コピーしました。',

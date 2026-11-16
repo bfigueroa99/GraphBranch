@@ -790,6 +790,7 @@ GB.i18n.define('bn', {
   'notes.head': '{repo}-এর রিলিজ নোট (খসড়া)',
   'notes.since': '{tag} ({date}) থেকে {branch}-এ',
   'notes.noTag': '{branch}-এ কোনো ট্যাগ নেই: যা কিছু লোড হয়েছে',
+  'notes.tagsOut': 'লোড হওয়া কোনো ট্যাগ {branch}-এর লোড হওয়া ইতিহাসে নেই: যা কিছু লোড হয়েছে',
   'notes.prs': 'মার্জ হওয়া pull request',
   'notes.people': 'অবদানকারী',
   'digest.copied': 'কপি হয়েছে।',

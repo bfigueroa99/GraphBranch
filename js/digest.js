@@ -411,9 +411,23 @@
     }
     const before = tag ? reach(data.commits, tag.sha) : new Set();
     const range = [...all].filter((s) => !before.has(s)).map((s) => data.commits.get(s));
+    // los PRs salen de los mensajes del primer padre (los commits que llegaron a la rama): «(#N)» en un commit de dentro
+    // de un PR puede ser un issue
+    const line = [];
+    for (let c = data.commits.get(tip); c && !before.has(c.sha) && line.length <= data.commits.size; c = data.commits.get(c.parents?.[0])) line.push(c);
+    const prNum = (c) => {
+      const head = String(c.message || '').split('\n')[0];
+      const m = /^Merge pull request #(\d+) from /.exec(head) || /\(#(\d+)\)\s*$/.exec(head);
+      return m ? +m[1] : null;
+    };
+    const older = new Set(); // PRs que ya están en el tag: no vuelven aunque la actividad los vea fusionarse después
+    for (const sha of before) {
+      const n = prNum(data.commits.get(sha));
+      if (n != null) older.add(n);
+    }
 
-    const prs = new Map(); // número -> { number, title, author, url, time }
-    for (const c of range) {
+    const prs = new Map(); // número -> { number, title, who, author, url, time }
+    for (const c of line) {
       const [head, ...rest] = String(c.message || '').split('\n');
       let m = /^Merge pull request #(\d+) from (\S+)/.exec(head);
       if (m) {
@@ -437,7 +451,7 @@
       if (a.kind !== 'pr-merge' || a.number == null || a.branch !== branch || seen.has(a.id ?? a)) continue;
       seen.add(a.id ?? a);
       const known = a.sha && data.commits.has(a.sha);
-      if (known ? !all.has(a.sha) || before.has(a.sha) : tag && !(at(a.time) > tag.time)) continue; // de antes del tag, o de otra historia
+      if (known ? !all.has(a.sha) || before.has(a.sha) : older.has(a.number) || (tag && !(at(a.time) > tag.time))) continue; // de antes del tag, o de otra historia
       const prev = prs.get(a.number);
       const title = text(a.detail) || prev?.title || text(a.title);
       const url = a.url && /^https?:\/\//.test(a.url) ? a.url : prev?.url || null;
@@ -459,21 +473,26 @@
     return {
       branch,
       tag,
+      tagsOut: !tag && [...(data.tags || [])].some(([, names]) => names?.length), // hay tags cargados, pero ninguno en la historia cargada de la rama
       prs: { total: rows.length, rows: rows.slice(0, NOTES_MAX).map((r) => ({ number: r.number, title: String(r.title || ''), author: r.who?.name || null, at: !!r.who?.at, url: r.url, time: r.time })) },
       people: { total: people.size, rows: [...people.values()].sort((a, b) => b.commits - a.commits || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) },
     };
   }
 
-  /** Markdown del borrador. `t`: { head, since, noTag, prs, people } ya traducidas. */
+  /** Markdown del borrador. `t`: { head, since, noTag, tagsOut, prs, people } ya traducidas. */
   function toMarkdownNotes(n, repo, t, fmtDate = (ms) => new Date(ms).toISOString().slice(0, 10), none = '—') {
     const code = (s) => '`' + String(s).replace(/`/g, "'") + '`';
-    const person = (name, isAt) => (isAt ? '@' : '') + md(name);
-    const out = [`# ${md(t.head.replace('{repo}', repo))}`, ''];
-    out.push(n.tag ? t.since.replace('{tag}', md(n.tag.name)).replace('{date}', fmtDate(n.tag.time)).replace('{branch}', code(n.branch)) : t.noTag.replace('{branch}', code(n.branch)));
+    // una @ de afuera (un título, un nombre sin cuenta) no avisa a nadie al pegar el borrador en GitHub
+    const quiet = (s) => md(s).replace(/@/g, '@\u200b');
+    const person = (name, isAt) => (isAt ? '@' + md(name) : quiet(name));
+    const fill = (tpl, v) => String(tpl).replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m)); // de una pasada: lo que trae un tag no se vuelve a sustituir
+    const out = [`# ${md(fill(t.head, { repo }))}`, ''];
+    out.push(n.tag ? fill(t.since, { tag: md(n.tag.name), date: fmtDate(n.tag.time), branch: code(n.branch) }) : fill(n.tagsOut && t.tagsOut ? t.tagsOut : t.noTag, { branch: code(n.branch) }));
     out.push('', `## ${t.prs} (${n.prs.total})`, '');
     const link = (r, s) => (r.url && /^https?:\/\//.test(r.url) ? `[${s}](${r.url.replace(/[()\s]/g, encodeURIComponent)})` : s);
-    if (n.prs.rows.length) for (const r of n.prs.rows) out.push(`- ${link(r, `#${r.number} ${md(r.title)}`)}${r.author ? ` (${person(r.author, r.at)})` : ''}`);
+    if (n.prs.rows.length) for (const r of n.prs.rows) out.push(`- ${link(r, `#${r.number} ${quiet(r.title)}`)}${r.author ? ` (${person(r.author, r.at)})` : ''}`);
     else out.push(none);
+    if (n.prs.total > n.prs.rows.length) out.push(`- … +${n.prs.total - n.prs.rows.length}`);
     out.push('', `## ${t.people} (${n.people.total})`, '');
     if (n.people.rows.length) for (const p of n.people.rows) out.push(`- ${person(p.name, p.at)} (${p.commits})`);
     else out.push(none);

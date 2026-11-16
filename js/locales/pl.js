@@ -801,6 +801,7 @@ GB.i18n.define('pl', {
   'notes.head': 'Informacje o wydaniu {repo} (szkic)',
   'notes.since': 'Od {tag} ({date}) w {branch}',
   'notes.noTag': 'Brak tagów w {branch}: wszystko, co wczytano',
+  'notes.tagsOut': 'Żaden wczytany tag nie jest w wczytanej historii {branch}: wszystko, co wczytano',
   'notes.prs': 'Scalone pull requesty',
   'notes.people': 'Współtwórcy',
   'digest.copied': 'Skopiowano.',

@@ -791,6 +791,7 @@ GB.i18n.define('fr', {
   'notes.head': 'Notes de version de {repo} (brouillon)',
   'notes.since': 'Depuis {tag} ({date}) sur {branch}',
   'notes.noTag': 'Aucun tag sur {branch} : tout ce qui est chargé',
+  'notes.tagsOut': 'Aucun tag chargé n’est dans l’historique chargé de {branch} : tout ce qui est chargé',
   'notes.prs': 'Pull requests fusionnées',
   'notes.people': 'Contributeurs et contributrices',
   'digest.copied': 'Copié.',

@@ -790,6 +790,7 @@ GB.i18n.define('zh-Hant', {
   'notes.head': '{repo} 的版本說明（草稿）',
   'notes.since': '自 {tag}（{date}）起，{branch} 分支',
   'notes.noTag': '{branch} 上沒有標籤：所有已載入內容',
+  'notes.tagsOut': '已載入的標籤都不在 {branch} 已載入的歷史中：所有已載入內容',
   'notes.prs': '已合併的拉取請求',
   'notes.people': '貢獻者',
   'digest.copied': '已複製。',

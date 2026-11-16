@@ -749,7 +749,8 @@
             const head = sec.querySelector('.df-fhead');
             head.querySelector('.df-owners')?.remove();
             if (!who?.length) continue;
-            const o = mk('span', 'df-owners', t('diff.owners', { owners: who.join(', ') }));
+            // la lista, aislada y de izquierda a derecha: en árabe o hebreo «@org/equipo» no se da vuelta
+            const o = mk('span', 'df-owners', t('diff.owners', { owners: '\u2066' + who.join(', ') + '\u2069' }));
             o.title = t('diff.ownersFrom', { file: got.path || 'CODEOWNERS' });
             head.append(o);
           }

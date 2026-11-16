@@ -1792,6 +1792,25 @@ if (seccion('Escritorio (1280×800)'))
     if (!after.hidden) throw new Error('el segundo clic no cerró la lista');
     if (after.expanded !== 'false') throw new Error('aria-expanded no volvió a false');
   });
+  await step(page, 'dueños del código: cada archivo del diff de la demo dice sus dueños según su CODEOWNERS, sin claves crudas', async () => {
+    await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
+    // los dueños llegan después que los archivos (la fuente pide el CODEOWNERS una vez): se espera a que estén en todos
+    await page
+      .waitForFunction(() => {
+        const files = [...document.querySelectorAll('#diff-panel:not([hidden]) .df-file')];
+        return files.length && files.every((f) => f.querySelector(':scope > .df-fhead > .df-owners'));
+      }, null, { timeout: T(5000) })
+      .catch(() => {
+        throw new Error('algún archivo del diff de la demo quedó sin dueños');
+      });
+    const seen = await page.evaluate(() =>
+      [...document.querySelectorAll('#diff-panel .df-file > .df-fhead > .df-owners')].map((o) => ({ text: o.textContent, title: o.title })),
+    );
+    for (const o of seen) {
+      if (/diff\.|undefined|\{/.test(o.text + o.title) || !/@/.test(o.text)) throw new Error('dueños mal escritos: ' + JSON.stringify(o));
+      if (!o.title.includes('.github/CODEOWNERS')) throw new Error('el título no dice de dónde salen: ' + o.title);
+    }
+  });
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
     const wait = (what, p) => p.catch((err) => {

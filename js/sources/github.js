@@ -1607,6 +1607,49 @@
         .sort((a, b) => a.from - b.from);
     }
 
+    /** El CODEOWNERS de la rama por defecto: { path, text } del primero que existe en `.github/`, la raíz o `docs/` (el
+        orden en que lo busca GitHub), o null si no hay. Se pide una vez por repo y solo cuando el panel de cambios lo
+        necesita; un fallo no se recuerda (el próximo panel lo vuelve a pedir). */
+    codeOwners() {
+      if (!this.ownersAsk) {
+        const ask = this.askCodeOwners();
+        this.ownersAsk = ask;
+        ask.catch(() => {
+          if (this.ownersAsk === ask) this.ownersAsk = null;
+        });
+      }
+      return this.ownersAsk;
+    }
+
+    async askCodeOwners() {
+      const where = ['.github/CODEOWNERS', 'CODEOWNERS', 'docs/CODEOWNERS'];
+      if (this.token) {
+        // con token, una consulta de GraphQL por las tres ubicaciones
+        const ref = this.data.repo.defaultBranch || 'HEAD';
+        const data = await this.gql(
+          `query($owner: String!, $name: String!, $a: String!, $b: String!, $c: String!) {
+            repository(owner: $owner, name: $name) {
+              a: object(expression: $a) { ... on Blob { text isBinary } }
+              b: object(expression: $b) { ... on Blob { text isBinary } }
+              c: object(expression: $c) { ... on Blob { text isBinary } }
+            }
+          }`,
+          { a: `${ref}:${where[0]}`, b: `${ref}:${where[1]}`, c: `${ref}:${where[2]}` },
+        );
+        const repo = data?.repository || {};
+        const i = ['a', 'b', 'c'].findIndex((k) => typeof repo[k]?.text === 'string' && !repo[k].isBinary);
+        return i < 0 ? null : { path: where[i], text: repo[['a', 'b', 'c'][i]].text };
+      }
+      // sin token, por REST y en orden, hasta el primero que exista
+      for (const path of where) {
+        const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}`, { allow: [404] });
+        if (status === 404 || data?.type !== 'file' || data.encoding !== 'base64' || !data.content) continue;
+        const { text, binary } = U.b64decode(data.content);
+        if (!binary) return { path, text };
+      }
+      return null;
+    }
+
     /* ---------- commits ---------- */
 
     /**

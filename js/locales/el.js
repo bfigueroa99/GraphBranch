@@ -767,6 +767,8 @@ GB.i18n.define('el', {
   'diff.blameOf': 'Τελευταίες αλλαγές στο {path}',
   'diff.blameNone': 'Κανένα προηγούμενο commit δεν άγγιξε αυτό το αρχείο.',
   'diff.blameLines': 'Γραμμές {from}–{to}',
+  'diff.owners': 'Κάτοχοι: {owners}',
+  'diff.ownersFrom': 'Σύμφωνα με το {file} του προεπιλεγμένου κλάδου',
   'diff.tooLong': 'Εμφανίζονται μόνο οι πρώτες {n} γραμμές.',
   'diff.lines': '{add} προστέθηκαν, {del} αφαιρέθηκαν',
   'diff.mode': 'Πώς εμφανίζονται οι αλλαγές',

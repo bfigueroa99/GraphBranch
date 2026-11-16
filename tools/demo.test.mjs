@@ -32,7 +32,7 @@ function demo(seed) {
   src.later = (ms, fn) => queue.push(fn);
   src.seed();
   src.running = true;
-  return { src, flush: () => queue.splice(0).forEach((fn) => fn()) };
+  return { src, GB: ctx.GB, flush: () => queue.splice(0).forEach((fn) => fn()) };
 }
 
 test('mucha actividad seguida no rompe la demo: un PR apilado sobre una rama fusionada y borrada pasa a la base de esa', () => {
@@ -176,4 +176,20 @@ test('la demo trae un PR fusionado en main después de v1.4.0: el borrador de no
     assert.ok(n.prs.rows[0].author, 'con su autor');
     assert.ok(n.people.total >= 1);
   }
+});
+
+test('la demo trae un CODEOWNERS: cada archivo que inventa su panel de cambios tiene dueños, y algunos más de uno', async () => {
+  const { src, GB } = demo(7);
+  const got = await src.codeOwners();
+  assert.equal(got.path, '.github/CODEOWNERS');
+  const rules = GB.diff.parseOwners(got.text);
+  const shas = [...src.data.commits.keys()].slice(0, 60);
+  const paths = new Set();
+  for (const r of await Promise.all(shas.map((sha) => src.commitDiff(sha)))) for (const f of r.files) paths.add(f.path);
+  assert.ok(paths.size > 5);
+  const owned = [...paths].map((p) => [p, GB.diff.ownersOf(rules, p)]);
+  assert.ok(owned.every(([, o]) => o?.length), 'todo archivo de la demo tiene dueño: ' + owned.filter(([, o]) => !o?.length).map(([p]) => p).join(', '));
+  assert.ok(owned.every(([, o]) => o.every((w) => w.includes('@'))), 'cada dueño es una cuenta, un equipo o un correo (un patrón por línea)');
+  assert.ok(owned.some(([, o]) => o.length > 1), 'alguno con más de un dueño');
+  assert.ok(new Set(owned.map(([, o]) => o.join(' '))).size >= 3, 'dueños distintos según la carpeta');
 });

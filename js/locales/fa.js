@@ -810,6 +810,8 @@ GB.i18n.define('fa', {
   'diff.blameOf': 'آخرین تغییرات {path}',
   'diff.blameNone': 'هیچ کامیت قبلی این فایل را تغییر نداده است.',
   'diff.blameLines': 'خط‌های {from}–{to}',
+  'diff.owners': 'مالکان: {owners}',
+  'diff.ownersFrom': 'طبق {file} در شاخهٔ پیش‌فرض',
   'diff.tooLong': 'فقط {n} خط نخست نشان داده می‌شود.',
   'diff.lines': '{add} افزوده، {del} حذف‌شده',
   'diff.mode': 'نحوهٔ نمایش تغییرات',

@@ -767,6 +767,8 @@ GB.i18n.define('zh-Hans', {
   'diff.blameOf': '{path} 的最近更改',
   'diff.blameNone': '此前没有提交改过这个文件。',
   'diff.blameLines': '第 {from}–{to} 行',
+  'diff.owners': '负责人：{owners}',
+  'diff.ownersFrom': '依据默认分支上的 {file}',
   'diff.tooLong': '仅显示前 {n} 行。',
   'diff.lines': '新增 {add} 行，删除 {del} 行',
   'diff.mode': '变更的显示方式',

@@ -767,6 +767,8 @@ GB.i18n.define('nb', {
   'diff.blameOf': 'Siste endringer i {path}',
   'diff.blameNone': 'Ingen tidligere commit har rørt denne filen.',
   'diff.blameLines': 'Linje {from}–{to}',
+  'diff.owners': 'Eiere: {owners}',
+  'diff.ownersFrom': 'Ifølge {file} på standardgrenen',
   'diff.tooLong': 'Bare de første {n} linjene vises.',
   'diff.lines': '{add} lagt til, {del} fjernet',
   'diff.mode': 'Slik vises endringene',

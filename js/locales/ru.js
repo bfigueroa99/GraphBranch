@@ -783,6 +783,8 @@ GB.i18n.define('ru', {
   'diff.blameOf': 'Последние изменения {path}',
   'diff.blameNone': 'Ни один более ранний коммит не менял этот файл.',
   'diff.blameLines': 'Строки {from}–{to}',
+  'diff.owners': 'Владельцы: {owners}',
+  'diff.ownersFrom': 'По файлу {file} в ветке по умолчанию',
   'diff.tooLong': 'Показаны только первые {n} строк.',
   'diff.lines': 'добавлено: {add}, удалено: {del}',
   'diff.mode': 'Как показывать изменения',

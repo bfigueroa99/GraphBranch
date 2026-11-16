@@ -767,6 +767,8 @@ GB.i18n.define('hu', {
   'diff.blameOf': '{path} legutóbbi változásai',
   'diff.blameNone': 'Korábbi commit nem módosította ezt a fájlt.',
   'diff.blameLines': '{from}–{to}. sor',
+  'diff.owners': 'Tulajdonosok: {owners}',
+  'diff.ownersFrom': 'Az alapértelmezett ág {file} fájlja szerint',
   'diff.tooLong': 'Csak az első {n} sor látszik.',
   'diff.lines': '{add} hozzáadva, {del} eltávolítva',
   'diff.mode': 'A változások megjelenítése',

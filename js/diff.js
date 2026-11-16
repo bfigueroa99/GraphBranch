@@ -286,6 +286,83 @@
   const STATUS_MARK = { added: 'A', removed: 'D', renamed: 'R', modified: 'M' };
   const STATUS_TEXT = { added: 'diff.status.added', removed: 'diff.status.removed', renamed: 'diff.status.renamed', modified: 'diff.status.modified' };
 
+  /* ---------- dueños del código (CODEOWNERS) ---------- */
+
+  const OWNERS_MAX = 3 * 1024 * 1024; // GitHub no lee un CODEOWNERS más grande que esto
+  const OWNERS_RULES = 5000; // ni se arman más reglas que estas
+
+  /** Un patrón de CODEOWNERS como expresión regular, con las reglas de GitHub (las de .gitignore, sin `!` ni `[ ]`):
+      con `/` al principio o en el medio se ancla a la raíz, si no vale a cualquier profundidad; `*` y `?` no cruzan
+      carpetas, `**` sí; un patrón que nombra una carpeta abarca lo de adentro, salvo que termine en `/*`. */
+  function ownerRegex(pattern) {
+    let p = pattern;
+    let anchored = false;
+    let dir = false;
+    if (p.startsWith('/')) {
+      anchored = true;
+      p = p.slice(1);
+    }
+    if (p.endsWith('/')) {
+      dir = true;
+      p = p.replace(/\/+$/, '');
+    }
+    if (p.includes('/')) anchored = true;
+    let re = '';
+    for (let i = 0; i < p.length; i++) {
+      const ch = p[i];
+      if (ch === '\\' && i + 1 < p.length) re += p[++i].replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+      else if (p.startsWith('**/', i)) {
+        re += '(?:.*/)?';
+        i += 2;
+      } else if (p.startsWith('**', i)) {
+        re += '.*';
+        i += 1;
+      } else if (ch === '*') re += '[^/]*';
+      else if (ch === '?') re += '[^/]';
+      else re += ch.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+    }
+    const head = anchored ? '^' : '^(?:.*/)?';
+    const tail = dir ? '/.*$' : /(^|\/)\*$/.test(p) ? '$' : '(?:/.*)?$';
+    return new RegExp(head + re + tail);
+  }
+
+  /** Las reglas de un CODEOWNERS ([{ pattern, owners }], en su orden): sin comentarios ni líneas vacías, y sin los
+      patrones que GitHub no admite (`!` y rangos `[ ]`), que él también salta. Los dueños son lo que sigue al patrón
+      hasta un `#`: cuentas (`@ana`), equipos (`@org/equipo`) o correos. */
+  function parseOwners(text) {
+    const out = [];
+    const src = String(text ?? '').slice(0, OWNERS_MAX);
+    for (const raw of src.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const parts = line.split(/\s+/);
+      const pattern = parts.shift();
+      if (pattern.startsWith('!') || /(^|[^\\])\[/.test(pattern)) continue;
+      const owners = [];
+      for (const w of parts) {
+        if (w.startsWith('#')) break;
+        owners.push(w);
+      }
+      let re;
+      try {
+        re = ownerRegex(pattern);
+      } catch {
+        continue;
+      }
+      out.push({ pattern, owners, re });
+      if (out.length >= OWNERS_RULES) break;
+    }
+    return out;
+  }
+
+  /** Los dueños de `path` según las reglas de `parseOwners`: los del último patrón que coincide ([] si ese patrón
+      no nombra a nadie) o null si ninguno coincide. */
+  function ownersOf(rules, path) {
+    const clean = String(path || '').replace(/^\/+/, '');
+    for (let i = (rules?.length || 0) - 1; i >= 0; i--) if (rules[i].re.test(clean)) return rules[i].owners.slice();
+    return null;
+  }
+
   /**
    * Monta el panel en `root` (ver index.html). Opciones:
    *   text(key, params), ago(ms), num(n): textos y formatos de la página
@@ -300,6 +377,7 @@
    *   canHistory() → ¿se puede filtrar el grafo por una ruta?; onHistory(path): dejar a la vista los commits que tocaron ese archivo
    *   canBlame() → ¿la fuente sabe quién tocó un archivo?; fileLog(path, sha) → Promise de [{ sha, author, date, message }]: los últimos commits que lo cambiaron
    *   fileBlame(path, sha) → Promise de [{ from, to, sha, author, date, message }] por tramo de líneas, o null si la fuente no puede (entonces rige fileLog)
+   *   codeOwners() → Promise de { path, text } (el CODEOWNERS de la rama por defecto) o null: los dueños de cada archivo van en su cabecera
    * Devuelve { open(sha, { focusGraph }), close(), step(dir), reset(), relocalize(), refresh(), get sha(), get isOpen(), get wide() }.
    */
   function mount(root, opts) {
@@ -338,6 +416,8 @@
     let seq = 0;
     let shown = null; // el commit cuyos archivos están dibujados
     let files = []; // y sus archivos (para volver a dibujarlos en el otro modo)
+    let ownersSeen = null; // el último CODEOWNERS leído y sus reglas: no se vuelve a armar por cada commit
+    let ownersRules = [];
     // unificado o lado a lado, y el panel ancho: se recuerdan en este navegador
     let mode = store.get('diffMode', 'unified') === 'split' ? 'split' : 'unified';
     let wide = store.get('diffWide', false) === true;
@@ -648,6 +728,35 @@
       return sec;
     }
 
+    /** Los dueños de cada archivo (CODEOWNERS de la rama por defecto), en su cabecera, cuando llegan. La fuente lo pide
+        una vez por repo; sin CODEOWNERS, o si falla, la cabecera queda como estaba. */
+    function showOwners(want) {
+      if (!opts.codeOwners) return;
+      Promise.resolve()
+        .then(() => opts.codeOwners())
+        .then((got) => {
+          if (shown !== want || root.hidden) return;
+          const text = typeof got?.text === 'string' ? got.text : '';
+          if (text !== ownersSeen) {
+            ownersSeen = text;
+            ownersRules = parseOwners(text);
+          }
+          if (!ownersRules.length) return;
+          const t = opts.text;
+          for (const sec of ui.body.querySelectorAll('.df-file')) {
+            const f = files[sec.dataset.i];
+            const who = f && ownersOf(ownersRules, f.path);
+            const head = sec.querySelector('.df-fhead');
+            head.querySelector('.df-owners')?.remove();
+            if (!who?.length) continue;
+            const o = mk('span', 'df-owners', t('diff.owners', { owners: who.join(', ') }));
+            o.title = t('diff.ownersFrom', { file: got.path || 'CODEOWNERS' });
+            head.append(o);
+          }
+        })
+        .catch(() => {});
+    }
+
     function renderFiles(c, r) {
       const t = opts.text;
       shown = c.sha;
@@ -695,6 +804,7 @@
         frag.append(fileSection(f, i, open));
       });
       ui.body.append(frag);
+      if (r.files.length) showOwners(c.sha);
       // las herramientas, solo si sirven: el filtro desde 4 archivos (o si ya tiene algo escrito)
       ui.tools.hidden = !r.files.length;
       ui.ffield.hidden = r.files.length < 4 && !ui.filter.value;
@@ -864,5 +974,5 @@
     };
   }
 
-  GB.diff = { parseGit, hunks, rows, words, count, totals, childrenOf, steps, mount, unquote };
+  GB.diff = { parseGit, hunks, rows, words, count, totals, childrenOf, steps, mount, unquote, parseOwners, ownersOf };
 })((window.GB = window.GB || {}));

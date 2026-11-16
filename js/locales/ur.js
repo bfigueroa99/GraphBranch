@@ -810,6 +810,8 @@ GB.i18n.define('ur', {
   'diff.blameOf': '{path} کی تازہ ترین تبدیلیاں',
   'diff.blameNone': 'اس سے پہلے کسی کمٹ نے اس فائل کو نہیں بدلا۔',
   'diff.blameLines': 'سطریں {from}–{to}',
+  'diff.owners': 'مالکان: {owners}',
+  'diff.ownersFrom': 'ڈیفالٹ برانچ کی {file} کے مطابق',
   'diff.tooLong': 'صرف پہلی {n} سطریں دکھائی جا رہی ہیں۔',
   'diff.lines': '{add} شامل، {del} حذف',
   'diff.mode': 'تبدیلیاں کیسے دکھائی جائیں',

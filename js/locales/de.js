@@ -768,6 +768,8 @@ GB.i18n.define('de', {
   'diff.blameOf': 'Letzte Änderungen an {path}',
   'diff.blameNone': 'Kein früherer Commit hat diese Datei geändert.',
   'diff.blameLines': 'Zeilen {from}–{to}',
+  'diff.owners': 'Verantwortlich: {owners}',
+  'diff.ownersFrom': 'Laut {file} im Standard-Branch',
   'diff.tooLong': 'Nur die ersten {n} Zeilen werden angezeigt.',
   'diff.lines': '{add} hinzugefügt, {del} entfernt',
   'diff.mode': 'Wie die Änderungen angezeigt werden',

@@ -768,6 +768,8 @@ GB.i18n.define('fil', {
   'diff.blameOf': 'Mga huling pagbabago sa {path}',
   'diff.blameNone': 'Walang naunang commit na humawak sa file na ito.',
   'diff.blameLines': 'Mga linya {from}–{to}',
+  'diff.owners': 'Mga may-ari: {owners}',
+  'diff.ownersFrom': 'Ayon sa {file} sa default na branch',
   'diff.tooLong': 'Ang unang {n} linya lang ang ipinapakita.',
   'diff.lines': '{add} idinagdag, {del} inalis',
   'diff.mode': 'Paano ipinapakita ang mga pagbabago',

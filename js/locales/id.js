@@ -767,6 +767,8 @@ GB.i18n.define('id', {
   'diff.blameOf': 'Perubahan terbaru pada {path}',
   'diff.blameNone': 'Tidak ada commit sebelumnya yang mengubah berkas ini.',
   'diff.blameLines': 'Baris {from}–{to}',
+  'diff.owners': 'Pemilik: {owners}',
+  'diff.ownersFrom': 'Menurut {file} di cabang bawaan',
   'diff.tooLong': 'Hanya {n} baris pertama yang ditampilkan.',
   'diff.lines': '{add} ditambahkan, {del} dihapus',
   'diff.mode': 'Cara perubahan ditampilkan',

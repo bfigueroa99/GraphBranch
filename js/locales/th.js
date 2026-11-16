@@ -768,6 +768,8 @@ GB.i18n.define('th', {
   'diff.blameOf': 'การเปลี่ยนแปลงล่าสุดของ {path}',
   'diff.blameNone': 'ไม่มีคอมมิตก่อนหน้าที่แก้ไขไฟล์นี้',
   'diff.blameLines': 'บรรทัด {from}–{to}',
+  'diff.owners': 'เจ้าของ: {owners}',
+  'diff.ownersFrom': 'ตาม {file} ในสาขาเริ่มต้น',
   'diff.tooLong': 'แสดงเฉพาะ {n} บรรทัดแรก',
   'diff.lines': 'เพิ่ม {add} ลบ {del}',
   'diff.mode': 'วิธีแสดงการเปลี่ยนแปลง',

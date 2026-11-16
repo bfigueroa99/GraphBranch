@@ -517,6 +517,8 @@
     canBlame: () => typeof diffSrc()?.fileLog === 'function',
     fileLog: (path, sha) => diffSrc().fileLog(path, sha),
     fileBlame: (path, sha) => (typeof diffSrc()?.fileBlame === 'function' ? diffSrc().fileBlame(path, sha) : null),
+    // los dueños de cada archivo: el CODEOWNERS de la rama por defecto, si la fuente lo sabe leer (GitHub y la demo)
+    codeOwners: () => (typeof diffSrc()?.codeOwners === 'function' ? diffSrc().codeOwners() : null),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);

@@ -1037,6 +1037,63 @@ test('fileBlame: con token pide el blame por GraphQL (una consulta) y devuelve t
   assert.equal(gh.calls.length, 0, 'sin token no gasta cuota');
 });
 
+/* Dueños del código: el CODEOWNERS de la rama por defecto, pedido una vez por repo y solo al abrir el panel de cambios. */
+
+test('codeOwners: sin token busca en .github/, la raíz y docs/ (el primero que existe), una vez por repo y nunca sin pedirlo', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const text = '*  @org/todos\n/docs/ @ana\n';
+  gh.override = (path) => (path === '/repos/o/r/contents/CODEOWNERS' ? { body: { type: 'file', encoding: 'base64', size: text.length, content: btoa(text), sha: 'x' } } : null);
+  const { src } = connect(gh);
+  await src.cycle();
+  await src.cycle();
+  assert.equal(gh.calls.filter((c) => /CODEOWNERS/.test(c)).length, 0, 'sin abrir el panel no se pide');
+  gh.calls.length = 0;
+  const got = await src.codeOwners();
+  assert.deepEqual(plain(got), { path: 'CODEOWNERS', text });
+  assert.deepEqual(gh.calls, ['/repos/o/r/contents/.github/CODEOWNERS', '/repos/o/r/contents/CODEOWNERS'], 'para en el primero que existe');
+  gh.calls.length = 0;
+  assert.deepEqual(plain(await src.codeOwners()), { path: 'CODEOWNERS', text });
+  assert.equal(gh.calls.length, 0, 'una vez por repo');
+  // sin CODEOWNERS: null, también una sola vez
+  gh.override = null;
+  const other = connect(gh).src;
+  gh.calls.length = 0;
+  assert.equal(await other.codeOwners(), null);
+  assert.equal(await other.codeOwners(), null);
+  assert.equal(gh.calls.length, 3, 'las tres ubicaciones, una vez');
+});
+
+test('codeOwners: con token, una consulta de GraphQL por las tres ubicaciones; si falla, se vuelve a pedir la próxima vez', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  const sent = [];
+  gh.override = (path, opts) => {
+    if (path !== '/graphql') return null;
+    const b = JSON.parse(opts.body);
+    if (!/CODEOWNERS|on Blob/.test(b.query + JSON.stringify(b.variables))) return null;
+    sent.push(b.variables);
+    return { body: { data: { repository: { a: null, b: { text: 'raiz @b', isBinary: false }, c: { text: 'docs @c', isBinary: false } } } } };
+  };
+  gh.calls.length = 0;
+  assert.deepEqual(plain(await src.codeOwners()), { path: 'CODEOWNERS', text: 'raiz @b' }, 'la raíz gana a docs/');
+  assert.equal(sent.length, 1, 'una sola consulta');
+  assert.deepEqual([sent[0].a, sent[0].b, sent[0].c], ['main:.github/CODEOWNERS', 'main:CODEOWNERS', 'main:docs/CODEOWNERS']);
+  assert.equal(gh.calls.length, 1);
+  await src.codeOwners();
+  assert.equal(sent.length, 1, 'una vez por repo');
+  // un fallo (500) no se recuerda: el próximo panel lo vuelve a pedir
+  const again = connect(gh, 'tok').src;
+  await again.cycle();
+  const ok = gh.override;
+  gh.override = (path, opts) => (path === '/graphql' && /on Blob/.test(JSON.parse(opts.body).query) ? { status: 500, body: { message: 'boom' } } : ok(path, opts));
+  await assert.rejects(again.codeOwners());
+  gh.override = ok;
+  assert.deepEqual(plain(await again.codeOwners()), { path: 'CODEOWNERS', text: 'raiz @b' });
+});
+
 /* Forks activos: /forks, solo los que hicieron push propio en los últimos 90 días. */
 
 test('forks: solo los activos, el push más nuevo primero, y una consulta cada 15 minutos, solo al pedirlos', async () => {

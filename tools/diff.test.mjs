@@ -239,3 +239,76 @@ test('la demo inventa los cambios de un commit a partir de su mensaje, y siempre
   assert.ok(marked > 10, `solo ${marked} líneas con palabras marcadas`);
   assert.equal(src.diffCheap(), true);
 });
+
+/* Dueños del código: el CODEOWNERS de la rama por defecto, con la coincidencia de GitHub (el último patrón que
+   coincide manda). */
+
+test('parseOwners: patrones y dueños, sin comentarios, líneas vacías ni patrones que GitHub no admite', () => {
+  const rules = D.parseOwners(
+    [
+      '# comentario',
+      '',
+      '*       @org/todos',
+      '  /docs/   @ana  @org/docs   # al final, otro comentario',
+      '\\#raro  @bob',
+      '!negado @bob',
+      '[ab].js @bob',
+      'sin-dueno',
+      'build/  dev@ejemplo.com',
+    ].join('\r\n'),
+  );
+  assert.deepEqual(plain(rules.map((r) => [r.pattern, r.owners])), [
+    ['*', ['@org/todos']],
+    ['/docs/', ['@ana', '@org/docs']],
+    ['\\#raro', ['@bob']],
+    ['sin-dueno', []],
+    ['build/', ['dev@ejemplo.com']],
+  ]);
+  assert.deepEqual(plain(D.parseOwners('')), []);
+  assert.deepEqual(plain(D.parseOwners(null)), []);
+});
+
+test('ownersOf: comodines, carpetas, anclas y el último patrón que coincide manda', () => {
+  const rules = D.parseOwners(`
+*                @todos
+*.js             @js
+**/logs          @anylogs
+/build/logs/     @logs
+docs/*           @docs
+apps/            @apps
+/scripts/        @scripts
+src/**/test.ts   @tests
+LICENSE          @legal
+/src/api/        @api
+/src/api/legacy/
+\\#notas.md      @hash
+`);
+  const of = (p) => plain(D.ownersOf(rules, p));
+  assert.deepEqual(of('README.md'), ['@todos']);
+  assert.deepEqual(of('src/app.js'), ['@js'], 'sin barra, a cualquier profundidad');
+  assert.deepEqual(of('build/logs/a.txt'), ['@logs']);
+  assert.deepEqual(of('build/logs/deep/b.txt'), ['@logs'], 'una carpeta, con todo lo de adentro');
+  assert.deepEqual(of('x/build/logs/a.txt'), ['@anylogs'], '/build/logs/ va anclada a la raíz; **/logs no');
+  assert.deepEqual(of('docs/guia.md'), ['@docs']);
+  assert.deepEqual(of('docs/sub/guia.md'), ['@todos'], 'docs/* no entra en subcarpetas');
+  assert.deepEqual(of('apps/web/main.ts'), ['@apps']);
+  assert.deepEqual(of('pkg/apps/web/main.ts'), ['@apps'], 'carpeta sin ancla: en cualquier lugar');
+  assert.deepEqual(of('scripts/run.sh'), ['@scripts']);
+  assert.deepEqual(of('lib/scripts/run.sh'), ['@todos']);
+  assert.deepEqual(of('a/b/logs/x.txt'), ['@anylogs']);
+  assert.deepEqual(of('src/test.ts'), ['@tests'], '/**/ también es ninguna carpeta');
+  assert.deepEqual(of('src/a/b/test.ts'), ['@tests']);
+  assert.deepEqual(of('LICENSE'), ['@legal']);
+  assert.deepEqual(of('vendor/LICENSE'), ['@legal']);
+  assert.deepEqual(of('LICENSE.md'), ['@todos'], 'el nombre entero, no un prefijo');
+  assert.deepEqual(of('src/api/users.js'), ['@api'], 'el último que coincide manda, aunque *.js esté antes');
+  assert.deepEqual(of('src/api/legacy/old.js'), [], 'un patrón sin dueños deja el archivo sin dueño');
+  assert.deepEqual(of('#notas.md'), ['@hash']);
+  assert.equal(D.ownersOf(D.parseOwners('/docs/ @a'), 'src/x.js'), null, 'ningún patrón: null');
+  assert.equal(D.ownersOf([], 'x'), null);
+  // un punto o un signo de regex en el patrón son literales
+  assert.deepEqual(plain(D.ownersOf(D.parseOwners('a.b(c)+.txt @x'), 'a.b(c)+.txt')), ['@x']);
+  assert.equal(D.ownersOf(D.parseOwners('a.b @x'), 'aXb'), null);
+  assert.deepEqual(plain(D.ownersOf(D.parseOwners('?.md @x'), 'a.md')), ['@x']);
+  assert.equal(D.ownersOf(D.parseOwners('?.md @x'), 'ab.md'), null);
+});

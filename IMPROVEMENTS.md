@@ -787,8 +787,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Skills: no aplica: un Markdown armado con lo ya cargado, en el mismo módulo y con el mismo patrón que el resumen de la semana; ningún dominio que el repo no cubra.
 - Arena: no aplica: una sola forma obvia (sin consultas, con lo cargado y junto al resumen de la semana, como pide el ítem); lo que sí admitía variantes (de dónde salen los PRs y su autor) lo zanjó la revisión.
 - Guías: test-driven-development (las pruebas de `digest`, `github` y `demo` antes del código, vistas fallar por la razón esperada), ux-copy (el estado vacío «—» bajo su título con el total, y los mismos «Copiar Markdown» y «Guardar .md» que el resumen), content-translation (paso 3: los 8 textos por su sentido, pull request y Markdown sin traducir donde el idioma ya los usa así, y en árabe, hebreo, persa y urdu)
-- OMC: plan=— · revisión=7 hallazgos (6 arreglados; el de la misma persona con dos claves, pendiente 30) · verificación=pendiente
+- OMC: plan=— · revisión=7 hallazgos (6 arreglados; el de la misma persona con dos claves, pendiente 30) · verificación=PASS
 - Reclamo: loop/302, sin colisión
 - Issues: sin pedidos
-- Validado: pendiente
+- Validado: 812 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. Es la segunda puerta: la primera cayó solo en la e2e de escritorio por un `node_modules` viejo (Electron 45.2.3 frente al 45.3.2 fijado; `npm ci` y su binario lo arreglaron), y entre las dos entraron los arreglos de la revisión.
 - **Siguiente:** iteración 303, mantenimiento · QA: pendiente 13 (Todo error `http` de la API (500, 502, 409…) cae en el mismo rótulo «Sin conexi…)

@@ -2204,6 +2204,8 @@ function fakeGitHub() {
       }
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
+    const reviews = rest.match(/^\/pulls\/(\d+)\/reviews$/); // las revisiones de un PR (`prReviews` en `more` de `repo`: número -> lista)
+    if (reviews) return r.prReviews?.has(Number(reviews[1])) ? { body: r.prReviews.get(Number(reviews[1])) } : { status: 404, body: { message: 'Not Found' } };
     if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
     const file = rest.match(/^\/contents\/(.+)$/); // un archivo de una rama (el editor, js/editor.js)
     if (file) return { body: { type: 'file', encoding: 'base64', size: 20, content: Buffer.from(`// ${decodeURIComponent(file[1])} en ${q.get('ref')}\n`).toString('base64'), sha: 'blob-' + file[1].length } };
@@ -6004,6 +6006,53 @@ if (seccion('OpenSSF Scorecard en la salud'))
     await page.waitForTimeout(1500);
     if (await page.$('#hl-scorecard')) throw new Error('un repo privado muestra la sección de Scorecard');
     if (asked.length !== mid) throw new Error(`el nombre de un repo privado salió a Scorecard: ${JSON.stringify(asked.slice(mid))}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Tiempo de ciclo: las revisiones que el feed no trajo'))
+{
+  // ítem 223: un PR fusionado que se abrió antes de la actividad cargada entra en las etapas con sus revisiones, que se
+  // consultan al abrir la salud; el que la actividad ya trae entero no se consulta
+  const now = Date.now();
+  const iso = (d) => new Date(now - d * 864e5).toISOString();
+  const gh = fakeGitHub();
+  gh.repo('o/c', { prReviews: new Map([[7, [{ state: 'APPROVED', submitted_at: iso(4) }]], [8, [{ state: 'APPROVED', submitted_at: iso(1.5) }]]]) });
+  const merged = (n, opened) => ({ action: 'closed', number: n, pull_request: { number: n, title: `Cambio ${n}`, merged: true, created_at: iso(opened), base: { ref: 'main' }, head: { ref: `b${n}` }, user: { login: 'ana' } } });
+  // del más viejo al más nuevo (repoEvent pone cada uno primero, como la API)
+  gh.repoEvent('o/c', { type: 'WatchEvent', created_at: iso(3), payload: { action: 'started' } }); // lo más viejo cargado: hace 3 días
+  gh.repoEvent('o/c', { type: 'PullRequestEvent', created_at: iso(2.5), payload: merged(7, 10) }); // abierto hace 10 días: antes
+  gh.repoEvent('o/c', { type: 'PullRequestReviewEvent', created_at: iso(1.5), payload: { action: 'created', number: 8, review: { state: 'approved', body: 'ok' }, pull_request: { number: 8, title: 'Cambio 8' } } });
+  gh.repoEvent('o/c', { type: 'PullRequestEvent', created_at: iso(1), payload: merged(8, 2) }); // abierto hace 2 días: con su aprobación en el feed
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  const reviews = () => gh.calls.filter((c) => /\/pulls\/\d+\/reviews$/.test(c));
+  await step(page, 'un PR abierto antes de la actividad cargada entra en las etapas con sus revisiones, consultadas al abrir la salud y una sola vez; el que la actividad trae entero no se consulta', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/c`);
+    await loaded(page);
+    await page.waitForFunction(() => ['#7 ', '#8 '].every((n) => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('PR ' + n))), null, { timeout: T(20000) }).catch(() => {
+      throw new Error('no llegaron al panel los dos PRs fusionados');
+    });
+    await page.waitForTimeout(1000);
+    if (reviews().length) throw new Error(`se consultaron revisiones sin abrir la salud: ${reviews().join(', ')}`);
+    await page.click('#health-btn');
+    const line = await page.waitForSelector('#health[open] #hl-cycle-fetched', { timeout: T(8000) }).catch(() => {
+      throw new Error('la salud no dice cuántos PRs entraron con sus revisiones consultadas');
+    });
+    const text = await line.textContent();
+    if (text !== 'Abiertos antes de la actividad cargada, medidos con sus revisiones consultadas a GitHub: 1') throw new Error(`la línea dice «${text}»`);
+    const open = await page.$eval('#hl-cycle-open', (e) => e.textContent);
+    if (!/ · PRs medidos: 2$/.test(open)) throw new Error(`el PR consultado no entró en las etapas: «${open}»`);
+    if (await page.$('#hl-cycle-early')) throw new Error('el PR consultado sigue contado fuera de las etapas');
+    if (JSON.stringify(reviews()) !== '["/repos/o/c/pulls/7/reviews"]') throw new Error(`consultas de revisiones: ${JSON.stringify(reviews())}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-cycle-fetched', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (reviews().length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${reviews().length}`);
+    await page.keyboard.press('Escape');
   }, { allow: /404/ });
   await page.context().close();
 }

@@ -536,6 +536,7 @@ GB.i18n.define('fr', {
   'health.cycleMerge': 'De l’approbation à la fusion : médiane {median} · PR mesurées : {count}',
   'health.cycleSkipped': 'Fusionnées sans revue : {none} · revues et fusionnées sans approbation : {unapproved}',
   'health.cycleEarly': 'Ouvertes avant l’activité chargée, écartées des étapes car leurs revues peuvent manquer : {count}',
+  'health.cycleFetched': 'Ouvertes avant l’activité chargée, mesurées avec leurs revues récupérées sur GitHub : {count}',
   'health.cycleNoReviews': 'Cette source ne fournit pas les revues des pull requests : le temps de cycle ne peut pas être découpé en étapes. Le délai entre l’ouverture et la fusion, plus haut, reste mesuré.',
   'health.scorecard': 'Sécurité : OpenSSF Scorecard',
   'health.scorecardScore': 'Score : {score} sur 10, analysé le {date}',

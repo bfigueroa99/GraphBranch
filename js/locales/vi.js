@@ -535,6 +535,7 @@ GB.i18n.define('vi', {
   'health.cycleMerge': 'Từ khi duyệt đến khi gộp: trung vị {median} · PR đã đo: {count}',
   'health.cycleSkipped': 'Gộp mà không có review: {none} · có review nhưng gộp mà không được duyệt: {unapproved}',
   'health.cycleEarly': 'Mở trước hoạt động đã tải, không tính vào các giai đoạn vì review của chúng có thể bị thiếu: {count}',
+  'health.cycleFetched': 'Mở trước hoạt động đã tải, đo bằng review lấy từ GitHub: {count}',
   'health.cycleNoReviews': 'Nguồn này không cung cấp review của pull request, nên không thể chia thời gian chu kỳ thành các giai đoạn. Thời gian từ khi mở đến khi gộp, ở trên, vẫn được đo.',
   'health.scorecard': 'Bảo mật: OpenSSF Scorecard',
   'health.scorecardScore': 'Điểm: {score} trên 10, phân tích ngày {date}',

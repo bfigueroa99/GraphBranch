@@ -551,6 +551,7 @@ GB.i18n.define('ru', {
   'health.cycleMerge': 'От одобрения до слияния: медиана {median} · измерено PR: {count}',
   'health.cycleSkipped': 'Слиты без ревью: {none} · с ревью, но слиты без одобрения: {unapproved}',
   'health.cycleEarly': 'Открыты раньше загруженной активности, не входят в этапы, потому что их ревью может не быть: {count}',
+  'health.cycleFetched': 'Открыты раньше загруженной активности, измерены по ревью, запрошенным у GitHub: {count}',
   'health.cycleNoReviews': 'Этот источник не отдаёт ревью pull request, поэтому время цикла нельзя разбить на этапы. Время от открытия до слияния, выше, по-прежнему измеряется.',
   'health.scorecard': 'Безопасность: OpenSSF Scorecard',
   'health.scorecardScore': 'Оценка: {score} из 10, анализ от {date}',

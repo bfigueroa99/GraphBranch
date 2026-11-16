@@ -535,6 +535,7 @@ GB.i18n.define('sw', {
   'health.cycleMerge': 'Kutoka kuidhinishwa hadi kuunganishwa: wastani wa kati {median} · PR zilizopimwa: {count}',
   'health.cycleSkipped': 'Zilizounganishwa bila ukaguzi: {none} · zilizokaguliwa na kuunganishwa bila idhini: {unapproved}',
   'health.cycleEarly': 'Zilizofunguliwa kabla ya shughuli iliyopakiwa, nje ya hatua kwa sababu ukaguzi wake unaweza kukosekana: {count}',
+  'health.cycleFetched': 'Zilizofunguliwa kabla ya shughuli iliyopakiwa, zimepimwa kwa ukaguzi wake uliochukuliwa kutoka GitHub: {count}',
   'health.cycleNoReviews': 'Chanzo hiki hakitoi ukaguzi wa pull request, kwa hivyo muda wa mzunguko hauwezi kugawanywa kwa hatua. Muda kutoka kufunguliwa hadi kuunganishwa, hapo juu, bado unapimwa.',
   'health.scorecard': 'Usalama: OpenSSF Scorecard',
   'health.scorecardScore': 'Alama: {score} kati ya 10, imechambuliwa {date}',

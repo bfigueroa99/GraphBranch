@@ -543,6 +543,7 @@ GB.i18n.define('hr', {
   'health.cycleMerge': 'Od odobrenja do spajanja: medijan {median} · izmjereni PR-ovi: {count}',
   'health.cycleSkipped': 'Spojeni bez pregleda: {none} · pregledani i spojeni bez odobrenja: {unapproved}',
   'health.cycleEarly': 'Otvoreni prije učitane aktivnosti, izvan faza jer im pregledi mogu nedostajati: {count}',
+  'health.cycleFetched': 'Otvoreni prije učitane aktivnosti, izmjereni s pregledima dohvaćenima s GitHuba: {count}',
   'health.cycleNoReviews': 'Ovaj izvor ne daje preglede pull requestova, pa se vrijeme ciklusa ne može podijeliti na faze. Vrijeme od otvaranja do spajanja, gore, i dalje se mjeri.',
   'health.scorecard': 'Sigurnost: OpenSSF Scorecard',
   'health.scorecardScore': 'Ocjena: {score} od 10, analizirano {date}',

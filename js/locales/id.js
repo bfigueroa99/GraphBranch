@@ -535,6 +535,7 @@ GB.i18n.define('id', {
   'health.cycleMerge': 'Dari disetujui sampai digabung: median {median} · PR yang diukur: {count}',
   'health.cycleSkipped': 'Digabung tanpa tinjauan: {none} · ditinjau dan digabung tanpa persetujuan: {unapproved}',
   'health.cycleEarly': 'Dibuka sebelum aktivitas yang dimuat, di luar tahapan karena tinjauannya mungkin tidak lengkap: {count}',
+  'health.cycleFetched': 'Dibuka sebelum aktivitas yang dimuat, diukur dengan tinjauan yang diambil dari GitHub: {count}',
   'health.cycleNoReviews': 'Sumber ini tidak menyediakan tinjauan pull request, jadi waktu siklus tidak bisa dibagi per tahap. Waktu dari dibuka hingga digabung, di atas, tetap diukur.',
   'health.scorecard': 'Keamanan: OpenSSF Scorecard',
   'health.scorecardScore': 'Skor: {score} dari 10, dianalisis pada {date}',

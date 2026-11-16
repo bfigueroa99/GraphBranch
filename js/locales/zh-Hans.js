@@ -535,6 +535,7 @@ GB.i18n.define('zh-Hans', {
   'health.cycleMerge': '从批准到合并：中位数 {median} · 已测量的 PR：{count}',
   'health.cycleSkipped': '未经审查即合并：{none} · 经审查但未批准即合并：{unapproved}',
   'health.cycleEarly': '在已加载的活动之前打开、因审查可能缺失而不计入各阶段：{count}',
+  'health.cycleFetched': '在已加载的活动之前打开、用从 GitHub 获取的审查计入各阶段：{count}',
   'health.cycleNoReviews': '此来源不提供拉取请求的审查，因此无法将周期时间分阶段。上方从打开到合并的耗时仍会照常计算。',
   'health.scorecard': '安全：OpenSSF Scorecard',
   'health.scorecardScore': '得分：{score} / 10，分析于 {date}',

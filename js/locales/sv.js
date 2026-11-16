@@ -535,6 +535,7 @@ GB.i18n.define('sv', {
   'health.cycleMerge': 'Från godkännande till sammanfogning: median {median} · mätta PR: {count}',
   'health.cycleSkipped': 'Sammanfogade utan granskning: {none} · granskade och sammanfogade utan godkännande: {unapproved}',
   'health.cycleEarly': 'Öppnade före den inlästa aktiviteten, utanför faserna eftersom deras granskningar kan saknas: {count}',
+  'health.cycleFetched': 'Öppnade före den inlästa aktiviteten, mätta med sina granskningar hämtade från GitHub: {count}',
   'health.cycleNoReviews': 'Den här källan ger inte granskningar av pull requests, så cykeltiden kan inte delas upp i faser. Tiden från öppnad till sammanfogad, ovan, mäts fortfarande.',
   'health.scorecard': 'Säkerhet: OpenSSF Scorecard',
   'health.scorecardScore': 'Poäng: {score} av 10, analyserat {date}',

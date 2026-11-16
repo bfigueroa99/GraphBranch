@@ -63,6 +63,7 @@ function fakeGitHub() {
     tags: null, // [{ name, commit: { sha } }] (si es null, /tags da 404)
     forks: null, // forks como los da /forks (si es null, 404)
     prCommits: null, // número de PR -> fecha ISO de su primer commit, como /pulls/:n/commits (si es null, 404)
+    prReviews: null, // número de PR -> sus revisiones como las da /pulls/:n/reviews (un número que no está, 404)
     deployments: null, // despliegues como los da la API, el más nuevo primero (si es null, 404)
     deployStatuses: null, // id del despliegue -> estados como los da /statuses, el más nuevo primero (si es null, 404)
     checks: null, // sha -> check-runs del commit (si es null, la API de checks no existe)
@@ -131,7 +132,9 @@ function fakeGitHub() {
     if (p === '/repos/o/r/tags') return gh.tags ? { body: gh.tags } : { status: 404, body: { message: 'Not Found' } };
     const prCommits = p.match(/^\/repos\/o\/r\/pulls\/(\d+)\/commits$/);
     if (prCommits) return gh.prCommits ? (gh.prCommits.has(Number(prCommits[1])) ? { body: [{ commit: { author: { date: gh.prCommits.get(Number(prCommits[1])) } } }] } : { status: 404, body: { message: 'Not Found' } }) : { status: 404, body: { message: 'Not Found' } };
-    if (p === '/repos/o/r/forks') return gh.forks ? { body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
+    const prReviews = p.match(/^\/repos\/o\/r\/pulls\/(\d+)\/reviews$/);
+    if (prReviews) return gh.prReviews?.has(Number(prReviews[1])) ? { body: gh.prReviews.get(Number(prReviews[1])).slice(0, Number(u.searchParams.get('per_page')) || 30) } : { status: 404, body: { message: 'Not Found' } };
+    if (p === '/repos/o/r/forks') return gh.forks ?{ body: gh.forks } : { status: 404, body: { message: 'Not Found' } };
     if (p === '/repos/o/r/deployments') return gh.deployments ? { body: gh.deployments } : { status: 404, body: { message: 'Not Found' } };
     const dst = p.match(/^\/repos\/o\/r\/deployments\/(\d+)\/statuses$/);
     if (dst) return gh.deployStatuses?.has(Number(dst[1])) ? { body: gh.deployStatuses.get(Number(dst[1])).slice(0, Number(u.searchParams.get('per_page')) || 30) } : { status: 404, body: { message: 'Not Found' } };
@@ -1240,6 +1243,105 @@ test('primer commit de cada PR: sin token pide menos, para no gastar los 60 por 
   await src.cycle();
   await src.syncFirstCommits(Array.from({ length: 15 }, (_, i) => i + 1));
   assert.equal(gh.calls.filter((c) => /\/pulls\/\d+\/commits/.test(c)).length, 8);
+});
+
+/* Tiempo de ciclo por etapas (ítem 223): las revisiones de los PRs que el feed no trajo, con /pulls/:n/reviews, solo al pedirlas. */
+
+test('revisiones de los PRs que el feed no trajo: una consulta por PR y una sola vez, con su hora y su tipo, y un PR que falla no corta a los demás', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const at = (d) => `2026-01-0${d}T12:00:00Z`;
+  gh.prReviews = new Map([
+    [3, [
+      { state: 'COMMENTED', submitted_at: at(1) },
+      { state: 'CHANGES_REQUESTED', submitted_at: at(2) },
+      { state: 'DISMISSED', submitted_at: at(3) }, // una aprobación descartada sigue siendo una revisión, no una aprobación
+      { state: 'APPROVED', submitted_at: at(4) },
+      { state: 'PENDING' }, // sin enviar: no tiene hora y no cuenta
+      { state: 'APPROVED', submitted_at: 'no es una fecha' },
+    ]],
+    [4, []],
+  ]);
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  await src.cycle();
+  const asked = () => gh.calls.filter((c) => /\/pulls\/\d+\/reviews/.test(c));
+  assert.equal(asked().length, 0, 'sin abrir el panel no se consulta');
+  assert.equal(await src.syncPrReviews([3, 4, 5, 3, 0, -1, 2.5, '6']), true);
+  assert.equal(errors.length, 0);
+  assert.deepEqual(asked(), ['/repos/o/r/pulls/3/reviews?per_page=100', '/repos/o/r/pulls/4/reviews?per_page=100', '/repos/o/r/pulls/5/reviews?per_page=100'], 'una por PR, sin repetir el 3 ni pedir lo que no es un número de PR');
+  assert.deepEqual(plain(src.data.prReviews.get(3)), [
+    { kind: 'review', time: Date.parse(at(1)) },
+    { kind: 'review-changes', time: Date.parse(at(2)) },
+    { kind: 'review', time: Date.parse(at(3)) },
+    { kind: 'review-ok', time: Date.parse(at(4)) },
+  ]);
+  assert.deepEqual(plain(src.data.prReviews.get(4)), [], 'sin revisiones: se sabe que no las tuvo');
+  assert.equal(src.data.prReviews.get(5), null, 'el que dio 404 queda sin dato');
+  assert.equal(await src.syncPrReviews([3, 4, 5]), false);
+  assert.equal(asked().length, 3, 'lo ya consultado no se vuelve a pedir');
+});
+
+test('revisiones de los PRs que el feed no trajo: hasta 20 por apertura con token y 8 sin él, y dos aperturas seguidas no piden dos veces', async () => {
+  for (const [token, max] of [['tok', 20], ['', 8]]) {
+    const gh = fakeGitHub();
+    gh.push('main', 'a1');
+    gh.prReviews = new Map();
+    const { src } = connect(gh, token);
+    await src.cycle();
+    const asked = () => gh.calls.filter((c) => /\/pulls\/\d+\/reviews/.test(c)).length;
+    const nums = Array.from({ length: 25 }, (_, i) => i + 1);
+    const [a, b] = await Promise.all([src.syncPrReviews(nums), src.syncPrReviews(nums)]);
+    assert.deepEqual([a, b], [true, false], 'la segunda espera a la primera');
+    assert.equal(asked(), max, `con token «${token}»`);
+    await src.syncPrReviews(nums);
+    assert.equal(asked(), Math.min(25, 2 * max), 'otra apertura sigue con los que faltaban');
+  }
+});
+
+test('revisiones de los PRs que el feed no trajo: solo se piden las de los abiertos antes de la actividad cargada, y con ellas el PR entra en las etapas', async () => {
+  const gh = fakeGitHub();
+  gh.commit('a1');
+  gh.branches.set('main', 'a1');
+  const now = Date.now();
+  const iso = (d) => new Date(now - d * 864e5).toISOString();
+  const ev = (id, type, days, payload) => ({ id: String(id), type, actor: { login: 'ana' }, created_at: iso(days), payload });
+  const merged = (n, opened) => ({ action: 'closed', number: n, pull_request: { number: n, title: `PR ${n}`, merged: true, created_at: iso(opened), base: { ref: 'main' }, head: { ref: `b${n}` }, user: { login: 'ana' } } });
+  gh.events = [
+    ev(5, 'PullRequestEvent', 1, merged(8, 2)), // el 8 se abrió hace 2 días, dentro de la actividad cargada…
+    ev(4, 'PullRequestReviewEvent', 1.5, { action: 'created', number: 8, review: { state: 'approved', body: 'ok' }, pull_request: { number: 8, title: 'PR 8' } }), // …que trae su aprobación
+    ev(3, 'PullRequestEvent', 2.5, merged(7, 10)), // el 7 se abrió hace 10 días: antes de lo más viejo cargado
+    ev(2, 'PushEvent', 3, { ref: 'refs/heads/main', head: 'a1' }), // lo más viejo cargado: hace 3 días
+  ];
+  gh.prReviews = new Map([[7, [{ state: 'APPROVED', submitted_at: iso(4) }]], [8, [{ state: 'APPROVED', submitted_at: iso(1.5) }]]]);
+  const { src, updates, GB } = connect(gh, 'tok');
+  await src.cycle();
+  const acts = updates.flatMap((u) => Array.from(u.activities || []));
+  const before = plain(GB.health.compute(src.data, acts, Date.now()).cycle);
+  assert.equal(before.early, 1, 'sin consultar, el 7 queda fuera de las etapas');
+  assert.equal(before.open.n, 1);
+  assert.equal(await src.syncPrReviews(GB.health.earlyMerges(acts, Date.now())), true);
+  assert.deepEqual(gh.calls.filter((c) => /\/pulls\/\d+\/reviews/.test(c)), ['/repos/o/r/pulls/7/reviews?per_page=100'], 'solo el que el feed no trajo entero');
+  const after = plain(GB.health.compute(src.data, acts, Date.now()).cycle);
+  assert.equal(after.early, 0);
+  assert.equal(after.fetched, 1);
+  assert.equal(after.open.n, 2, 'el 7 entra en las etapas con su aprobación consultada');
+  assert.ok(Math.abs(after.review.median - 0) < 1 && after.merge.n === 2);
+});
+
+test('revisiones de los PRs que el feed no trajo: GitLab y las demás fuentes hijas no piden /pulls/:n/reviews', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.prReviews = new Map([[3, []]]);
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  for (const host of ['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local']) {
+    src.host = host;
+    assert.equal(await src.syncPrReviews([3]), false, host);
+  }
+  assert.equal(gh.calls.filter((c) => /\/reviews/.test(c)).length, 0);
+  src.host = 'github';
+  assert.equal(await src.syncPrReviews([3]), true, 'GitHub sí');
 });
 
 /* ---------- editar un archivo (js/editor.js): leer de una rama y escribir un commit ---------- */

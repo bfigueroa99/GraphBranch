@@ -543,6 +543,7 @@ GB.i18n.define('ro', {
   'health.cycleMerge': 'De la aprobare la îmbinare: mediana {median} · PR-uri măsurate: {count}',
   'health.cycleSkipped': 'Îmbinate fără recenzie: {none} · recenzate și îmbinate fără aprobare: {unapproved}',
   'health.cycleEarly': 'Deschise înainte de activitatea încărcată, lăsate în afara etapelor pentru că recenziile lor pot lipsi: {count}',
+  'health.cycleFetched': 'Deschise înainte de activitatea încărcată, măsurate cu recenziile lor aduse de pe GitHub: {count}',
   'health.cycleNoReviews': 'Această sursă nu oferă recenziile pull request-urilor, așa că timpul de ciclu nu poate fi împărțit pe etape. Timpul de la deschidere la îmbinare, mai sus, se măsoară în continuare.',
   'health.scorecard': 'Securitate: OpenSSF Scorecard',
   'health.scorecardScore': 'Scor: {score} din 10, analizat pe {date}',

@@ -535,6 +535,7 @@ GB.i18n.define('hi', {
   'health.cycleMerge': 'स्वीकृति से मर्ज तक: माध्यिका {median} · मापे गए PR: {count}',
   'health.cycleSkipped': 'बिना समीक्षा के मर्ज: {none} · समीक्षा हुई पर बिना स्वीकृति के मर्ज: {unapproved}',
   'health.cycleEarly': 'लोड की गई गतिविधि से पहले खुले, चरणों से बाहर क्योंकि उनकी समीक्षाएँ छूटी हो सकती हैं: {count}',
+  'health.cycleFetched': 'लोड की गई गतिविधि से पहले खुले, GitHub से लाई गई उनकी समीक्षाओं से मापे गए: {count}',
   'health.cycleNoReviews': 'यह स्रोत pull request की समीक्षाएँ नहीं देता, इसलिए साइकिल टाइम को चरणों में नहीं बाँटा जा सकता। खुलने से मर्ज होने तक का समय, ऊपर, अब भी मापा जाता है।',
   'health.scorecard': 'सुरक्षा: OpenSSF Scorecard',
   'health.scorecardScore': 'स्कोर: 10 में से {score}, विश्लेषण {date} को',

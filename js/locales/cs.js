@@ -546,6 +546,7 @@ GB.i18n.define('cs', {
   'health.cycleMerge': 'Od schválení po sloučení: medián {median} · změřené PR: {count}',
   'health.cycleSkipped': 'Sloučené bez revize: {none} · s revizí, ale sloučené bez schválení: {unapproved}',
   'health.cycleEarly': 'Otevřené před načtenou aktivitou, mimo fáze, protože jejich revize mohou chybět: {count}',
+  'health.cycleFetched': 'Otevřené před načtenou aktivitou, změřené s revizemi dotaženými z GitHubu: {count}',
   'health.cycleNoReviews': 'Tento zdroj neposkytuje revize pull requestů, takže dobu cyklu nelze rozdělit na fáze. Doba od otevření po sloučení, výše, se měří dál.',
   'health.scorecard': 'Zabezpečení: OpenSSF Scorecard',
   'health.scorecardScore': 'Skóre: {score} z 10, analýza z {date}',

@@ -536,6 +536,7 @@ GB.i18n.define('nl', {
   'health.cycleMerge': 'Van goedkeuring tot samenvoegen: mediaan {median} · gemeten PR’s: {count}',
   'health.cycleSkipped': 'Samengevoegd zonder review: {none} · gereviewd en samengevoegd zonder goedkeuring: {unapproved}',
   'health.cycleEarly': 'Geopend vóór de geladen activiteit, buiten de fases omdat hun reviews kunnen ontbreken: {count}',
+  'health.cycleFetched': 'Geopend vóór de geladen activiteit, gemeten met hun reviews opgehaald bij GitHub: {count}',
   'health.cycleNoReviews': 'Deze bron levert geen reviews van pull requests, dus de cyclustijd kan niet in fases worden opgesplitst. De tijd van geopend tot samengevoegd, hierboven, wordt wel gemeten.',
   'health.scorecard': 'Beveiliging: OpenSSF Scorecard',
   'health.scorecardScore': 'Score: {score} van 10, geanalyseerd op {date}',

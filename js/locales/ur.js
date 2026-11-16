@@ -578,6 +578,7 @@ GB.i18n.define('ur', {
   'health.cycleMerge': 'منظوری سے مرج تک: وسطانیہ {median} · ناپے گئے PR: {count}',
   'health.cycleSkipped': 'بغیر جائزے کے مرج: {none} · جائزہ ہوا مگر بغیر منظوری کے مرج: {unapproved}',
   'health.cycleEarly': 'لوڈ کی گئی سرگرمی سے پہلے کھلے، مراحل سے باہر کیونکہ ان کے جائزے غائب ہو سکتے ہیں: {count}',
+  'health.cycleFetched': 'لوڈ کی گئی سرگرمی سے پہلے کھلے، GitHub سے لائے گئے جائزوں سے ناپے گئے: {count}',
   'health.cycleNoReviews': 'یہ ذریعہ pull request کے جائزے نہیں دیتا، اس لیے سائیکل ٹائم کو مراحل میں نہیں بانٹا جا سکتا۔ کھلنے سے مرج ہونے تک کا وقت، اوپر، اب بھی ناپا جاتا ہے۔',
   'health.scorecard': 'سیکیورٹی: OpenSSF Scorecard',
   'health.scorecardScore': 'اسکور: 10 میں سے {score}، تجزیہ {date} کو',

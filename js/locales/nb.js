@@ -535,6 +535,7 @@ GB.i18n.define('nb', {
   'health.cycleMerge': 'Fra godkjenning til fletting: median {median} · målte PR-er: {count}',
   'health.cycleSkipped': 'Flettet uten gjennomgang: {none} · gjennomgått og flettet uten godkjenning: {unapproved}',
   'health.cycleEarly': 'Åpnet før den innlastede aktiviteten, holdt utenfor fasene fordi gjennomgangene deres kan mangle: {count}',
+  'health.cycleFetched': 'Åpnet før den innlastede aktiviteten, målt med gjennomgangene deres hentet fra GitHub: {count}',
   'health.cycleNoReviews': 'Denne kilden gir ikke gjennomganger av pull requests, så syklustiden kan ikke deles opp i faser. Tiden fra åpnet til flettet, over, måles fortsatt.',
   'health.scorecard': 'Sikkerhet: OpenSSF Scorecard',
   'health.scorecardScore': 'Poeng: {score} av 10, analysert {date}',

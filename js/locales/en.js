@@ -541,6 +541,7 @@ GB.i18n.define('en', {
   'health.cycleMerge': 'Approval to merge: median {median} · PRs measured: {count}',
   'health.cycleSkipped': 'Merged without review: {none} · reviewed and merged without approval: {unapproved}',
   'health.cycleEarly': 'Opened before the loaded activity, left out of the stages because their reviews may be missing: {count}',
+  'health.cycleFetched': 'Opened before the loaded activity, measured with their reviews fetched from GitHub: {count}',
   'health.cycleNoReviews': "This source doesn't provide pull request reviews, so cycle time can't be split into stages. Time from opened to merged, above, is still measured.",
   'health.scorecard': 'Security: OpenSSF Scorecard',
   'health.scorecardScore': 'Score: {score} out of 10, analyzed on {date}',

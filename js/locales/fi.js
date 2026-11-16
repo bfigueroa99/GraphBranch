@@ -535,6 +535,7 @@ GB.i18n.define('fi', {
   'health.cycleMerge': 'Hyväksynnästä yhdistämiseen: mediaani {median} · mitattuja PR:iä: {count}',
   'health.cycleSkipped': 'Yhdistetty ilman katselmointia: {none} · katselmoitu ja yhdistetty ilman hyväksyntää: {unapproved}',
   'health.cycleEarly': 'Avattu ennen ladattua toimintaa, jätetty vaiheiden ulkopuolelle, koska niiden katselmointeja voi puuttua: {count}',
+  'health.cycleFetched': 'Avattu ennen ladattua toimintaa, mitattu GitHubista haetuilla katselmoinneilla: {count}',
   'health.cycleNoReviews': 'Tämä lähde ei anna pull requestien katselmointeja, joten sykliaikaa ei voi jakaa vaiheisiin. Aika avaamisesta yhdistämiseen, yllä, mitataan edelleen.',
   'health.scorecard': 'Tietoturva: OpenSSF Scorecard',
   'health.scorecardScore': 'Pisteet: {score}/10, analysoitu {date}',

@@ -578,6 +578,7 @@ GB.i18n.define('fa', {
   'health.cycleMerge': 'از تأیید تا ادغام: میانه {median} · PRهای سنجیده‌شده: {count}',
   'health.cycleSkipped': 'ادغام‌شده بدون بازبینی: {none} · بازبینی‌شده و ادغام‌شده بدون تأیید: {unapproved}',
   'health.cycleEarly': 'باز شده پیش از فعالیت بارگذاری‌شده، بیرون از مراحل چون ممکن است بازبینی‌هایشان نباشد: {count}',
+  'health.cycleFetched': 'باز شده پیش از فعالیت بارگذاری‌شده، سنجیده با بازبینی‌هایشان که از GitHub گرفته شد: {count}',
   'health.cycleNoReviews': 'این منبع بازبینی‌های pull requestها را نمی‌دهد، پس زمان چرخه را نمی‌توان به مراحل تقسیم کرد. زمان از باز شدن تا ادغام، در بالا، همچنان سنجیده می‌شود.',
   'health.scorecard': 'امنیت: OpenSSF Scorecard',
   'health.scorecardScore': 'امتیاز: {score} از 10، تحلیل‌شده در {date}',

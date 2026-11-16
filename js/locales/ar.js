@@ -634,6 +634,7 @@ GB.i18n.define('ar', {
   'health.cycleMerge': 'من الاعتماد إلى الدمج: الوسيط {median} · طلبات السحب المقيسة: {count}',
   'health.cycleSkipped': 'مدموجة بلا مراجعة: {none} · رُوجعت ودُمجت بلا اعتماد: {unapproved}',
   'health.cycleEarly': 'فُتحت قبل النشاط المحمّل، وهي خارج المراحل لأن مراجعاتها قد تكون ناقصة: {count}',
+  'health.cycleFetched': 'فُتحت قبل النشاط المحمّل، وقيست بمراجعاتها المستعلَم عنها من GitHub: {count}',
   'health.cycleNoReviews': 'هذا المصدر لا يوفّر مراجعات طلبات السحب، لذا لا يمكن تقسيم زمن الدورة إلى مراحل. أما الوقت من الفتح إلى الدمج، في الأعلى، فما زال يُقاس.',
   'health.scorecard': 'الأمان: OpenSSF Scorecard',
   'health.scorecardScore': 'النتيجة: {score} من 10، حُلِّل في {date}',

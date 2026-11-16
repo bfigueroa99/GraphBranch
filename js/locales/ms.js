@@ -535,6 +535,7 @@ GB.i18n.define('ms', {
   'health.cycleMerge': 'Dari kelulusan hingga digabungkan: median {median} · PR yang diukur: {count}',
   'health.cycleSkipped': 'Digabungkan tanpa semakan: {none} · disemak dan digabungkan tanpa kelulusan: {unapproved}',
   'health.cycleEarly': 'Dibuka sebelum aktiviti yang dimuatkan, di luar peringkat kerana semakannya mungkin tiada: {count}',
+  'health.cycleFetched': 'Dibuka sebelum aktiviti yang dimuatkan, diukur dengan semakan yang diambil dari GitHub: {count}',
   'health.cycleNoReviews': 'Sumber ini tidak memberikan semakan pull request, jadi masa kitaran tidak boleh dibahagikan mengikut peringkat. Masa dari dibuka hingga digabungkan, di atas, masih diukur.',
   'health.scorecard': 'Keselamatan: OpenSSF Scorecard',
   'health.scorecardScore': 'Skor: {score} daripada 10, dianalisis pada {date}',

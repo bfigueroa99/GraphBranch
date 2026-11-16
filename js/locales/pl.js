@@ -546,6 +546,7 @@ GB.i18n.define('pl', {
   'health.cycleMerge': 'Od zatwierdzenia do scalenia: mediana {median} · zmierzone PR: {count}',
   'health.cycleSkipped': 'Scalone bez recenzji: {none} · zrecenzowane i scalone bez zatwierdzenia: {unapproved}',
   'health.cycleEarly': 'Otwarte przed wczytaną aktywnością, poza etapami, bo może brakować ich recenzji: {count}',
+  'health.cycleFetched': 'Otwarte przed wczytaną aktywnością, zmierzone z recenzjami pobranymi z GitHuba: {count}',
   'health.cycleNoReviews': 'To źródło nie podaje recenzji pull requestów, więc czasu cyklu nie da się podzielić na etapy. Czas od otwarcia do scalenia, wyżej, jest nadal mierzony.',
   'health.scorecard': 'Bezpieczeństwo: OpenSSF Scorecard',
   'health.scorecardScore': 'Wynik: {score} na 10, analiza z {date}',

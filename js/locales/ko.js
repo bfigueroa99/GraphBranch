@@ -535,6 +535,7 @@ GB.i18n.define('ko', {
   'health.cycleMerge': '승인부터 병합까지: 중앙값 {median} · 측정한 PR: {count}',
   'health.cycleSkipped': '리뷰 없이 병합: {none} · 리뷰는 있었지만 승인 없이 병합: {unapproved}',
   'health.cycleEarly': '불러온 활동보다 먼저 열려 리뷰가 빠졌을 수 있어 단계에서 제외: {count}',
+  'health.cycleFetched': '불러온 활동보다 먼저 열려 GitHub에서 가져온 리뷰로 측정: {count}',
   'health.cycleNoReviews': '이 소스는 풀 리퀘스트 리뷰를 제공하지 않아 사이클 타임을 단계로 나눌 수 없습니다. 열림에서 병합까지 걸린 시간(위)은 계속 측정됩니다.',
   'health.scorecard': '보안: OpenSSF Scorecard',
   'health.scorecardScore': '점수: 10점 중 {score}점, {date} 분석',

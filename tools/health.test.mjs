@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, earlyMerges } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -745,13 +745,70 @@ test('tiempo de ciclo por etapas: la mediana de cada etapa de los PRs fusionados
     noReview: 1,
     noApproval: 1,
     early: 1,
+    fetched: 0,
   });
   assert.equal(compute(repo(), [], NOW).cycle, null, 'sin PRs fusionados en las 4 semanas no hay nada que partir');
   const none = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4), { kind: 'push', id: 'p', time: ago(10) }], NOW).cycle));
-  assert.deepEqual(none, { reviews: true, merged: 1, open: { median: null, n: 0 }, review: { median: null, n: 0 }, merge: { median: null, n: 0 }, noReview: 1, noApproval: 0, early: 0 }, 'sin revisiones, las etapas no tienen mediana');
+  assert.deepEqual(none, { reviews: true, merged: 1, open: { median: null, n: 0 }, review: { median: null, n: 0 }, merge: { median: null, n: 0 }, noReview: 1, noApproval: 0, early: 0, fetched: 0 }, 'sin revisiones, las etapas no tienen mediana');
   const alone = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4)], NOW).cycle));
   assert.equal(alone.early, 1, 'con solo su merge cargado, la actividad no llega a su apertura: no se sabe si tuvo revisión');
   assert.equal(alone.noReview, 0);
+});
+
+test('tiempo de ciclo: los PRs que el feed no trajo entero (earlyMerges) son los fusionados de las 4 semanas abiertos antes de la actividad cargada, el de fusión más reciente primero y cada uno una vez', () => {
+  const mg = (id, number, mergedDays, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(mergedDays), openedAt: openedDays == null ? null : ago(openedDays) });
+  const acts = [
+    { kind: 'push', id: 'p', time: ago(35) }, // la actividad más vieja cargada: hace 35 días
+    mg('1', 1, 2, 36), // abierto antes: sus revisiones de entonces pueden faltar
+    mg('2', 2, 1, 50), mg('2b', 2, 1.5, 50), // otro, fusionado después: va primero, y su merge repetido cuenta una vez
+    mg('3', 3, 3, 5), // abierto después de la actividad más vieja: la actividad ya trae su historia
+    mg('4', 4, 30, 40), // fusionado hace más de 4 semanas: no entra en el tiempo de ciclo
+    mg('5', 5, 1, null), // sin apertura
+    mg('6', 6, -1, 40), // del futuro
+    { kind: 'pr-merge', id: 'x', time: ago(1), openedAt: ago(40) }, // sin número
+  ];
+  assert.deepEqual([...earlyMerges(acts, NOW)], [2, 1]);
+  assert.deepEqual([...earlyMerges([], NOW)], []);
+  assert.deepEqual([...earlyMerges([mg('3', 3, 3, 5), { kind: 'push', id: 'q', time: ago(10) }], NOW)], [], 'con la historia del PR ya cargada no hay nada que consultar');
+});
+
+test('tiempo de ciclo: un PR abierto antes de la actividad cargada entra en las etapas con sus revisiones consultadas (data.prReviews), y se cuenta aparte', () => {
+  const mg = (id, number, mergedDays, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(mergedDays), openedAt: ago(openedDays) });
+  const rv = (kind, number, days) => ({ kind, id: `${kind}:${number}:${days}`, number, time: ago(days) });
+  const acts = [
+    { kind: 'push', id: 'p', time: ago(6) }, // la actividad más vieja cargada: hace 6 días
+    // el 1: sus revisiones consultadas (cambios pedidos y una aprobación) más una aprobación que sí trajo el feed: manda la última
+    mg('1', 1, 2, 10), rv('review-ok', 1, 2.5),
+    mg('2', 2, 1, 12), // el 2: solo un comentario consultado: revisado y fusionado sin aprobación
+    mg('3', 3, 1.5, 9), // el 3: consultado y sin ninguna revisión: fusionado sin revisión
+    mg('4', 4, 3, 20), // el 4: la consulta falló: sigue fuera de las etapas
+    mg('5', 5, 2.5, 30), // el 5: todavía sin consultar
+    mg('6', 6, 1, 5), rv('review-ok', 6, 2), // el 6: con su historia en la actividad, como siempre
+  ];
+  const data = repo();
+  data.prReviews = new Map([
+    // del 1, una revisión de antes de abrirlo y una aprobación de después de fusionarlo, que no cuentan
+    [1, [{ kind: 'review', time: ago(11) }, { kind: 'review-changes', time: ago(9) }, { kind: 'review-ok', time: ago(4) }, { kind: 'review-ok', time: ago(1) }]],
+    [2, [{ kind: 'review', time: ago(11) }]],
+    [3, []],
+    [4, null],
+    [6, [{ kind: 'review-ok', time: ago(4.5) }]], // el 6 no estaba fuera: lo consultado no cambia lo que dice la actividad
+  ]);
+  const c = JSON.parse(JSON.stringify(compute(data, acts, NOW).cycle));
+  assert.deepEqual(c, {
+    reviews: true,
+    merged: 6,
+    open: { median: DAY, n: 3 }, // 1 (el 1), 1 (el 2) y 3 días (el 6)
+    review: { median: 3.25 * DAY, n: 2 }, // 6,5 (el 1, de los cambios pedidos a la aprobación del feed) y 0 días (el 6)
+    merge: { median: 0.75 * DAY, n: 2 }, // 0,5 (el 1) y 1 día (el 6)
+    noReview: 1, // el 3
+    noApproval: 1, // el 2
+    early: 2, // el 4 y el 5
+    fetched: 3, // el 1, el 2 y el 3
+  });
+  assert.deepEqual([...earlyMerges(acts, NOW)], [2, 3, 1, 5, 4],'earlyMerges no mira lo consultado: decide qué pedir la fuente, que no repite');
+  const off = JSON.parse(JSON.stringify(compute(data, acts, NOW, 'recent', { reviews: false }).cycle));
+  assert.deepEqual(off, { reviews: false, merged: 6 }, 'una fuente que no da revisiones no usa lo consultado');
 });
 
 test('tiempo de ciclo: una fuente que no da revisiones lo dice, y no cuenta sus PRs como fusionados sin revisión', () => {

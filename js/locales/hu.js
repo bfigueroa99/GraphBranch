@@ -535,6 +535,7 @@ GB.i18n.define('hu', {
   'health.cycleMerge': 'A jóváhagyástól az egyesítésig: medián {median} · mért PR-ek: {count}',
   'health.cycleSkipped': 'Átnézés nélkül egyesítve: {none} · átnézve, de jóváhagyás nélkül egyesítve: {unapproved}',
   'health.cycleEarly': 'A betöltött tevékenység előtt megnyitva, a szakaszokon kívül, mert az átnézéseik hiányozhatnak: {count}',
+  'health.cycleFetched': 'A betöltött tevékenység előtt megnyitva, a GitHubról lekért átnézéseikkel mérve: {count}',
   'health.cycleNoReviews': 'Ez a forrás nem adja meg a pull requestek átnézéseit, így a ciklusidő nem bontható szakaszokra. A megnyitástól az egyesítésig eltelt időt (fentebb) továbbra is méri.',
   'health.scorecard': 'Biztonság: OpenSSF Scorecard',
   'health.scorecardScore': 'Pontszám: {score}/10, elemezve: {date}',

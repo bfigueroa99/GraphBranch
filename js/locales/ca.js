@@ -535,6 +535,7 @@ GB.i18n.define('ca', {
   'health.cycleMerge': 'De l’aprovació a la fusió: mediana {median} · PR mesurats: {count}',
   'health.cycleSkipped': 'Fusionats sense revisió: {none} · revisats i fusionats sense aprovació: {unapproved}',
   'health.cycleEarly': 'Oberts abans de l’activitat carregada, fora de les etapes perquè en poden faltar les revisions: {count}',
+  'health.cycleFetched': 'Oberts abans de l’activitat carregada, mesurats amb les revisions consultades a GitHub: {count}',
   'health.cycleNoReviews': 'Aquesta font no dona les revisions dels pull requests, així que el temps de cicle no es pot dividir en etapes. El temps d’obert a fusionat, més amunt, sí que es mesura.',
   'health.scorecard': 'Seguretat: OpenSSF Scorecard',
   'health.scorecardScore': 'Puntuació: {score} de 10, analitzat el {date}',

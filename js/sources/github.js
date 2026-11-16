@@ -106,6 +106,7 @@
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
   const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
+  const OWNERS_RETRY_MS = 5 * 60e3; // un CODEOWNERS que no se pudo pedir se vuelve a pedir pasado esto
   const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
   // un repo vacío no se llena solo en segundos: se mira cada minuto hasta su primer push (sin token, cada 5: cada
   // intento gasta unas 3 consultas de las 60 por hora, y la cuota se comparte con los demás repos seguidos)
@@ -1611,11 +1612,16 @@
         orden en que lo busca GitHub), o null si no hay. Se pide una vez por repo y solo cuando el panel de cambios lo
         necesita; un fallo no se recuerda (el próximo panel lo vuelve a pedir). */
     codeOwners() {
+      // las fuentes que heredan de esta (GitLab, Codeberg, Bitbucket, Azure, las carpetas locales) no tienen esta API
+      if (this.constructor !== GitHubSource) return Promise.resolve(null);
+      // un fallo se recuerda 5 minutos: ni un 403 que no se pasa solo ni la cuota agotada se piden en cada commit
+      if (this.ownersAsk && this.ownersFail && Date.now() - this.ownersFail > OWNERS_RETRY_MS) this.ownersAsk = null;
       if (!this.ownersAsk) {
         const ask = this.askCodeOwners();
         this.ownersAsk = ask;
+        this.ownersFail = 0;
         ask.catch(() => {
-          if (this.ownersAsk === ask) this.ownersAsk = null;
+          if (this.ownersAsk === ask) this.ownersFail = Date.now();
         });
       }
       return this.ownersAsk;
@@ -1643,9 +1649,11 @@
       // sin token, por REST y en orden, hasta el primero que exista
       for (const path of where) {
         const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}`, { allow: [404] });
-        if (status === 404 || data?.type !== 'file' || data.encoding !== 'base64' || !data.content) continue;
-        const { text, binary } = U.b64decode(data.content);
-        if (!binary) return { path, text };
+        if (status === 404 || data?.type !== 'file') continue;
+        // el primero que existe manda, aunque sea vacío o no se pueda leer (de más de 1 MB, `/contents` no da su contenido)
+        if (data.encoding !== 'base64' || (data.size > 0 && !data.content)) return { path, text: '' };
+        const { text, binary } = U.b64decode(data.content || '');
+        return { path, text: binary ? '' : text };
       }
       return null;
     }

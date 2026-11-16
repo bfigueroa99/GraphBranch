@@ -312,3 +312,13 @@ LICENSE          @legal
   assert.deepEqual(plain(D.ownersOf(D.parseOwners('?.md @x'), 'a.md')), ['@x']);
   assert.equal(D.ownersOf(D.parseOwners('?.md @x'), 'ab.md'), null);
 });
+
+test('ownersOf: un patrón hecho para retroceder sin fin (`*a*a*a…b`) no cuelga la página, y `/` o un `\` al final no nombran nada', () => {
+  const rules = D.parseOwners(`${'*a'.repeat(20)}b @x\n${'**a'.repeat(12)}b @y\n/ @z\nfoo\\ @w`);
+  assert.deepEqual(plain(rules.map((r) => r.pattern)), ['*a'.repeat(20) + 'b', '**a'.repeat(12) + 'b']);
+  const t0 = Date.now();
+  for (const p of ['a'.repeat(200), 'a/'.repeat(100) + 'a', 'a'.repeat(4000)]) assert.equal(D.ownersOf(rules, p), null);
+  assert.ok(Date.now() - t0 < 1000, `tardó ${Date.now() - t0} ms`);
+  assert.deepEqual(plain(D.ownersOf(rules, 'a'.repeat(30) + 'b')), ['@y'], 'y sigue coincidiendo cuando corresponde');
+  assert.deepEqual(plain(D.parseOwners('x'.repeat(3 * 1024 * 1024 + 1))), [], 'de más de 3 MB, GitHub no lo usa');
+});

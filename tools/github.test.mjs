@@ -1064,7 +1064,7 @@ test('codeOwners: sin token busca en .github/, la raíz y docs/ (el primero que 
   assert.equal(gh.calls.length, 3, 'las tres ubicaciones, una vez');
 });
 
-test('codeOwners: con token, una consulta de GraphQL por las tres ubicaciones; si falla, se vuelve a pedir la próxima vez', async () => {
+test('codeOwners: con token, una consulta de GraphQL por las tres ubicaciones; un fallo se recuerda 5 minutos y después se vuelve a pedir', async () => {
   const gh = fakeGitHub();
   gh.push('main', 'a1');
   const { src } = connect(gh, 'tok');
@@ -1091,7 +1091,27 @@ test('codeOwners: con token, una consulta de GraphQL por las tres ubicaciones; s
   gh.override = (path, opts) => (path === '/graphql' && /on Blob/.test(JSON.parse(opts.body).query) ? { status: 500, body: { message: 'boom' } } : ok(path, opts));
   await assert.rejects(again.codeOwners());
   gh.override = ok;
+  const before = sent.length;
+  await assert.rejects(again.codeOwners(), undefined, 'recién fallado: no se pide en cada commit');
+  assert.equal(sent.length, before);
+  again.ownersFail -= 6 * 60e3; // pasaron más de 5 minutos
   assert.deepEqual(plain(await again.codeOwners()), { path: 'CODEOWNERS', text: 'raiz @b' });
+  assert.equal(sent.length, before + 1);
+});
+
+test('codeOwners: el primero que existe manda aunque no se pueda leer (más de 1 MB por /contents), y las fuentes que heredan de GitHub no lo piden', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  gh.override = (path) => (path === '/repos/o/r/contents/.github/CODEOWNERS' ? { body: { type: 'file', encoding: 'none', size: 2e6, content: '', sha: 'x' } } : path === '/repos/o/r/contents/CODEOWNERS' ? { body: { type: 'file', encoding: 'base64', size: 4, content: btoa('* @b'), sha: 'y' } } : null);
+  const { src, GB } = connect(gh);
+  gh.calls.length = 0;
+  assert.deepEqual(plain(await src.codeOwners()), { path: '.github/CODEOWNERS', text: '' });
+  assert.equal(gh.calls.length, 1, 'no sigue buscando en la raíz');
+  const Hija = class extends GB.GitHubSource {};
+  const other = new Hija({ owner: 'o', name: 'r' });
+  gh.calls.length = 0;
+  assert.equal(await other.codeOwners(), null);
+  assert.equal(gh.calls.length, 0, 'GitLab, Codeberg, Bitbucket, Azure y las carpetas locales no consultan /contents/CODEOWNERS');
 });
 
 /* Forks activos: /forks, solo los que hicieron push propio en los últimos 90 días. */

@@ -426,18 +426,37 @@ if (seccion('Escritorio (1280×800)'))
   });
 
   await step(page, 'los avisos se retienen con el foco y se anuncian una sola vez', async () => {
-    const t = await page.waitForSelector('#toasts .toast:not(.leaving)', { timeout: T(30000) });
+    // el foco va a un aviso recién llegado, en la misma vuelta de la página en que entra. Antes se tomaba el primero del
+    // DOM, que es el más viejo, y se le daba el foco una ida y vuelta de Playwright después: si ya había vivido sus 6 s,
+    // se cerraba igual (iteración 306: con 6,3, 6,7 y 6,8 s de edad al recibir el foco, en la rama y en `dev`)
+    const t = (
+      await page.evaluateHandle(
+        (ms) =>
+          new Promise((ok) => {
+            const box = document.querySelector('#toasts');
+            const done = (el) => (mo.disconnect(), clearTimeout(late), el?.querySelector('.toast-main').focus(), ok(el || null));
+            const mo = new MutationObserver((list) => {
+              for (const m of list) for (const n of m.addedNodes) if (n.classList?.contains('toast')) return done(n);
+            });
+            mo.observe(box, { childList: true });
+            const late = setTimeout(() => done(null), ms);
+          }),
+        T(30000),
+      )
+    ).asElement();
+    if (!t) throw new Error('no llegó ningún aviso en 30 s');
     // regiones vivas anidadas: algunos lectores anuncian dos veces cada aviso
     const nested = await page.evaluate(() =>
       document.querySelector('#toasts')?.hasAttribute('aria-live')
         ? document.querySelectorAll('#toasts [role=status], #toasts [role=alert], #toasts [aria-live]').length
         : 0,
     );
-    await t.evaluate((el) => el.querySelector('.toast-main').focus());
-    await page.waitForTimeout(7000); // un aviso común dura 6 s
+    const held = await t.evaluate((el) => el.contains(document.activeElement) && el.classList.contains('paused'));
+    await page.waitForTimeout(7000); // un aviso común dura 6 s: con el foco, tiene que seguir ahí después
     const kept = await t.evaluate((el) => el.isConnected && !el.classList.contains('leaving'));
     await page.evaluate(() => document.activeElement?.blur());
     if (nested) throw new Error(`${nested} avisos son regiones vivas dentro de otra`);
+    if (!held) throw new Error('el aviso con el foco no se detuvo');
     if (!kept) throw new Error('el aviso con el foco se cerró solo');
   });
 

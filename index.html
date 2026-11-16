@@ -872,6 +872,11 @@
         <option value="name" data-i18n="constellation.orderName">Name</option>
       </select>
     </label>
+    <label class="cs-order" id="constellation-due-field" hidden>
+      <span data-i18n="constellation.due">Deadline</span>
+      <input type="date" id="constellation-due">
+    </label>
+    <p class="help" id="constellation-late" aria-live="polite" hidden></p>
     <p id="constellation-status" class="sr-only" role="status" aria-live="polite"></p>
     <div id="constellation-body" class="cs-body" aria-describedby="constellation-help"></div>
   </div>

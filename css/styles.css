@@ -6490,6 +6490,31 @@ html.tv .agk-btn {
 .cs-gx[data-state='ghost'] .cs-name {
   color: var(--ink-2);
 }
+/* una entrega de una tarea con su último push después del plazo: borde de color y un reloj en la esquina (su nombre
+   accesible y su globo lo dicen con palabras) */
+.cs-gx[data-late='true'] {
+  border: 2px solid var(--bad);
+}
+.cs-gx[data-state='ghost'][data-late='true'] {
+  border-style: dashed;
+}
+/* el reloj no se apaga con la galaxia tenue o quieta (esas reglas tocan todo svg de la galaxia) */
+.cs-gx[data-late='true'] .cs-late {
+  grid-area: auto;
+  opacity: 1;
+  filter: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bad);
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
 .cs-gx:hover svg,
 .cs-gx:focus-visible svg {
   filter: brightness(1.25);

@@ -728,13 +728,25 @@ if (seccion('Escritorio (1280×800)'))
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
     const rec = page.locator('#replay .rp-rec');
     const saved = page.waitForEvent('download', { timeout: T(15000) });
-    await rec.click();
-    await page.waitForTimeout(2500);
-    await rec.click();
-    await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
-    while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
-    await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
+    let fallo = null;
+    try {
+      await rec.click();
+      await page.waitForTimeout(2500);
+      await rec.click();
+      await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
+    } catch (e) {
+      fallo = e;
+    }
+    // es el último paso del Replay: se sale aunque el video haya fallado. Con la máquina cargada el video dura de más
+    // (`dura 5.6 s y no entre 1.5 y 5`) y, sin salir, los pasos que siguen trabajaban dentro del Replay y caían en
+    // cascada: la salud, los filtros por autor y por ruta, ocultar una rama, cargar más y la vista de un PR
+    // (pendiente 1; las tres puertas de la iteración 305, con carga de 3 a 13 en 2 CPU)
+    if (await page.locator('#replay').isVisible()) {
+      while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
+      await page.click('#replay .rp-exit');
+      await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
+    }
+    if (fallo) throw fallo;
   });
 
   await step(page, 'ajustes', async () => {

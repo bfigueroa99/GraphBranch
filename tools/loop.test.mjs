@@ -1473,7 +1473,7 @@ describe('diagnostico() de --salud', () => {
 
   test('un reclamo abandonado lo releva el disparo siguiente, no el de después (RECLAMO_H < CRON_H)', () => {
     // loop/128: una sesión la dejó sin fusionar a los 25 min; con 6 h, el disparo de 4 h después la vio «Ocupada»
-    assert.equal(CRON_H, 2, 'el cron de la Routine es cada 2 h desde el 2026-10-28 (3 */2 * * *)');
+    assert.equal(CRON_H, 4.8, 'desde el 2026-11-16 dispara la rotación: cinco veces por día (0, 5, 10, 15 y 20 h de Santiago)');
     assert.ok(RECLAMO_H < CRON_H, `RECLAMO_H (${RECLAMO_H}) tiene que ser menor que CRON_H (${CRON_H})`);
     const ahora = Date.parse('2026-11-01T00:00:00Z'); // en el tramo de 2 h
     const r = diagnostico({ ...base, ahora, ramas: [{ nombre: 'loop/28', fecha: ahora - (CRON_H - 0.1) * H }] });
@@ -1484,8 +1484,17 @@ describe('diagnostico() de --salud', () => {
   });
 
   test('la cadencia por tramos: cada uno con su intervalo, sin huecos falsos de antes del cambio', () => {
-    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2]);
+    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2, 4.8]);
     assert.equal(CADENCIAS[0].desde, '2026-10-10T04:32:04Z');
+    // la rotación cada 5 h (2026-11-16): sus ventanas de 5 h no son huecos, como sí lo eran con el intervalo de 2 h
+    assert.equal(CADENCIAS[2].desde, '2026-11-16T13:00:00Z');
+    const r5 = Date.parse(CADENCIAS[2].desde);
+    assert.equal(Math.round(disparosEntre(r5, r5 + 24 * H)), 5);
+    const rotacion = [5, 10, 15, 19, 24, 29].map((h) => ({ fecha: r5 + h * H, titulo: 'x (#1)' }));
+    const rot = diagnostico({ ...base, desde: CADENCIAS[2].desde, ahora: r5 + 30 * H, merges: rotacion });
+    assert.deepEqual(rot.lineas.filter((l) => l.startsWith('Hueco:')), [], rot.lineas.join('\n'));
+    const conDos = diagnostico({ ...base, desde: CADENCIAS[2].desde, ahora: r5 + 30 * H, merges: rotacion, cadencias: CADENCIAS.slice(0, 2) });
+    assert.ok(conDos.lineas.filter((l) => l.startsWith('Hueco:')).length >= 5, 'con el intervalo de 2 h, cada ventana de la rotación era un hueco');
     const tramos2 = [{ desde: desde, horas: 4 }, { desde: new Date(t0 + 24 * H).toISOString(), horas: 2 }];
     assert.equal(disparosEntre(t0, t0 + 48 * H, tramos2), 6 + 12);
     assert.equal(disparosEntre(t0 + 20 * H, t0 + 28 * H, tramos2), 1 + 2, 'un tramo que cruza el cambio cuenta cada parte con su intervalo');

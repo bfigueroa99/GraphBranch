@@ -671,8 +671,8 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Arena: no aplica: una sola forma obvia (sumar los dos `kind` al mapa de rótulos que ya distingue los demás).
 - Guías: test-driven-development (las dos pruebas primero, vistas fallar), content-translation (el sentido en cada idioma, como los otros rótulos del indicador), verification-before-completion (el ciclo rojo-verde)
 - Sentry: sin acceso
-- OMC: plan=— · revisión=pendiente · verificación=pendiente
+- OMC: plan=— · revisión=4 hallazgos (3 arreglados o atendidos: el LOW del 407 y el 511, que siguen «Sin conexión»; el LOW del README, sin contradicción con el repo vacío por GraphQL; el LOW del largo del texto, sin cambios porque `.status-text` parte en dos líneas; el MEDIUM de la fuente local, pendiente 30) · verificación=PASS
 - Reclamo: loop/303, sin colisión
 - Issues: sin pedidos
-- Validado: pendiente
+- Validado: 812 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 30 e2e en verde. Es la segunda puerta: la primera cayó solo en la e2e de escritorio por un `node_modules` viejo (Electron 45.2.3 frente al 45.3.2 fijado, otra vez como en la 302; `npm ci` y `node node_modules/electron/install.js` lo arreglaron), y entre las dos entró el arreglo del 407 y el 511.
 - **Siguiente:** iteración 304, expansión: ítem 219 (Dueños del código en el diff, Datos)

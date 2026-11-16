@@ -3669,63 +3669,108 @@ if (seccion('Una tarea de GitHub Classroom'))
     if (owners !== 'curso/tarea-2-*,curso') throw new Error(`se siguen ${owners}`);
   });
 
-  // ítem 222: el plazo vence al terminar ese día (en la hora local); los pushes van a mediodía UTC, lejos del borde
-  await step(page, '?plazo= marca en la constelación las entregas con push después del plazo, y su campo lo cambia', async () => {
-    gh.repo('curso/parcial-ana', { pushedAt: '2026-01-10T12:00:00Z' }); // a tiempo
-    gh.repo('curso/parcial-beto', { pushedAt: '2026-01-16T12:00:00Z' }); // un día tarde
-    gh.repo('curso/parcial-caro', { pushedAt: '2026-02-01T12:00:00Z' }); // tarde, y sin pestaña
-    await page.evaluate(() => localStorage.clear());
-    await page.goto(`${base}/index.html?lang=es&repo=org:curso/parcial-*&plazo=2026-01-15`);
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(15000) });
-    await page.locator('.rt', { hasText: 'curso/parcial-caro' }).locator('.rt-close').click();
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(5000) });
-    await page.waitForTimeout(1000); // lo que la pestaña cerrada ya había pedido termina de llegar
-    const before = asked('curso/parcial-caro');
-    await page.click('#constellation-btn');
-    await page.waitForSelector('#constellation[open] .cs-gx[data-late="true"]', { timeout: T(3000) });
-    const read = () =>
-      page.evaluate(() => {
-        const count = document.querySelector('#constellation-late');
-        return {
-          late: [...document.querySelectorAll('#constellation .cs-gx[data-late="true"]')].map((b) => b.dataset.key).sort().join(),
-          clocks: document.querySelectorAll('#constellation .cs-gx[data-late="true"] > .cs-late').length,
-          said: Object.fromEntries([...document.querySelectorAll('#constellation .cs-gx')].map((b) => [b.dataset.key, `${b.getAttribute('aria-label')} | ${b.title}`])),
-          field: !document.querySelector('#constellation-due-field').hidden,
-          value: document.querySelector('#constellation-due').value,
-          count: count.hidden ? null : count.textContent,
-        };
+  // ítem 222: el plazo de una tarea. Cada paso en un contexto nuevo, sin lo guardado ni la renovación cada 1,5 s de esta
+  // página (un `localStorage.clear()` seguido de `goto` perdía la carrera con esa renovación, que volvía a guardar las
+  // tareas de los pasos de arriba). El plazo vence al terminar ese día (en la hora local); los pushes van a mediodía UTC
+  await page.goto('about:blank'); // esta página sigue la organización curso entera: abriría las entregas nuevas
+  gh.repo('curso/parcial-ana', { pushedAt: '2026-01-10T12:00:00Z' }); // a tiempo
+  gh.repo('curso/parcial-beto', { pushedAt: '2026-01-16T12:00:00Z' }); // un día tarde
+  gh.repo('curso/parcial-caro', { pushedAt: '2026-02-01T12:00:00Z' }); // tarde, y sin pestaña
+  /** Una página nueva con este GitHub simulado; `fn(p, pedidos)` la usa (`pedidos`: las rutas que pidió ella) y sus errores
+      de consola cuentan como los de la sección. */
+  const aparte = async (opts, fn) => {
+    const p = await openPage({ viewport: { width: 1280, height: 800 }, ...opts });
+    const pedidos = [];
+    try {
+      await p.unroute('https://api.github.com/**');
+      await p.route('https://api.github.com/**', (r) => {
+        pedidos.push(new URL(r.request().url()).pathname);
+        return gh.handle(r);
       });
-    let r = await read();
-    if (r.late !== 'curso/parcial-beto,curso/parcial-caro' || r.clocks !== 2) throw new Error('fuera de plazo: ' + JSON.stringify(r));
-    if (!r.field || r.value !== '2026-01-15') throw new Error(`el campo del plazo: ${JSON.stringify(r)}`);
-    if (r.count !== 'Con push después del plazo: 2 de 3') throw new Error(`la cuenta dice ${r.count}`);
-    // con palabras, en el nombre accesible y en el globo (no solo con el color del borde)
-    if (!/^curso\/parcial-beto, commits: .*, con push después del plazo \| curso\/parcial-beto · .* · con push después del plazo$/.test(r.said['curso/parcial-beto'])) throw new Error('la entrega tarde dice: ' + r.said['curso/parcial-beto']);
-    if (!/^curso\/parcial-caro, último push .+, con push después del plazo, .*sin pestaña: elígela para abrirla \|/.test(r.said['curso/parcial-caro'])) throw new Error('la entrega tarde sin pestaña dice: ' + r.said['curso/parcial-caro']);
-    if (/plazo/.test(r.said['curso/parcial-ana'])) throw new Error('la entrega a tiempo dice: ' + r.said['curso/parcial-ana']);
-    // el campo: con el 16, la de ese día llega a tiempo (el plazo vence al terminar el día)
-    await page.fill('#constellation-due', '2026-01-16');
-    await page.waitForFunction(() => document.querySelector('#constellation-late').textContent === 'Con push después del plazo: 1 de 3', null, { timeout: T(3000) });
-    r = await read();
-    if (r.late !== 'curso/parcial-caro' || r.clocks !== 1) throw new Error('con el plazo del 16: ' + JSON.stringify(r));
-    // sin plazo, nada marcado ni contado; el campo sigue ahí para ponerlo
-    await page.fill('#constellation-due', '');
-    await page.waitForFunction(() => document.querySelector('#constellation-late').hidden, null, { timeout: T(3000) });
-    r = await read();
-    if (r.late || r.clocks || !r.field || Object.values(r.said).some((x) => /plazo/.test(x))) throw new Error('sin plazo: ' + JSON.stringify(r));
-    if (asked('curso/parcial-caro') !== before) throw new Error('marcar el plazo consultó la entrega sin pestaña');
-    await page.keyboard.press('Escape');
-  });
+      await fn(p, pedidos);
+      if (p.errors.length) throw new Error(p.errors.join(' · '));
+    } finally {
+      await p.context().close();
+    }
+  };
+  const tabsAre = (p, n) => p.waitForFunction((k) => document.querySelectorAll('#repo-tabs .rt').length === k, n, { timeout: T(15000) });
 
-  await step(page, 'sin una tarea seguida no aparece el campo del plazo, aunque la URL traiga ?plazo=', async () => {
-    await page.evaluate(() => localStorage.clear());
-    await page.goto(`${base}/index.html?lang=es&repo=org:curso&plazo=2026-01-15`);
-    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length > 1, null, { timeout: T(15000) });
-    await page.click('#constellation-btn');
-    await page.waitForSelector('#constellation[open] .cs-gx', { timeout: T(3000) });
-    const r = await page.evaluate(() => ({ field: !document.querySelector('#constellation-due-field').hidden, count: !document.querySelector('#constellation-late').hidden, late: document.querySelectorAll('#constellation .cs-gx[data-late]').length }));
-    if (r.field || r.count || r.late) throw new Error('una organización entera no tiene entregas: ' + JSON.stringify(r));
-  });
+  await step(page, '?plazo= marca en la constelación las entregas con push después del plazo, y su campo lo cambia', () =>
+    aparte({}, async (p, pedidos) => {
+      const caro = () => pedidos.filter((x) => x.startsWith('/repos/curso/parcial-caro')).length;
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso/parcial-*&plazo=2026-01-15`);
+      await tabsAre(p, 3);
+      await p.locator('.rt', { hasText: 'curso/parcial-caro' }).locator('.rt-close').click();
+      await tabsAre(p, 2);
+      await p.waitForTimeout(1000); // lo que la pestaña cerrada ya había pedido termina de llegar
+      const before = caro();
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx[data-late="true"]', { timeout: T(3000) });
+      const read = () =>
+        p.evaluate(() => {
+          const count = document.querySelector('#constellation-late');
+          return {
+            late: [...document.querySelectorAll('#constellation .cs-gx[data-late="true"]')].map((b) => b.dataset.key).sort().join(),
+            clocks: document.querySelectorAll('#constellation .cs-gx[data-late="true"] > .cs-late').length,
+            said: Object.fromEntries([...document.querySelectorAll('#constellation .cs-gx')].map((b) => [b.dataset.key, `${b.getAttribute('aria-label')} | ${b.title}`])),
+            field: !document.querySelector('#constellation-due-field').hidden,
+            value: document.querySelector('#constellation-due').value,
+            count: count.hidden ? null : count.textContent,
+          };
+        });
+      let r = await read();
+      if (r.late !== 'curso/parcial-beto,curso/parcial-caro' || r.clocks !== 2) throw new Error('fuera de plazo: ' + JSON.stringify(r));
+      if (!r.field || r.value !== '2026-01-15') throw new Error(`el campo del plazo: ${JSON.stringify(r)}`);
+      if (r.count !== 'Con push después del plazo: 2 de 3') throw new Error(`la cuenta dice ${r.count}`);
+      // con palabras, en el nombre accesible y en el globo (no solo con el color del borde)
+      if (!/^curso\/parcial-beto, commits: .*, con push después del plazo \| curso\/parcial-beto · .* · con push después del plazo$/.test(r.said['curso/parcial-beto'])) throw new Error('la entrega tarde dice: ' + r.said['curso/parcial-beto']);
+      if (!/^curso\/parcial-caro, último push .+, con push después del plazo, .*sin pestaña: elígela para abrirla \|/.test(r.said['curso/parcial-caro'])) throw new Error('la entrega tarde sin pestaña dice: ' + r.said['curso/parcial-caro']);
+      if (/plazo/.test(r.said['curso/parcial-ana'])) throw new Error('la entrega a tiempo dice: ' + r.said['curso/parcial-ana']);
+      // el campo: con el 16, la de ese día llega a tiempo (el plazo vence al terminar el día)
+      await p.fill('#constellation-due', '2026-01-16');
+      await p.waitForFunction(() => document.querySelector('#constellation-late').textContent === 'Con push después del plazo: 1 de 3', null, { timeout: T(3000) });
+      r = await read();
+      if (r.late !== 'curso/parcial-caro' || r.clocks !== 1) throw new Error('con el plazo del 16: ' + JSON.stringify(r));
+      // sin plazo, nada marcado ni contado; el campo sigue ahí para ponerlo
+      await p.fill('#constellation-due', '');
+      await p.waitForFunction(() => document.querySelector('#constellation-late').hidden, null, { timeout: T(3000) });
+      r = await read();
+      if (r.late || r.clocks || !r.field || Object.values(r.said).some((x) => /plazo/.test(x))) throw new Error('sin plazo: ' + JSON.stringify(r));
+      if (caro() !== before) throw new Error('marcar el plazo consultó la entrega sin pestaña');
+    }),
+  );
+
+  // con el teclado, Chromium arma el año de a un dígito (0002, 0020, 0202, 2026): el campo no se vacía a medio escribir
+  // (pasaba en la primera versión: el plazo inválido se devolvía al campo) ni marca todas las entregas por un instante
+  await step(page, 'el plazo se escribe con el teclado en el campo, dígito a dígito', () =>
+    aparte({ locale: 'en-US' }, async (p) => {
+      // en-US: mm/dd/aaaa
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso/parcial-*`);
+      await tabsAre(p, 3);
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx', { timeout: T(3000) });
+      await p.focus('#constellation-due');
+      const seen = [];
+      for (const ch of '01162026') {
+        await p.keyboard.type(ch);
+        seen.push(await p.evaluate(() => `${document.querySelector('#constellation-due').value}:${document.querySelectorAll('#constellation .cs-gx[data-late]').length}`));
+      }
+      if (seen.at(-1) !== '2026-01-16:1' || seen.slice(0, -1).some((x) => !x.endsWith(':0'))) throw new Error(`el campo, tecla a tecla: ${seen.join(' ')}`);
+      const count = await p.$eval('#constellation-late', (el) => el.textContent);
+      if (count !== 'Con push después del plazo: 1 de 3') throw new Error(`la cuenta dice ${count}`);
+    }),
+  );
+
+  await step(page, 'sin una tarea seguida no aparece el campo del plazo, aunque la URL traiga ?plazo=', () =>
+    aparte({}, async (p) => {
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso&plazo=2026-01-15`);
+      await p.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length > 1, null, { timeout: T(15000) });
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx', { timeout: T(3000) });
+      const r = await p.evaluate(() => ({ field: !document.querySelector('#constellation-due-field').hidden, count: !document.querySelector('#constellation-late').hidden, late: document.querySelectorAll('#constellation .cs-gx[data-late]').length }));
+      if (r.field || r.count || r.late) throw new Error('una organización entera no tiene entregas: ' + JSON.stringify(r));
+    }),
+  );
   await page.context().close();
 }
 

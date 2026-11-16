@@ -59,10 +59,11 @@
   }
 
   /** El momento (ms) en que vence el plazo `AAAA-MM-DD`: al terminar ese día en la hora local, así que un push de ese
-      mismo día llega a tiempo. `null` si no es una fecha que existe. */
+      mismo día llega a tiempo. `null` si no es una fecha que existe o es de antes de 1970 (al escribir el año en el
+      campo, Chromium pasa por `0002`, `0020` y `0202`: con esos, todas las entregas saldrían tarde un instante). */
   function dueAt(day) {
     const m = String(day ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) return null;
+    if (!m || +m[1] < 1970) return null;
     const [y, mo, d] = [+m[1], +m[2] - 1, +m[3]];
     const start = new Date(y, mo, d);
     if (start.getFullYear() !== y || start.getMonth() !== mo || start.getDate() !== d) return null;
@@ -285,11 +286,12 @@
     let recent = null;
     let due = ''; // el día del plazo (AAAA-MM-DD), o '' sin plazo
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
-    if (plazo?.input) plazo.input.addEventListener('change', () => setDue(plazo.input.value));
-    /** Fija el plazo de la tarea (`AAAA-MM-DD`; lo que no es una fecha que existe lo quita) y vuelve a marcar las entregas. */
-    function setDue(day) {
+    if (plazo?.input) plazo.input.addEventListener('change', () => setDue(plazo.input.value, true));
+    /** Fija el plazo de la tarea (`AAAA-MM-DD`; lo que no es una fecha que existe lo quita) y vuelve a marcar las entregas.
+        Desde la URL deja el campo puesto; desde el campo no lo toca: borrarle a medio escribir el año lo vaciaba. */
+    function setDue(day, fromField = false) {
       due = dueAt(day) === null ? '' : String(day);
-      if (plazo?.input && plazo.input.value !== due) plazo.input.value = due;
+      if (!fromField && plazo?.input && plazo.input.value !== due) plazo.input.value = due;
       draw();
     }
     /** El campo del plazo, solo con alguna entrega de una tarea entre los repos, y la cuenta de las que llegaron tarde. */
@@ -390,5 +392,5 @@
     return { render, setOrder, setFilter, setRecent, setDue };
   }
 
-  GB.constellation = { place, sortItems, describe, ghostItems, submissions, dueParam, dueAt, isLate, lateCount, ORG_MAX,openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, ghostItems, submissions, dueParam, dueAt, isLate, lateCount, ORG_MAX, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

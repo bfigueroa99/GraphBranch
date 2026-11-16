@@ -321,6 +321,9 @@ test('?plazo=AAAA-MM-DD: solo una fecha que existe; el plazo vence al terminar e
   assert.equal(C.dueAt('2026-01-15'), new Date(2026, 0, 16).getTime());
   assert.equal(C.dueAt('2026-12-31'), new Date(2027, 0, 1).getTime(), 'el último día del año vence al empezar el siguiente');
   for (const bad of ['', null, undefined, '2026-02-30', 'ayer']) assert.equal(C.dueAt(bad), null, String(bad));
+  // al escribir el año en el campo, Chromium pasa por 0002, 0020 y 0202: no son un plazo (todas saldrían tarde)
+  for (const y of ['0002', '0020', '0202', '1969']) assert.equal(C.dueAt(`${y}-01-15`), null, y);
+  assert.equal(C.dueAt('1970-01-01'), new Date(1970, 0, 2).getTime());
 });
 
 test('las entregas de una tarea: cada repo de su lista con su último push, hasta 100 por lista y sin repetir', () => {

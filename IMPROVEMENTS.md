@@ -679,5 +679,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - OMC: no disponible (sin la herramienta de subagentes en esta sesión de la rotación); en su lugar, relectura adversarial propia del diff (un borrador aprobado, un PR aprobado con el CI en rojo, uno de un fork con el nombre de una rama del repo, el orden de las marcas en el nombre accesible, la demo que vuelve un borrador listo antes de revisarlo, y si la demo con revisiones guardadas cambia «PRs sin revisión» de la salud o un paso del smoke que cuente estados): 0 hallazgos; verificación propia contra el ítem (en el nombre de cada rama, con lo ya cargado, sin consultas nuevas, `tools/textview.test.mjs` con PRs aprobados y sin revisar) y «Lo que trae cada expansión» (en la web y el escritorio, visible en la demo, 40 idiomas, pruebas que fallan sin el cambio, README): PASS
 - Reclamo: loop/313, sin colisión
 - Issues: sin pedidos
-- Validado: pendiente
+- Validado: 850 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 31 e2e en verde. A la primera, con carga de 2 a 3 en 2 CPU: 25 min 17 s, el smoke 269 pasos en 20 min 25 s, sin intermitentes.
 - **Siguiente:** iteración 314, expansión: ítem 228 (Exportar el grafo como diagrama Mermaid, Salidas)

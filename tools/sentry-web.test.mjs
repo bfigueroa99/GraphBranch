@@ -84,6 +84,12 @@ test('en la web, la pila de Chromium, Firefox y Safari queda solo con los archiv
       ['app:///js/graph.js', 'drawBranch', 120],
     ],
   );
+  // un mensaje con líneas que parecen cuadros no cuela un nombre como función: la pila se lee sin el mensaje
+  const trampa = `fallo\n    at juanita (${BASE}js/app.js:1:1)`;
+  const conTrampa = S.buildEvent({ kind: 'error', type: 'Error', message: trampa, stack: `Error: ${trampa}\n    at real (${BASE}js/graph.js:2:2)` }, { fileOf, surface: 'web' });
+  assert.deepEqual(conTrampa.exception.values[0].stacktrace.frames.map((f) => f.function), ['real']);
+  const sinCuadros = S.buildEvent({ kind: 'error', type: 'Error', message: `juanita@${BASE}js/app.js:1:1`, stack: `Error: juanita@${BASE}js/app.js:1:1` }, { fileOf, surface: 'web' });
+  assert.equal('stacktrace' in sinCuadros.exception.values[0], false);
   const text = JSON.stringify(S.frames(v8 + '\n' + gecko, { fileOf }));
   for (const v of ['bfigueroa99', 'acme-secreta', 'repo=', 'otro.example', 'extension']) assert.equal(text.includes(v), false, `${v} quedó en la pila`);
   // una carpeta que no es una URL de la página no deja pasar nada; un archivo con «..» tampoco
@@ -200,7 +206,8 @@ test('tools/sentry-web.mjs pone el DSN y solo su host en connect-src, y --quitar
   assert.equal(remove(html), html);
 
   // un host que ya estaba en connect-src (un Sentry propio en un servidor ya permitido) no se repite ni se quita
-  const propio = html.replace('https://api.scorecard.dev;', 'https://api.scorecard.dev https://git.example.com;');
+  const propio = html.replace(/(http-equiv="Content-Security-Policy" content="[^"]*connect-src\s[^;"]*);/, '$1 https://git.example.com;');
+  assert.ok(connectSrc(propio).includes('https://git.example.com'));
   const conPropio = apply(propio, { dsn: `https://${KEY}@git.example.com/7` });
   assert.equal(connectSrc(conPropio).filter((s) => s === 'https://git.example.com').length, 1);
   assert.equal(/data-added-host/.test(conPropio), false);

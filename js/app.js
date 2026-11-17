@@ -4555,7 +4555,8 @@
     let origin = '';
     try {
       const u = new URL(dsn);
-      if (u.protocol === 'https:' && u.username && /^\/(?:.*\/)?\d+$/.test(u.pathname)) origin = u.origin;
+      // lo mismo que pide parseDsn de js/sentry.js (que se carga después): un DSN que no lo cumple no se ofrece
+      if (u.protocol === 'https:' && /^[\w-]{8,64}$/.test(u.username) && !u.search && !u.hash && /^\/(?:.*\/)?\d{1,20}$/.test(u.pathname)) origin = u.origin;
     } catch {
       /* no es una URL: no se ofrece */
     }

@@ -11,7 +11,9 @@
      GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com (y, con la vista de agentes, al gasto de
      Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan, y, al abrir la salud de un repo público de
      github.com, al puntaje de OpenSSF Scorecard), y las imágenes de otro sitio son los avatares de cada uno
-     (los de Bitbucket y los de Azure DevOps no se cargan). -->
+     (los de Bitbucket y los de Azure DevOps no se cargan). Los informes de errores a Sentry de la web suman a
+     connect-src solo el host de su DSN, y solo si quien publica la página lo pone con tools/sentry-web.mjs, que
+     deja el DSN en una etiqueta meta «sentry-dsn» justo después de esta; el repo no trae ninguno. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';

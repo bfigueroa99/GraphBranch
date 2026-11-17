@@ -196,6 +196,10 @@
 
   const MECHANISM = { error: 'onerror', rejection: 'onunhandledrejection', main: 'onuncaughtexception' };
 
+  /** La pila sin el mensaje del error: en la de V8 va al principio, y un mensaje con líneas que parecen cuadros
+      («\n    at x (…/js/app.js:1:1)», o «x@…» en una pila sin cuadros) no puede colar un nombre como función. */
+  const stackWithoutMessage = (rec) => (typeof rec.stack === 'string' && rec.message ? rec.stack.replace(rec.message, '') : rec.stack);
+
   /** El evento de Sentry de un error ya acotado: solo los campos que dice Ajustes, nada más. `surface`: 'desktop'
       (con la versión de Electron, y el proceso que falló) o 'web' (sin datos del navegador). */
   function buildEvent(rec, { names = [], fileOf = appFile, release = '', environment = '', os = '', runtime = '', surface = 'desktop', now = Date.now } = {}) {
@@ -211,7 +215,7 @@
       release: releaseName(release, `graphbranch@${SDK.version}`),
       environment: environmentName(environment, 'production'),
       exception: {
-        values: [{ type, value: scrubText(rec.message, names), mechanism: { type: MECHANISM[rec.kind], handled: false }, stacktrace: { frames: frames(rec.stack, { names, fileOf }) } }],
+        values: [{ type, value: scrubText(rec.message, names), mechanism: { type: MECHANISM[rec.kind], handled: false }, stacktrace: { frames: frames(stackWithoutMessage(rec), { names, fileOf }) } }],
       },
       contexts,
       tags: { process: web ? 'web' : rec.kind === 'main' ? 'main' : 'renderer' },

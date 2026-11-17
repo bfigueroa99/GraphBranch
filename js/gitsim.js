@@ -615,6 +615,7 @@
         'fetch [origin] [--prune]    bring what the remote has into origin/<branch>, without touching your branches (--prune drops the ones deleted there)',
         'pull [--rebase|--no-rebase|--ff-only] [origin [<branch>]]  fetch, then bring the branch it follows into the current one',
         'branch -r | -a              list the remote-tracking branches (origin/<branch>), or every branch',
+        'branch --merged [<commit>]  list the branches already in HEAD (or in that commit): safe to delete with -d; --no-merged lists the rest',
       ];
     },
 
@@ -860,10 +861,25 @@
     },
 
     branch(args) {
-      const { flags, rest } = parse(args);
+      /* --merged y --no-merged [<commit>]: el commit es opcional (HEAD) y va como el argumento siguiente o con =, como
+         en git; los dos juntos dejan las contenidas en uno y no en el otro (git 2.29) */
+      const filters = [];
+      const others = [];
+      for (let i = 0; i < args.length; i++) {
+        const m = /^--(no-)?merged(?:=(.*))?$/.exec(args[i]);
+        if (!m) {
+          others.push(args[i]);
+          continue;
+        }
+        let ref = m[2];
+        if (ref === undefined && i + 1 < args.length && !args[i + 1].startsWith('-')) ref = args[++i];
+        filters.push({ merged: !m[1], ref: ref || 'HEAD' });
+      }
+      const { flags, rest } = parse(others);
       const del = flags['-d'] || flags['-D'] || flags['--delete'];
       const move = flags['-m'] || flags['-M'] || flags['--move'];
       const copy = flags['-c'] || flags['-C'] || flags['--copy'];
+      if (filters.length && (del || move || copy)) fail('usage: branch [-r | -a] [--merged [<commit>]] [--no-merged [<commit>]] [<pattern>...]\n   --merged and --no-merged only list branches: they do not go with -d, -m or -c');
       if (del && move) fail('usage: branch (-m | -M) [<old-branch>] <new-branch>');
       if (copy && (del || move)) fail('usage: branch (-c | -C) [<old-branch>] <new-branch>');
       if (move) return renameBranch.call(this, rest, !!(flags['-M'] || flags['-f'] || flags['--force']));
@@ -884,11 +900,20 @@
         }
         return out;
       }
-      const remotes = () => (this.remote ? [...this.tracking.keys()].sort().map((n) => `${this.remote.name}/${n}`) : []);
+      // con --merged o --no-merged, solo las ramas cuya punta está (o no) en la historia de ese commit; lo que queda
+      // suelto son patrones, como en git (branch --merged main "feat*")
+      for (const f of filters) {
+        const sha = this.resolve(f.ref);
+        if (!sha) fail(`error: malformed object name ${f.ref}`);
+        f.history = this.ancestors(sha);
+      }
+      const glob = (p) => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
+      const keep = (name, tip) => filters.every((f) => f.history.has(tip) === f.merged) && (!filters.length || !rest.length || rest.some((p) => glob(p).test(name)));
+      const remotes = () => (this.remote ? [...this.tracking.keys()].sort().filter((n) => keep(`${this.remote.name}/${n}`, this.tracking.get(n))).map((n) => `${this.remote.name}/${n}`) : []);
       if (flags['-r'] || flags['--remotes']) return remotes().map((n) => `  ${n}`);
-      const locals = () => [...this.branches.keys()].sort().map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
+      const locals = () => [...this.branches.keys()].sort().filter((n) => keep(n, this.branches.get(n))).map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
       if (flags['-a'] || flags['--all']) return [...locals(), ...remotes().map((n) => `  remotes/${n}`)];
-      if (!rest.length) return locals();
+      if (!rest.length || filters.length) return locals();
       const [name, start] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
       if (this.branches.has(name)) fail(`fatal: a branch named '${name}' already exists`);

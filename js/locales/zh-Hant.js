@@ -697,6 +697,7 @@ GB.i18n.define('zh-Hant', {
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '開啟中的 PR：{n}',
   'textview.drafts': '草稿 PR：{n}',
+  'textview.approved': '已核准的 PR：{n}',
   'textview.draft': '草稿',
   'textview.noPr': '沒有開啟中的 PR',
   'textview.fresh': '最近 7 天內建立',

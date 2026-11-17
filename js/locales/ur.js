@@ -740,6 +740,7 @@ GB.i18n.define('ur', {
   'textview.fork': '{name}، آخری push {when}',
   'textview.prs': 'کھلے PR: {n}',
   'textview.drafts': 'مسودہ PR: {n}',
+  'textview.approved': 'منظور شدہ PR: {n}',
   'textview.draft': 'مسودہ',
   'textview.noPr': 'کوئی کھلا PR نہیں',
   'textview.fresh': 'پچھلے 7 دنوں میں بنائی گئی',

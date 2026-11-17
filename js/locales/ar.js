@@ -796,6 +796,7 @@ GB.i18n.define('ar', {
   'textview.fork': '{name}، آخر push {when}',
   'textview.prs': 'PR مفتوحة: {n}',
   'textview.drafts': 'مسودات PR: {n}',
+  'textview.approved': 'PR معتمدة: {n}',
   'textview.draft': 'مسودة',
   'textview.noPr': 'بلا PR مفتوح',
   'textview.fresh': 'أُنشئ في آخر 7 أيام',

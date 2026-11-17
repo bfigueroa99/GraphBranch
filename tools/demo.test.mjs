@@ -193,3 +193,21 @@ test('la demo trae un CODEOWNERS: cada archivo que inventa su panel de cambios t
   assert.ok(owned.some(([, o]) => o.length > 1), 'alguno con más de un dueño');
   assert.ok(new Set(owned.map(([, o]) => o.join(' '))).size >= 3, 'dueños distintos según la carpeta');
 });
+
+test('una aprobación o un pedido de cambios de la demo queda en su PR, como el reviewDecision de GitHub: la vista de texto, la salud y el Launchpad lo leen', () => {
+  let aprobados = 0;
+  let cambios = 0;
+  for (const seed of [1, 7, 42]) {
+    const { src, flush } = demo(seed);
+    for (let i = 0; i < 400; i++) {
+      const acts = src.doReview() || [];
+      flush();
+      for (const a of acts) {
+        const pr = src.data.pulls.get(a.number);
+        if (a.kind === 'review-ok') assert.equal(pr.review, 'approved', `semilla ${seed}: aprobado y el PR #${a.number} dice ${pr.review}`), aprobados++;
+        if (a.kind === 'review-changes') assert.equal(pr.review, 'changes', `semilla ${seed}: cambios pedidos y el PR #${a.number} dice ${pr.review}`), cambios++;
+      }
+    }
+  }
+  assert.ok(aprobados > 10 && cambios > 10, `${aprobados} aprobaciones y ${cambios} pedidos de cambios`);
+});

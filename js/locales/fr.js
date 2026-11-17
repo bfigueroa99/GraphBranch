@@ -698,6 +698,7 @@ GB.i18n.define('fr', {
   'textview.fork': '{name}, dernier push {when}',
   'textview.prs': 'PR ouvertes : {n}',
   'textview.drafts': 'PR en brouillon : {n}',
+  'textview.approved': 'PR approuvées : {n}',
   'textview.draft': 'brouillon',
   'textview.noPr': 'aucune PR ouverte',
   'textview.fresh': 'créée ces 7 derniers jours',

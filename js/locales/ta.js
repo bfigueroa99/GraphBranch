@@ -697,6 +697,7 @@ GB.i18n.define('ta', {
   'textview.fork': '{name}, கடைசி push {when}',
   'textview.prs': 'திறந்த PR: {n}',
   'textview.drafts': 'வரைவு PR: {n}',
+  'textview.approved': 'அங்கீகரிக்கப்பட்ட PR: {n}',
   'textview.draft': 'வரைவு',
   'textview.noPr': 'திறந்த PR இல்லை',
   'textview.fresh': 'கடந்த 7 நாட்களில் உருவாக்கப்பட்டது',

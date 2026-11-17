@@ -697,6 +697,7 @@ GB.i18n.define('hu', {
   'textview.fork': '{name}, utolsó push {when}',
   'textview.prs': 'nyitott PR-ek: {n}',
   'textview.drafts': 'piszkozat PR-ek: {n}',
+  'textview.approved': 'jóváhagyott PR-ek: {n}',
   'textview.draft': 'piszkozat',
   'textview.noPr': 'nincs nyitott PR',
   'textview.fresh': 'az elmúlt 7 napban jött létre',

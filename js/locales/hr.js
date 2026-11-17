@@ -705,6 +705,7 @@ GB.i18n.define('hr', {
   'textview.fork': '{name}, zadnji push {when}',
   'textview.prs': 'otvoreni PR-ovi: {n}',
   'textview.drafts': 'PR-ovi kao skica: {n}',
+  'textview.approved': 'odobreni PR-ovi: {n}',
   'textview.draft': 'skica',
   'textview.noPr': 'bez otvorenog PR-a',
   'textview.fresh': 'stvorena u posljednjih 7 dana',

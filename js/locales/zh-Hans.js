@@ -697,6 +697,7 @@ GB.i18n.define('zh-Hans', {
   'textview.fork': '{name}，最近一次 push {when}',
   'textview.prs': '打开的 PR：{n}',
   'textview.drafts': '草稿 PR：{n}',
+  'textview.approved': '已批准的 PR：{n}',
   'textview.draft': '草稿',
   'textview.noPr': '没有打开的 PR',
   'textview.fresh': '最近 7 天内创建',

@@ -698,6 +698,7 @@ GB.i18n.define('fil', {
   'textview.fork': '{name}, huling push {when}',
   'textview.prs': 'bukas na PR: {n}',
   'textview.drafts': 'draft na PR: {n}',
+  'textview.approved': 'naaprubahang PR: {n}',
   'textview.draft': 'draft',
   'textview.noPr': 'walang bukas na PR',
   'textview.fresh': 'ginawa sa nakaraang 7 araw',

@@ -697,6 +697,7 @@ GB.i18n.define('bg', {
   'textview.fork': '{name}, последен push {when}',
   'textview.prs': 'отворени PR: {n}',
   'textview.drafts': 'PR чернови: {n}',
+  'textview.approved': 'одобрени PR: {n}',
   'textview.draft': 'чернова',
   'textview.noPr': 'без отворен PR',
   'textview.fresh': 'създаден през последните 7 дни',

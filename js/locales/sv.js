@@ -697,6 +697,7 @@ GB.i18n.define('sv', {
   'textview.fork': '{name}, senaste push {when}',
   'textview.prs': 'öppna PR: {n}',
   'textview.drafts': 'PR som utkast: {n}',
+  'textview.approved': 'godkända PR: {n}',
   'textview.draft': 'utkast',
   'textview.noPr': 'ingen öppen PR',
   'textview.fresh': 'skapad de senaste 7 dagarna',

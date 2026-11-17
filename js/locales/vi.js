@@ -697,6 +697,7 @@ GB.i18n.define('vi', {
   'textview.fork': '{name}, push gần nhất {when}',
   'textview.prs': 'PR đang mở: {n}',
   'textview.drafts': 'PR bản nháp: {n}',
+  'textview.approved': 'PR đã duyệt: {n}',
   'textview.draft': 'bản nháp',
   'textview.noPr': 'không có PR đang mở',
   'textview.fresh': 'được tạo trong 7 ngày qua',

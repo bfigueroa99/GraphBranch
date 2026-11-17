@@ -697,6 +697,7 @@ GB.i18n.define('hi', {
   'textview.fork': '{name}, आख़िरी push {when}',
   'textview.prs': 'खुले PR: {n}',
   'textview.drafts': 'ड्राफ़्ट PR: {n}',
+  'textview.approved': 'स्वीकृत PR: {n}',
   'textview.draft': 'ड्राफ़्ट',
   'textview.noPr': 'कोई खुला PR नहीं',
   'textview.fresh': 'पिछले 7 दिनों में बनी',

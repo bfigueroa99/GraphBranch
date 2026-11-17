@@ -713,6 +713,7 @@ GB.i18n.define('uk', {
   'textview.fork': '{name}, останній push {when}',
   'textview.prs': 'відкриті PR: {n}',
   'textview.drafts': 'PR-чернетки: {n}',
+  'textview.approved': 'схвалені PR: {n}',
   'textview.draft': 'чернетка',
   'textview.noPr': 'немає відкритих PR',
   'textview.fresh': 'створена за останні 7 днів',

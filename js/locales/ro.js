@@ -705,6 +705,7 @@ GB.i18n.define('ro', {
   'textview.fork': '{name}, ultimul push {when}',
   'textview.prs': 'PR-uri deschise: {n}',
   'textview.drafts': 'PR-uri ciornă: {n}',
+  'textview.approved': 'PR-uri aprobate: {n}',
   'textview.draft': 'ciornă',
   'textview.noPr': 'niciun PR deschis',
   'textview.fresh': 'creată în ultimele 7 zile',

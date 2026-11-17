@@ -697,6 +697,7 @@ GB.i18n.define('id', {
   'textview.fork': '{name}, push terakhir {when}',
   'textview.prs': 'PR terbuka: {n}',
   'textview.drafts': 'PR draf: {n}',
+  'textview.approved': 'PR disetujui: {n}',
   'textview.draft': 'draf',
   'textview.noPr': 'tanpa PR terbuka',
   'textview.fresh': 'dibuat dalam 7 hari terakhir',

@@ -697,6 +697,7 @@ GB.i18n.define('tr', {
   'textview.fork': '{name}, son push {when}',
   'textview.prs': 'açık PR: {n}',
   'textview.drafts': 'taslak PR: {n}',
+  'textview.approved': 'onaylı PR: {n}',
   'textview.draft': 'taslak',
   'textview.noPr': 'açık PR yok',
   'textview.fresh': 'son 7 günde oluşturuldu',

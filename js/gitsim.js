@@ -873,7 +873,7 @@
         }
         let ref = m[2];
         if (ref === undefined && i + 1 < args.length && !args[i + 1].startsWith('-')) ref = args[++i];
-        filters.push({ merged: !m[1], ref: ref || 'HEAD' });
+        filters.push({ merged: !m[1], ref: ref ?? 'HEAD' }); // --merged= (vacío) no es HEAD: git lo rechaza
       }
       const { flags, rest } = parse(others);
       const del = flags['-d'] || flags['-D'] || flags['--delete'];

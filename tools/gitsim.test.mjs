@@ -122,6 +122,7 @@ test('branch --merged y --no-merged: las ramas contenidas en HEAD o en un commit
   const before = r.snapshot();
   const bad = r.run('branch --merged nada');
   assert.deepEqual([bad.ok, plain(bad.lines), bad.changed], [false, ['error: malformed object name nada'], false]);
+  assert.deepEqual(plain(r.run('branch --no-merged=').lines), ['error: malformed object name ']);
   for (const line of ['branch -d viejo --merged', 'branch --no-merged -m otro', 'branch -c viejo copia --merged']) {
     const e = r.run(line);
     assert.equal(e.ok, false, line);

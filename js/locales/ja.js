@@ -543,6 +543,8 @@ GB.i18n.define('ja', {
   'health.scorecardCheck': '{name}：{score} / 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard はこのリポジトリをまだ分析していません。広く使われているプロジェクトと、その GitHub Action を実行しているリポジトリを毎週分析します。',
   'health.scorecardError': 'OpenSSF Scorecard のスコアを読み込めませんでした。次にこのパネルを開いたときに再試行します。',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard はこのプロジェクトをまだ分析していません。gitlab.com では公開リストにあるプロジェクトを毎週分析しており、リストへの追加を依頼できます。',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard の API は、このプロジェクトのように GitLab のサブグループにあるプロジェクトのスコアを提供していません。',
   'health.merges7': 'マージ数、直近7日',
   'health.merges30': 'マージ数、直近30日',
   'health.releases30': 'リリース数、直近30日',

@@ -586,6 +586,8 @@ GB.i18n.define('ur', {
   'health.scorecardCheck': '{name}: 10 میں سے {score} — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard نے ابھی تک اس ریپوزٹری کا تجزیہ نہیں کیا۔ یہ ہر ہفتے سب سے زیادہ استعمال ہونے والے پروجیکٹس کا تجزیہ کرتا ہے، اور ہر اس ریپوزٹری کا جو اس کا GitHub Action چلاتی ہے۔',
   'health.scorecardError': 'OpenSSF Scorecard کا اسکور پڑھا نہیں جا سکا۔ اگلی بار یہ پینل کھولنے پر دوبارہ کوشش کی جائے گی۔',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard نے ابھی تک اس پروجیکٹ کا تجزیہ نہیں کیا۔ gitlab.com پر یہ ہر ہفتے اپنی عوامی فہرست کے پروجیکٹس کا تجزیہ کرتا ہے، اور اس فہرست میں کوئی پروجیکٹ شامل کرنے کی درخواست کی جا سکتی ہے۔',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard کا API کسی GitLab ذیلی گروپ کے پروجیکٹس کا اسکور نہیں دیتا، جیسے یہ پروجیکٹ۔',
   'health.merges7': 'مرج، پچھلے 7 دن',
   'health.merges30': 'مرج، پچھلے 30 دن',
   'health.releases30': 'ریلیزز، پچھلے 30 دن',

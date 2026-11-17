@@ -543,6 +543,8 @@ GB.i18n.define('vi', {
   'health.scorecardCheck': '{name}: {score} trên 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard chưa phân tích kho lưu trữ này. Mỗi tuần, nó phân tích các dự án được dùng nhiều nhất và mọi kho lưu trữ chạy GitHub Action của nó.',
   'health.scorecardError': 'Không đọc được điểm OpenSSF Scorecard. Sẽ thử lại vào lần tới bạn mở bảng này.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard chưa phân tích dự án này. Trên gitlab.com, mỗi tuần nó phân tích các dự án trong danh sách công khai của mình, và bạn có thể đề nghị thêm một dự án.',
+  'health.scorecardSubgroup': 'API của OpenSSF Scorecard không cung cấp điểm cho các dự án nằm trong nhóm con của GitLab, như dự án này.',
   'health.merges7': 'Lượt gộp, 7 ngày qua',
   'health.merges30': 'Lượt gộp, 30 ngày qua',
   'health.releases30': 'Bản phát hành, 30 ngày qua',

@@ -551,6 +551,8 @@ GB.i18n.define('hr', {
   'health.scorecardCheck': '{name}: {score} od 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard još nije analizirao ovaj repozitorij. Svaki tjedan analizira najkorištenije projekte i svaki repozitorij koji pokreće njegov GitHub Action.',
   'health.scorecardError': 'Ocjenu iz OpenSSF Scorecarda nije bilo moguće pročitati. Pokušat će se ponovno sljedeći put kad otvorite ovu ploču.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard još nije analizirao ovaj projekt. Na gitlab.com svaki tjedan analizira projekte sa svog javnog popisa, a može se zatražiti da doda još jedan.',
+  'health.scorecardSubgroup': 'API OpenSSF Scorecarda ne daje ocjenu projekata u podgrupi GitLaba, poput ovoga.',
   'health.merges7': 'Spajanja, zadnjih 7 dana',
   'health.merges30': 'Spajanja, zadnjih 30 dana',
   'health.releases30': 'Izdanja, zadnjih 30 dana',

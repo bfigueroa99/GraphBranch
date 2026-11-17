@@ -543,6 +543,8 @@ GB.i18n.define('zh-Hant', {
   'health.scorecardCheck': '{name}：{score} / 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard 尚未分析此儲存庫。它每週分析使用最廣泛的專案，以及任何執行其 GitHub Action 的儲存庫。',
   'health.scorecardError': '無法讀取 OpenSSF Scorecard 的分數。下次開啟此面板時會重試。',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard 尚未分析此專案。在 gitlab.com 上，它每週分析其公開清單中的專案，也可以申請將專案加入該清單。',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard 的 API 不提供 GitLab 子群組中專案的分數，此專案即是如此。',
   'health.merges7': '合併數，近 7 天',
   'health.merges30': '合併數，近 30 天',
   'health.releases30': '發布數，近 30 天',

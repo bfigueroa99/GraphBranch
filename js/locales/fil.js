@@ -544,6 +544,8 @@ GB.i18n.define('fil', {
   'health.scorecardCheck': '{name}: {score} sa 10 — {reason}',
   'health.scorecardNone': 'Hindi pa sinusuri ng OpenSSF Scorecard ang repository na ito. Bawat linggo, sinusuri nito ang mga pinakaginagamit na proyekto, at ang anumang repository na nagpapatakbo ng GitHub Action nito.',
   'health.scorecardError': 'Hindi mabasa ang iskor ng OpenSSF Scorecard. Susubukan ulit sa susunod na buksan mo ang panel na ito.',
+  'health.scorecardNoneGitlab': 'Hindi pa sinusuri ng OpenSSF Scorecard ang proyektong ito. Sa gitlab.com, bawat linggo nitong sinusuri ang mga proyekto sa pampublikong listahan nito, at puwedeng hilinging idagdag ang isa.',
+  'health.scorecardSubgroup': 'Hindi nagbibigay ang API ng OpenSSF Scorecard ng iskor ng mga proyekto sa isang subgroup ng GitLab, gaya nito.',
   'health.merges7': 'Mga merge, huling 7 araw',
   'health.merges30': 'Mga merge, huling 30 araw',
   'health.releases30': 'Mga release, huling 30 araw',

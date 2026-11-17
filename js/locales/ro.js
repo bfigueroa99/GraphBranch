@@ -551,6 +551,8 @@ GB.i18n.define('ro', {
   'health.scorecardCheck': '{name}: {score} din 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard nu a analizat încă acest depozit. Analizează în fiecare săptămână proiectele cele mai folosite și orice depozit care rulează GitHub Action-ul său.',
   'health.scorecardError': 'Scorul OpenSSF Scorecard nu a putut fi citit. Se va încerca din nou data viitoare când deschideți acest panou.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard nu a analizat încă acest proiect. Pe gitlab.com analizează în fiecare săptămână proiectele din lista sa publică și se poate cere adăugarea unuia nou.',
+  'health.scorecardSubgroup': 'API-ul OpenSSF Scorecard nu oferă scorul proiectelor dintr-un subgrup GitLab, precum acesta.',
   'health.merges7': 'Îmbinări, ultimele 7 zile',
   'health.merges30': 'Îmbinări, ultimele 30 de zile',
   'health.releases30': 'Lansări, ultimele 30 de zile',

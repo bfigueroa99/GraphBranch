@@ -843,3 +843,9 @@ test('OpenSSF Scorecard: el puntaje, la fecha del análisis y las tres comprobac
   data.scorecard = { state: 'raro' };
   assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'error' }, 'un estado que no se conoce se dice como un fallo');
 });
+
+test('OpenSSF Scorecard: un proyecto de un subgrupo de GitLab, que la API de Scorecard no da, se dice como tal y no como un fallo', () => {
+  const data = repo();
+  data.scorecard = { state: 'subgroup' };
+  assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'subgroup' });
+});

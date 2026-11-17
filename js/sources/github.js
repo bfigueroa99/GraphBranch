@@ -78,9 +78,10 @@
       .filter((w) => Array.isArray(w) && Number.isFinite(w[0]) && w[0] > 0)
       .map(([t, add, del]) => ({ time: t * 1000, added: Number.isFinite(add) ? Math.abs(add) : 0, deleted: Number.isFinite(del) ? Math.abs(del) : 0 }))
       .slice(-12);
-  /** La API de OpenSSF Scorecard (ítem 218): el puntaje ya calculado de un repo público de github.com, sin token y con
-      CORS abierto. Es el único servidor que no es de GitHub al que habla esta fuente (y está en el CSP por eso). */
-  const SCORECARD = 'https://api.scorecard.dev/projects/github.com/';
+  /** La API de OpenSSF Scorecard (ítem 218): el puntaje ya calculado de un repo público de github.com (o, desde la fuente
+      de GitLab, de gitlab.com: ítem 225), sin token y con CORS abierto. Es el único servidor que no es de GitHub al que
+      habla esta fuente (y está en el CSP por eso). Cada proyecto es `{plataforma}/{dueño}/{repo}`. */
+  const SCORECARD = 'https://api.scorecard.dev/projects/';
   const SCORECARD_CHECKS = 40; // Scorecard da 18: un tope por si una respuesta trae una lista enorme
   const SCORECARD_REASON = 200; // caracteres del motivo de cada comprobación: los de Scorecard son una frase
   /** La respuesta de api.scorecard.dev como `{ state: 'ok', score, date, checks: [{ name, score, reason }] }`, o null si no
@@ -741,23 +742,32 @@
 
     /** El puntaje de OpenSSF Scorecard del repo (ítem 218, `data.scorecard`): una consulta a api.scorecard.dev, solo cuando
         el panel de salud lo pide y una sola vez por pestaña (Scorecard analiza cada semana). Solo de un repo de github.com
-        que GitHub dice público: Scorecard no analiza otros, y el nombre de un repo privado no sale a un tercero. La
+        que GitHub dice público (o un proyecto público de gitlab.com: `scorecardProject` de la fuente de GitLab): Scorecard
+        no analiza otros, y el nombre de un repo privado no sale a un tercero. La
         consulta va sin el token de GitHub, sin cookies y sin referer (la URL de la página lleva `?repo=`), y no gasta cuota
         de GitHub. Un 404 es «sin análisis» y queda como el puntaje; un fallo (red, 5xx, una respuesta que no es un
         análisis) queda como fallo y la próxima apertura vuelve a preguntar. Nunca dos consultas a la vez, y nada de esto
         corta el ciclo del grafo. Devuelve si preguntó. */
     syncScorecard() {
-      if (this.ep.api !== API || this.data.repo.private !== false) return Promise.resolve(false);
+      const project = this.scorecardProject();
+      if (!project) return Promise.resolve(false);
       if (this.scorecardAsk) return this.scorecardAsk.then(() => false);
       if (this.data.scorecard && this.data.scorecard.state !== 'error') return Promise.resolve(false);
-      const ask = this.askScorecard().finally(() => (this.scorecardAsk = null));
+      const ask = this.askScorecard(project).finally(() => (this.scorecardAsk = null));
       this.scorecardAsk = ask.catch(() => {});
       return ask;
     }
 
-    async askScorecard() {
+    /** El proyecto que se le pregunta a Scorecard (`github.com/dueño/repo`, ya escapado), o null si este repo no se
+        consulta: solo uno de github.com que GitHub dice público, y ya cargado. La fuente de GitLab da el suyo. */
+    scorecardProject() {
+      if (this.ep.api !== API || this.data.repo.private !== false) return null;
       const { owner, name } = this.data.repo; // como lo escribe GitHub: Scorecard distingue mayúsculas
-      const url = SCORECARD + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+      return 'github.com/' + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+    }
+
+    async askScorecard(project) {
+      const url = SCORECARD + project;
       let next;
       try {
         const { res, body } = await this.request(url, { headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' });

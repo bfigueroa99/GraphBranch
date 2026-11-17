@@ -26,12 +26,13 @@
 
   /** El puntaje de OpenSSF Scorecard que trajo la fuente al abrir el panel (`data.scorecard`, ítem 218) listo para
       mostrar: null sin consulta (otra fuente, un repo privado o de GitHub Enterprise: la sección no sale); `{ state }`
-      sin análisis (`none`) o con un fallo (`error`, también un estado que no se conoce); y con análisis, el puntaje, la
+      sin análisis (`none`), de un proyecto de un subgrupo de GitLab, que la API de Scorecard no da (`subgroup`, ítem
+      225), o con un fallo (`error`, también un estado que no se conoce); y con análisis, el puntaje, la
       fecha y las SCORECARD_LOWEST comprobaciones más bajas, de la más baja a la más alta y a igual puntaje por nombre.
       Las de -1 (Scorecard no pudo concluir) no son bajas: no entran, ni en la cuenta de comprobaciones. */
   function scorecardView(sc) {
     if (!sc) return null;
-    if (sc.state === 'none') return { state: 'none' };
+    if (sc.state === 'none' || sc.state === 'subgroup') return { state: sc.state };
     if (sc.state !== 'ok') return { state: 'error' };
     const rated = (sc.checks || []).filter((c) => c && Number.isInteger(c.score) && c.score >= 0 && c.score <= 10);
     const lowest = [...rated].sort((a, b) => a.score - b.score || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).slice(0, SCORECARD_LOWEST);

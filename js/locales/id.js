@@ -543,6 +543,8 @@ GB.i18n.define('id', {
   'health.scorecardCheck': '{name}: {score} dari 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard belum menganalisis repositori ini. Setiap minggu ia menganalisis proyek yang paling banyak dipakai, dan repositori apa pun yang menjalankan GitHub Action-nya.',
   'health.scorecardError': 'Skor OpenSSF Scorecard tidak bisa dibaca. Akan dicoba lagi saat Anda membuka panel ini berikutnya.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard belum menganalisis proyek ini. Di gitlab.com, setiap minggu ia menganalisis proyek dalam daftar publiknya, dan Anda bisa meminta agar sebuah proyek ditambahkan.',
+  'health.scorecardSubgroup': 'API OpenSSF Scorecard tidak memberikan skor untuk proyek di dalam subgrup GitLab, seperti proyek ini.',
   'health.merges7': 'Merge, 7 hari terakhir',
   'health.merges30': 'Merge, 30 hari terakhir',
   'health.releases30': 'Rilis, 30 hari terakhir',

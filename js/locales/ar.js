@@ -642,6 +642,8 @@ GB.i18n.define('ar', {
   'health.scorecardCheck': '{name}: {score} من 10 — {reason}',
   'health.scorecardNone': 'لم يحلّل OpenSSF Scorecard هذا المستودع بعد. فهو يحلّل كل أسبوع المشاريع الأكثر استخدامًا، وأي مستودع يشغّل إجراءه على GitHub.',
   'health.scorecardError': 'تعذّرت قراءة نتيجة OpenSSF Scorecard. ستُعاد المحاولة في المرة القادمة التي تفتح فيها هذه اللوحة.',
+  'health.scorecardNoneGitlab': 'لم يحلّل OpenSSF Scorecard هذا المشروع بعد. فهو يحلّل كل أسبوع مشاريع gitlab.com المدرجة في قائمته العامة، ويمكن طلب إضافة مشروع إليها.',
+  'health.scorecardSubgroup': 'لا تعطي واجهة OpenSSF Scorecard البرمجية نتيجة المشاريع الموجودة في مجموعة فرعية على GitLab، مثل هذا المشروع.',
   'health.merges7': 'عمليات الدمج، آخر 7 أيام',
   'health.merges30': 'عمليات الدمج، آخر 30 يومًا',
   'health.releases30': 'الإصدارات، آخر 30 يومًا',

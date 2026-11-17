@@ -3985,13 +3985,14 @@ function fakeGitLab() {
         { path_with_namespace: 'g/viejo', archived: true, visibility: 'public' },
       ] };
     }
-    const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado)(\/.*)?$/.exec(path);
+    // g/abierto y g/nuevo: públicos y sin subgrupo, para OpenSSF Scorecard (ítem 225); los cuatro sirven las mismas ramas
+    const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado|g%2Fabierto|g%2Fnuevo)(\/.*)?$/.exec(path);
     if (!m) return { status: 404, body: { message: '404 Project Not Found' } };
     const priv = m[1] === 'g%2Fprivado';
     if (priv && auth !== `Bearer ${GITLAB_TOKEN}`) return auth ? { status: 401, body: { message: '401 Unauthorized' } } : { status: 404, body: { message: '404 Project Not Found' } };
     const rest = m[2] || '';
     if (!rest) {
-      const name = priv ? 'g/privado' : 'g/sub/p';
+      const name = decodeURIComponent(m[1]);
       return { body: { id: priv ? 2 : 1, path_with_namespace: name, default_branch: 'main', web_url: `https://gitlab.com/${name}`, visibility: priv ? 'private' : 'public', description: 'Un proyecto de GitLab' } };
     }
     if (rest === '/repository/branches') return { body: [...branches].map(([name, sha]) => ({ name, commit: commits.get(sha), protected: name === 'main' })), headers: { 'X-Total': branches.size } };
@@ -4175,6 +4176,64 @@ if (seccion('GitLab'))
     if (saved[0] !== JSON.stringify(GITLAB_TOKEN)) throw new Error(`se guardó ${saved[0]}`);
     const sent = gl.auths.slice(from).filter((a) => a.path.includes('g%2Fprivado'));
     if (!sent.length || sent.some((a) => a.auth !== `Bearer ${GITLAB_TOKEN}`)) throw new Error(`a g/privado fue ${[...new Set(sent.map((a) => a.auth))]}`);
+  }, { allow: /40[14]/ });
+
+  await step(page, 'OpenSSF Scorecard de gitlab.com: un proyecto público lo consulta al abrir la salud, una vez y sin el token de GitLab; uno de un subgrupo lo dice sin consultar y uno privado no consulta', async () => {
+    // ítem 225: con el token de GitLab ya guardado (el paso anterior), que no tiene que salir a Scorecard
+    const asked = [];
+    await page.unroute('https://api.scorecard.dev/**');
+    await page.route('https://api.scorecard.dev/**', (r) => {
+      const u = new URL(r.request().url());
+      const h = r.request().headers();
+      asked.push({ path: u.pathname, auth: h.authorization || '', referer: h.referer || '', cookie: h.cookie || '' });
+      const headers = { 'access-control-allow-origin': '*' };
+      if (u.pathname !== '/projects/gitlab.com/g/abierto') return r.fulfill({ status: 404, headers, body: '' }); // sin análisis: como la API, 404 sin cuerpo
+      return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify({ date: new Date().toISOString(), score: 4.6, checks: [{ name: 'Code-Review', score: 2, reason: 'Found 4/20 approved changesets -- score normalized to 2' }, { name: 'Packaging', score: -1, reason: 'packaging workflow not detected' }] }) });
+    });
+    const open = async (repo) => {
+      if (await page.evaluate(() => document.querySelector('#health')?.open)) await page.keyboard.press('Escape');
+      await page.fill('#repo-input', `gitlab:${repo}`);
+      await page.press('#repo-input', 'Enter');
+      await page.waitForFunction((r) => document.querySelector('#repo-link')?.textContent === r && document.querySelector('#overlay').hidden && document.querySelector('#status')?.dataset.state !== 'loading', repo, { timeout: T(15000) });
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    };
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/privado', null, { timeout: T(5000) });
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    await page.waitForTimeout(1000);
+    if (await page.$('#hl-scorecard')) throw new Error('un proyecto privado muestra la sección de Scorecard');
+    if (asked.length) throw new Error(`el nombre de un proyecto privado salió a Scorecard: ${JSON.stringify(asked)}`);
+
+    await open('g/abierto');
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(8000) });
+    if (!/^Puntaje: 4,6 de 10, analizado el /.test(await score.textContent())) throw new Error(`el puntaje dice ${await score.textContent()}`);
+    const checks = await page.$$eval('#hl-scorecard .hl-checks li', (ls) => ls.map((l) => l.textContent.replace(/[⁨⁩]/g, '')));
+    if (JSON.stringify(checks) !== JSON.stringify(['Code-Review: 2 de 10 — Found 4/20 approved changesets -- score normalized to 2'])) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(checks)}`);
+    if (asked.length !== 1 || asked[0].path !== '/projects/gitlab.com/g/abierto') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+    if (asked[0].auth || asked[0].cookie || asked[0].referer) throw new Error(`la consulta a Scorecard llevó credenciales o la URL de la página: ${JSON.stringify(asked[0])}`);
+    if (!gl.auths.some((a) => a.path.includes('g%2Fabierto') && a.auth === `Bearer ${GITLAB_TOKEN}`)) throw new Error('GitLab no recibió el token de la prueba: la prueba no prueba nada');
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+
+    await open('g/nuevo');
+    const none = await page.waitForSelector('#health[open] #hl-scorecard-none', { timeout: T(8000) });
+    const noneText = await none.textContent();
+    if (!/todavía no analizó este proyecto\. En gitlab\.com/.test(noneText) || /GitHub/.test(noneText)) throw new Error(`sin análisis dice ${noneText}`);
+    if (asked.length !== 2 || asked[1].path !== '/projects/gitlab.com/g/nuevo') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+
+    await page.keyboard.press('Escape');
+    await page.locator('.rt', { hasText: 'g/sub/p' }).locator('.rt-main').click();
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/sub/p', null, { timeout: T(10000) });
+    await page.click('#health-btn');
+    const sub = await page.waitForSelector('#health[open] #hl-scorecard-subgroup', { timeout: T(8000) });
+    if (!/subgrupo de GitLab/.test(await sub.textContent())) throw new Error(`de un subgrupo dice ${await sub.textContent()}`);
+    await page.waitForTimeout(500);
+    if (asked.length !== 2) throw new Error(`el proyecto de un subgrupo se consultó en Scorecard: ${JSON.stringify(asked.slice(2))}`);
+    await page.keyboard.press('Escape');
   }, { allow: /40[14]/ });
 
   await step(page, 'cada token va solo a su servicio', async () => {

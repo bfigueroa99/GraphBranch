@@ -543,6 +543,8 @@ GB.i18n.define('ko', {
   'health.scorecardCheck': '{name}: 10점 중 {score}점 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard가 아직 이 저장소를 분석하지 않았습니다. 매주 가장 많이 쓰이는 프로젝트와 GitHub Action을 실행하는 모든 저장소를 분석합니다.',
   'health.scorecardError': 'OpenSSF Scorecard 점수를 읽지 못했습니다. 다음에 이 패널을 열 때 다시 시도합니다.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard가 아직 이 프로젝트를 분석하지 않았습니다. gitlab.com에서는 공개 목록에 있는 프로젝트를 매주 분석하며, 목록에 프로젝트를 추가해 달라고 요청할 수 있습니다.',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard API는 이 프로젝트처럼 GitLab 하위 그룹에 있는 프로젝트의 점수를 제공하지 않습니다.',
   'health.merges7': '병합, 최근 7일',
   'health.merges30': '병합, 최근 30일',
   'health.releases30': '릴리스, 최근 30일',

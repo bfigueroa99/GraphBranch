@@ -586,6 +586,8 @@ GB.i18n.define('fa', {
   'health.scorecardCheck': '{name}: {score} از 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard هنوز این مخزن را تحلیل نکرده است. هر هفته پرکاربردترین پروژه‌ها و هر مخزنی را که اکشن GitHub آن را اجرا کند تحلیل می‌کند.',
   'health.scorecardError': 'خواندن امتیاز OpenSSF Scorecard ممکن نشد. دفعهٔ بعد که این پنل را باز کنید دوباره تلاش می‌شود.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard هنوز این پروژه را تحلیل نکرده است. در gitlab.com هر هفته پروژه‌های فهرست عمومی خود را تحلیل می‌کند و می‌توان درخواست کرد پروژه‌ای به آن افزوده شود.',
+  'health.scorecardSubgroup': 'رابط برنامه‌نویسی OpenSSF Scorecard امتیاز پروژه‌های یک زیرگروه GitLab، مانند این پروژه، را ارائه نمی‌کند.',
   'health.merges7': 'ادغام‌ها، ۷ روز گذشته',
   'health.merges30': 'ادغام‌ها، ۳۰ روز گذشته',
   'health.releases30': 'انتشارها، ۳۰ روز گذشته',

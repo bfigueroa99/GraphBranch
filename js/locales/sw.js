@@ -543,6 +543,8 @@ GB.i18n.define('sw', {
   'health.scorecardCheck': '{name}: {score} kati ya 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard bado haijachambua hazina hii. Kila wiki huchambua miradi inayotumika zaidi, na hazina yoyote inayoendesha GitHub Action yake.',
   'health.scorecardError': 'Alama ya OpenSSF Scorecard haikuweza kusomwa. Itajaribiwa tena utakapofungua paneli hii wakati ujao.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard bado haijachambua mradi huu. Kwenye gitlab.com huchambua kila wiki miradi iliyo kwenye orodha yake ya umma, na unaweza kuomba mradi uongezwe.',
+  'health.scorecardSubgroup': 'API ya OpenSSF Scorecard haitoi alama za miradi iliyo ndani ya kikundi kidogo cha GitLab, kama huu.',
   'health.merges7': 'Uunganishaji, siku 7 zilizopita',
   'health.merges30': 'Uunganishaji, siku 30 zilizopita',
   'health.releases30': 'Toleo, siku 30 zilizopita',

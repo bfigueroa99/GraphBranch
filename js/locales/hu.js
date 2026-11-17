@@ -543,6 +543,8 @@ GB.i18n.define('hu', {
   'health.scorecardCheck': '{name}: {score}/10 — {reason}',
   'health.scorecardNone': 'Az OpenSSF Scorecard még nem elemezte ezt a repozitóriumot. Minden héten elemzi a legtöbbet használt projekteket, és minden repozitóriumot, amely futtatja a GitHub Actionjét.',
   'health.scorecardError': 'Az OpenSSF Scorecard pontszámát nem sikerült beolvasni. A panel következő megnyitásakor újra megpróbálja.',
+  'health.scorecardNoneGitlab': 'Az OpenSSF Scorecard még nem elemezte ezt a projektet. A gitlab.com-on minden héten elemzi a nyilvános listáján szereplő projekteket, és kérhető, hogy felvegyen egy újat.',
+  'health.scorecardSubgroup': 'Az OpenSSF Scorecard API-ja nem ad pontszámot a GitLab-alcsoportokban lévő projektekre, mint amilyen ez is.',
   'health.merges7': 'Egyesítések, az elmúlt 7 nap',
   'health.merges30': 'Egyesítések, az elmúlt 30 nap',
   'health.releases30': 'Kiadások, az elmúlt 30 nap',

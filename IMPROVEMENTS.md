@@ -798,5 +798,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/310, sin colisión
 - Issues: sin pedidos; además, el issue del pedido 7 de Para Benjamin que pidió `--salud` tras fusionar la 309 (#381, `loop:necesita-humano`)
 - Web publicada: no se pudo comprobar (Request was cancelled.)
-- Validado: pendiente
+- Validado: 841 pruebas (`node --test`), smoke, i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 31 e2e en verde. A la primera, con carga de 2 a 8 en 2 CPU: 25 min 17 s, el smoke 229 pasos en 20 min 28 s, sin intermitentes.
 - **Siguiente:** iteración 311, mantenimiento · Accesibilidad: pendiente 21 (Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se …)

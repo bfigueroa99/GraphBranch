@@ -747,12 +747,32 @@ if (seccion('Escritorio (1280×800)'))
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
     const rec = page.locator('#replay .rp-rec');
     const saved = page.waitForEvent('download', { timeout: T(15000) });
+    saved.catch(() => {}); // si el paso falla antes de esperarla, que su vencimiento no tumbe el smoke entero
+    // El video tiene que durar lo que se grabó: desde que arranca el grabador hasta el clic que lo para, medidos en la
+    // página. El tope fijo de 5 s (2,5 s de espera y algo de holgura) contaba también lo que tarda Playwright en dar el
+    // clic, y con la máquina cargada el segundo tardaba de 2,4 a 7,3 s: 8 de 8 videos de 5,1 a 9,9 s, cada uno igual
+    // (±0,01 s) a lo que se grabó (pendiente 1: `dura 5.6 s y no entre 1.5 y 5`; carga 7 a 9 en 2 CPU, iteración 307)
+    await page.evaluate(() => {
+      window.__recManual = { clicks: [], start: null };
+      document.addEventListener('click', (e) => e.target.closest?.('#replay .rp-rec') && window.__recManual.clicks.push(performance.now()), true);
+      const st = MediaRecorder.prototype.start;
+      MediaRecorder.prototype.start = function (...a) {
+        window.__recManual.start = performance.now();
+        return st.apply(this, a);
+      };
+    });
     let fallo = null;
     try {
       await rec.click();
       await page.waitForTimeout(2500);
       await rec.click();
-      await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
+      if ((await rec.getAttribute('aria-pressed')) !== 'false') throw new Error('el segundo clic no apaga el botón de grabar');
+      const dl = await saved;
+      const m = await page.evaluate(() => window.__recManual);
+      if (m.clicks.length !== 2 || m.start == null || m.start > m.clicks[1]) throw new Error(`el grabador no arrancó entre los dos clics: ${JSON.stringify(m)}`);
+      const grabado = (m.clicks[1] - m.start) / 1000;
+      const s2 = (x) => Math.round(x * 100) / 100; // centésimas: el fallo dice «entre 5.17 y 6.17», no 5.1695
+      await videoFile(page, dl, sel, { minSeconds: Math.max(1.5, s2(grabado - 0.5)), maxSeconds: s2(grabado + 0.5) });
     } catch (e) {
       fallo = e;
     }
@@ -920,12 +940,22 @@ if (seccion('Escritorio (1280×800)'))
       document.querySelector('#cmp-go').click();
       await new Promise((r) => setTimeout(r, 800));
     });
-    const marked = await page.evaluate(() => ({
-      a: document.querySelectorAll('#graph .node.cmp-a').length,
-      b: document.querySelectorAll('#graph .node.cmp-b').length,
-      base: document.querySelectorAll('#graph .node.cmp-base').length,
-      dim: document.querySelectorAll('#graph .node.pfx').length,
-    }));
+    const marked = await page.evaluate(() => {
+      // el commit del punto de separación, por su SHA corto en la fila «Punto de separación»: si falta su marca, el fallo
+      // dice si estaba dibujado (el 2D crea cada commit al entrar en pantalla; pendiente 1, `"base":0` con a y b marcados)
+      const row = [...document.querySelectorAll('#cmp-out .hl-row')].map((b) => b.textContent).find((t) => /separ/i.test(t)) || '';
+      const short = (row.match(/\b[0-9a-f]{7}\b/) || [''])[0];
+      const nodes = [...document.querySelectorAll('#graph .node')];
+      return {
+        a: document.querySelectorAll('#graph .node.cmp-a').length,
+        b: document.querySelectorAll('#graph .node.cmp-b').length,
+        base: document.querySelectorAll('#graph .node.cmp-base').length,
+        dim: document.querySelectorAll('#graph .node.pfx').length,
+        baseSha: short,
+        baseDibujado: !!short && nodes.some((n) => String(n.__sha || '').startsWith(short)),
+        dibujados: nodes.length,
+      };
+    });
     if (marked.a + marked.b < 1 || marked.base !== 1 || marked.dim < 1) throw new Error('comparar ramas: el grafo no marca los tramos ni el punto de separación: ' + JSON.stringify(marked));
     await page.evaluate(() => [...document.querySelectorAll('#cmp-out .hl-row')].find((b) => b.textContent.includes(document.documentElement.lang === 'es' ? 'Quitar el resaltado' : 'Clear the highlight'))?.click());
     const left = await page.evaluate(() => document.querySelectorAll('#graph .node.cmp-a, #graph .node.cmp-b, #graph .node.cmp-base').length);
@@ -1244,11 +1274,17 @@ if (seccion('Escritorio (1280×800)'))
   }));
 
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
-    await page.click('#textview-btn');
-    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
-    const live = await page.evaluate(() => {
-      const l = document.querySelector('#textview-live');
-      return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
+    // se abre con la demo en pausa: con la máquina cargada abrir tarda de 4 a 7 s, y un commit que llega en ese tiempo
+    // es una novedad de verdad y no algo viejo anunciado al abrir (pendiente 1: `al abrir, la región viva ya anuncia
+    // algo más…: Novedades: 0 ramas, 2 commits`; 5 de 30 aperturas con carga 10 en 2 CPU, y 0 de 30 en pausa, iteración 307)
+    let live = null;
+    await quieta(page, async () => {
+      await page.click('#textview-btn');
+      await page.waitForSelector('#textview[open]', { timeout: T(3000) });
+      live = await page.evaluate(() => {
+        const l = document.querySelector('#textview-live');
+        return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
+      });
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
     if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
@@ -1515,13 +1551,19 @@ if (seccion('Escritorio (1280×800)'))
     await page.fill('#search-path', word);
     await page.press('#search-path', 'Enter');
     await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: T(3000) });
-    const on = await page.evaluate(() => ({
-      dim: document.querySelectorAll('#graph svg .node.pfx').length,
-      all: document.querySelectorAll('#graph svg .node').length,
-      status: document.querySelector('#search-path-status').textContent,
-      mark: document.querySelector('#search-btn').classList.contains('filtered'),
-    }));
-    if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all}`);
+    const on = await page.evaluate(() => {
+      // la palabra sale del primer resultado: si todo queda atenuado, el fallo dice si ese commit estaba dibujado
+      const hit = document.querySelector('#search .sr-hit')?.dataset.sha || '';
+      return {
+        dim: document.querySelectorAll('#graph svg .node.pfx').length,
+        all: document.querySelectorAll('#graph svg .node').length,
+        status: document.querySelector('#search-path-status').textContent,
+        mark: document.querySelector('#search-btn').classList.contains('filtered'),
+        hit: hit.slice(0, 7),
+        hitDibujado: [...document.querySelectorAll('#graph svg .node')].some((n) => n.__sha === hit),
+      };
+    });
+    if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all} («${word}», ${on.status}; el commit ${on.hit} ${on.hitDibujado ? 'está' : 'no está'} dibujado)`);
     if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark) throw new Error('sin aviso del filtro: ' + on.status);
     await page.click('#search-path-clear');
     await page.waitForFunction(() => !document.querySelectorAll('#graph svg .node.pfx').length, null, { timeout: T(3000) }).catch(() => {});
@@ -5823,11 +5865,22 @@ if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
     await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
     const solo = await count();
     if (solo !== 2) throw new Error(`?solo= dejó ${solo} ramas, no 2 (la elegida y la por defecto)`);
-    await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: T(3000) });
-    if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
-    await page.click('#branch-view-reset');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    // «Ver todas» se compara con las ramas que tiene esta página ahora, con la demo quieta, y no con las de la primera
+    // carga: la demo viva crea y fusiona ramas (de 6 a 5, 7 u 8 en los primeros 6 s), y con la máquina cargada el clic
+    // llegaba con una rama más y la espera de «=== 6» vencía (pendiente 1: `Timeout 15000ms exceeded`, 1 de 10 con
+    // carga 8 en 2 CPU, iteración 307)
+    await quieta(page, async () => {
+      await page.click('#search-btn');
+      await page.waitForSelector('#search[open]', { timeout: T(3000) });
+      if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
+      const status = await page.textContent('#branch-view-status');
+      const total = Number((/^\d+ de (\d+) ramas a la vista$/.exec(status) || [])[1]);
+      if (!(total > solo)) throw new Error(`?solo= no dice cuántas ramas hay: «${status}»`);
+      await page.click('#branch-view-reset');
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, total, { timeout: T(5000) }).catch(async () => {
+        throw new Error(`«Ver todas» deja ${await count()} ramas a la vista y no las ${total} que había (${status})`);
+      });
+    });
     const after = await page.evaluate(() => location.search);
     if (/solo=|ocultar=/.test(after)) throw new Error('«Ver todas» deja la rama en la URL: ' + after);
   });

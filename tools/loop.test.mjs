@@ -1473,7 +1473,7 @@ describe('diagnostico() de --salud', () => {
 
   test('un reclamo abandonado lo releva el disparo siguiente, no el de después (RECLAMO_H < CRON_H)', () => {
     // loop/128: una sesión la dejó sin fusionar a los 25 min; con 6 h, el disparo de 4 h después la vio «Ocupada»
-    assert.equal(CRON_H, 4.8, 'desde el 2026-11-16 dispara la rotación: cinco veces por día (0, 5, 10, 15 y 20 h de Santiago)');
+    assert.equal(CRON_H, 6, 'desde el 2026-11-16 dispara la rotación cada 6 h: cuatro veces por día (3, 9, 15 y 21 h de Santiago)');
     assert.ok(RECLAMO_H < CRON_H, `RECLAMO_H (${RECLAMO_H}) tiene que ser menor que CRON_H (${CRON_H})`);
     const ahora = Date.parse('2026-11-01T00:00:00Z'); // en el tramo de 2 h
     const r = diagnostico({ ...base, ahora, ramas: [{ nombre: 'loop/28', fecha: ahora - (CRON_H - 0.1) * H }] });
@@ -1484,17 +1484,31 @@ describe('diagnostico() de --salud', () => {
   });
 
   test('la cadencia por tramos: cada uno con su intervalo, sin huecos falsos de antes del cambio', () => {
-    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2, 4.8]);
+    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2, 4.8, 6]);
     assert.equal(CADENCIAS[0].desde, '2026-10-10T04:32:04Z');
-    // la rotación cada 5 h (2026-11-16): sus ventanas de 5 h no son huecos, como sí lo eran con el intervalo de 2 h
+    // la rotación cada 5 h (2026-11-16): sus ventanas de 5 h no son huecos, como sí lo eran con el intervalo de 2 h (con
+    // los tramos hasta el suyo: el de 6 h empezó el mismo día)
     assert.equal(CADENCIAS[2].desde, '2026-11-16T13:00:00Z');
+    const hasta5 = CADENCIAS.slice(0, 3);
     const r5 = Date.parse(CADENCIAS[2].desde);
-    assert.equal(Math.round(disparosEntre(r5, r5 + 24 * H)), 5);
+    assert.equal(Math.round(disparosEntre(r5, r5 + 24 * H, hasta5)), 5);
     const rotacion = [5, 10, 15, 19, 24, 29].map((h) => ({ fecha: r5 + h * H, titulo: 'x (#1)' }));
-    const rot = diagnostico({ ...base, desde: CADENCIAS[2].desde, ahora: r5 + 30 * H, merges: rotacion });
+    const rot = diagnostico({ ...base, desde: CADENCIAS[2].desde, ahora: r5 + 30 * H, merges: rotacion, cadencias: hasta5 });
     assert.deepEqual(rot.lineas.filter((l) => l.startsWith('Hueco:')), [], rot.lineas.join('\n'));
     const conDos = diagnostico({ ...base, desde: CADENCIAS[2].desde, ahora: r5 + 30 * H, merges: rotacion, cadencias: CADENCIAS.slice(0, 2) });
     assert.ok(conDos.lineas.filter((l) => l.startsWith('Hueco:')).length >= 5, 'con el intervalo de 2 h, cada ventana de la rotación era un hueco');
+    // la rotación cada 6 h (desde el disparo de las 18:00 UTC del mismo día, que está en las dos; pedido de la
+    // rotación, 2026-11-17): cuatro disparos por día y no cinco, y dos fusiones a 11 h (una corrida que tardó, entre
+    // dos disparos seguidos) no son un hueco, como sí lo eran con el intervalo de 4,8 h
+    assert.equal(CADENCIAS[3].desde, '2026-11-16T18:00:00Z');
+    const r6 = Date.parse(CADENCIAS[3].desde);
+    assert.equal(Math.round(disparosEntre(r6, r6 + 24 * H)), 4);
+    assert.equal(Math.round(disparosEntre(r6, r6 + 24 * H, hasta5)), 5);
+    const seis = [0.7, 6.7, 17.7, 24.7, 30.6].map((h) => ({ fecha: r6 + h * H, titulo: 'x (#1)' }));
+    const rot6 = diagnostico({ ...base, desde: CADENCIAS[3].desde, ahora: r6 + 31 * H, merges: seis });
+    assert.deepEqual(rot6.lineas.filter((l) => l.startsWith('Hueco:')), [], rot6.lineas.join('\n'));
+    const conTres = diagnostico({ ...base, desde: CADENCIAS[3].desde, ahora: r6 + 31 * H, merges: seis, cadencias: hasta5 });
+    assert.deepEqual(conTres.lineas.filter((l) => l.startsWith('Hueco:')), ['Hueco: 2026-11-17 00:42 → 2026-11-17 11:42 UTC (11,0 h, un disparo sin iteración)'], 'con el intervalo de 4,8 h, la ventana de 11 h salía como hueco');
     const tramos2 = [{ desde: desde, horas: 4 }, { desde: new Date(t0 + 24 * H).toISOString(), horas: 2 }];
     assert.equal(disparosEntre(t0, t0 + 48 * H, tramos2), 6 + 12);
     assert.equal(disparosEntre(t0 + 20 * H, t0 + 28 * H, tramos2), 1 + 2, 'un tramo que cruza el cambio cuenta cada parte con su intervalo');

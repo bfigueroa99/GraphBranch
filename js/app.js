@@ -4542,12 +4542,69 @@
         return field;
       });
 
-  /* El reporte de errores opcional con Sentry (solo en la app de escritorio, electron/sentry.js). Ajustes lo ofrece
-     solo si la app tiene un DSN, apagado mientras quien la usa no lo prenda; prendido, la página escucha sus errores
-     sin atrapar y los pasa al proceso principal junto con los nombres que conoce (repos, alias, ramas, autores) para
-     que los quite antes de mandarlos. El DSN y el envío nunca están en la página. En la web no hay nada de esto. */
+  /* El reporte de errores opcional con Sentry en la web: el mismo puente que el de escritorio (state, set, report),
+     pero aquí. Solo existe si quien publica la página dejó su DSN en index.html con tools/sentry-web.mjs (un
+     <meta name="sentry-dsn">) y el host de ingestión de ese DSN está en connect-src del CSP: sin los dos, no se
+     ofrece (un DSN sin su host no podría salir). Lo prendido queda en este navegador (solo `true` cuenta), y
+     js/sentry.js (la misma limpieza y el mismo sobre que el escritorio) se carga solo al mandar el primer informe:
+     quien no lo prende no baja nada ni escucha nada. En escritorio manda el proceso principal y esto no corre. */
+  function webErrors() {
+    const meta = document.querySelector('meta[name="sentry-dsn"]');
+    const dsn = meta?.content?.trim() || '';
+    if (desktop || !dsn) return null;
+    let origin = '';
+    try {
+      const u = new URL(dsn);
+      if (u.protocol === 'https:' && u.username && /^\/(?:.*\/)?\d+$/.test(u.pathname)) origin = u.origin;
+    } catch {
+      /* no es una URL: no se ofrece */
+    }
+    const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content || '';
+    const connect = (/(?:^|;)\s*connect-src\s+([^;]*)/.exec(csp)?.[1] || '').trim().split(/\s+/);
+    if (!origin || !connect.includes(origin)) return null;
+    const KEY = 'errorReports';
+    const on = () => U.store.get(KEY, false) === true;
+    let client = null;
+    // js/sentry.js, una vez y solo cuando hay algo que mandar; si no carga (sin red), no se insiste en esta visita
+    const load = () =>
+      (client ||= new Promise((resolve, reject) => {
+        if (GB.sentry) return resolve(GB.sentry);
+        const s = document.createElement('script');
+        s.src = 'js/sentry.js';
+        s.onload = () => (GB.sentry ? resolve(GB.sentry) : reject(new Error('js/sentry.js no se cargó')));
+        s.onerror = () => reject(new Error('js/sentry.js no se cargó'));
+        document.head.append(s);
+      }).then((S) =>
+        S.createClient({
+          dsn,
+          isEnabled: on,
+          fetch: (url, init) => fetch(url, init),
+          auth: 'query',
+          surface: 'web',
+          fileOf: S.baseFileOf(new URL('./', location.href).href),
+          release: meta.dataset.release || '',
+          environment: meta.dataset.environment || '',
+          os: S.osName(navigator),
+        }),
+      ));
+    const state = () => ({ available: true, enabled: on() });
+    return {
+      state: async () => state(),
+      async set(value) {
+        U.store.set(KEY, value === true ? true : null);
+        return state();
+      },
+      report: (rec, names) => load().then((c) => c.report(rec, names)),
+    };
+  }
+
+  /* El reporte de errores opcional con Sentry: en la app de escritorio lo manda el proceso principal
+     (electron/sentry.js) y en la web, webErrors. Ajustes lo ofrece solo si hay un DSN, apagado mientras quien usa la
+     app no lo prenda; prendido, la página escucha sus errores sin atrapar y los pasa al puente junto con los nombres
+     que conoce (repos, alias, ramas, autores) para que se quiten antes de mandarlos. En escritorio, el DSN y el envío
+     nunca están en la página. */
   const errorReports = (() => {
-    const bridge = desktop?.errors;
+    const bridge = desktop?.errors || webErrors();
     let state = { available: false, enabled: false };
     let listening = false;
     /** Los nombres de lo cargado que no pueden salir en un informe, hasta 5000. */

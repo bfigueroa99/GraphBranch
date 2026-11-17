@@ -25,6 +25,7 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { apply as withSentryDsn } from './sentry-web.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const allLangs = process.argv.includes('--langs');
@@ -4889,13 +4890,19 @@ if (seccion('Informes de errores (escritorio simulado)'))
 
   {
     const page = await openPage({ viewport: { width: 1280, height: 800 } });
-    await step(page, 'informes de errores: en la web no hay interruptor ni nada que escuche', async () => {
+    const lazy = [];
+    page.on('request', (r) => /\/js\/sentry\.js(?:\?|$)/.test(r.url()) && lazy.push(r.url()));
+    await step(page, 'informes de errores: en la web sin DSN no hay interruptor ni nada que escuche', async () => {
       await page.goto(`${base}/index.html?lang=es`);
       await loaded(page);
       await openSettings(page);
       if (await page.isVisible('#errors-field')) throw new Error('la web ofrece mandar informes de errores');
       if (await page.evaluate(() => typeof window.GBDesktop !== 'undefined')) throw new Error('la web tiene un GBDesktop');
-    });
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba en la web sin DSN');
+      await page.waitForTimeout(400);
+      if (lazy.length) throw new Error('sin DSN la página pidió js/sentry.js');
+    }, { allow: /fallo de prueba/ });
     await page.context().close();
   }
 
@@ -4963,6 +4970,123 @@ if (seccion('Informes de errores (escritorio simulado)'))
       await save(page);
       await page.waitForTimeout(200);
       if ((await page.evaluate(() => window.__errors.sets.length)) !== 2) throw new Error('guardar sin cambios volvió a guardarlo');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+}
+
+if (seccion('Informes de errores (web con DSN)'))
+{
+  /* En la web (ítem 226), con el DSN que pone tools/sentry-web.mjs en index.html: aquí la página se sirve pasada por
+     esa misma herramienta, con un DSN de un host que no existe (.invalid), y la consulta a Sentry se intercepta y se
+     anota. Sin service worker en el contexto, así cada visita pasa por la ruta. Que el sobre vaya limpio de tokens y
+     nombres lo prueba también tools/sentry-web.test.mjs, con un transporte falso. */
+  const KEY = 'fedcba9876543210fedcba9876543210';
+  const HOST = 'https://sentry.graphbranch.invalid';
+  const DSN = `${HOST.replace('https://', `https://${KEY}@`)}/7`;
+  const TOKEN = 'ghp_FAKE0123456789abcdefABCDEF0123456789';
+  const source = readFileSync(join(root, 'index.html'), 'utf8');
+  const withDsn = withSentryDsn(source, { dsn: DSN, release: 'graphbranch@0.1.0', environment: 'production' });
+  // el error que haría quien publica a mano: el DSN sin su host en el CSP
+  const dsnOnly = withDsn.replace(` ${HOST};`, ';');
+  const boom = (page, text) => page.evaluate((m) => setTimeout(GB.U.esc, 0, { toString: () => { throw new TypeError(m); } }), text);
+  const openSettings = async (page) => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+  };
+  const save = async (page) => {
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+  };
+  async function webPage(html) {
+    const page = await openPage({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
+    page.sentry = [];
+    page.lazy = [];
+    await page.route(/\/index\.html(?:\?.*)?$/, (r) => r.fulfill({ contentType: 'text/html; charset=utf-8', body: html }));
+    await page.route(`${HOST}/**`, (r) => {
+      const q = r.request();
+      page.sentry.push({ url: q.url(), method: q.method(), headers: q.headers(), body: q.postData() || '' });
+      return r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '{}' });
+    });
+    page.on('request', (r) => /\/js\/sentry\.js(?:\?|$)/.test(r.url()) && page.lazy.push(r.url()));
+    return page;
+  }
+  const events = (page) => page.sentry.map((x) => JSON.parse(x.body.split('\n')[2] || '{}'));
+
+  {
+    const page = await webPage(dsnOnly);
+    await step(page, 'informes de errores en la web: un DSN sin su host en el CSP no se ofrece ni carga nada', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('se ofrece el interruptor con un DSN que el CSP no deja salir');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba sin el host');
+      await page.waitForTimeout(400);
+      if (page.lazy.length || page.sentry.length) throw new Error(`se pidió ${[...page.lazy, ...page.sentry.map((x) => x.url)].join(', ')}`);
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+
+  {
+    const page = await webPage(withDsn);
+    await step(page, 'informes de errores en la web: con el DSN de la página, apagados de fábrica y sin cargar nada; prendidos mandan el error limpio a su host, siguen al volver y apagados dejan de mandar', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isVisible('#errors-field'))) throw new Error('con el DSN en la página no se ofrece el interruptor');
+      if (await page.isChecked('#errors-report')) throw new Error('el interruptor viene prendido');
+      if ((await page.getAttribute('#errors-report', 'aria-describedby')) !== 'errors-help') throw new Error('la casilla no apunta a su ayuda');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba apagado');
+      await page.waitForTimeout(400);
+      if (page.sentry.length) throw new Error('apagado se mandó un informe');
+      if (page.lazy.length) throw new Error('apagado se pidió js/sentry.js');
+
+      await openSettings(page);
+      await page.check('#errors-report');
+      await save(page);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:errorReports'))) !== 'true') throw new Error('prendido no quedó guardado');
+      if (page.lazy.length) throw new Error('prenderlo pidió js/sentry.js antes de que hubiera un error');
+      // un error con un token, la URL de la página, el repo de la demo, una de sus ramas y una URL de la API
+      const message = await page.evaluate((tok) => `fallo de prueba prendido con ${tok} en ${location.href} de acme/orbita (rama main) por https://api.github.com/repos/acme/orbita`, TOKEN);
+      await boom(page, message);
+      for (let i = 0; i < T(50) && !page.sentry.length; i++) await page.waitForTimeout(100);
+      if (page.sentry.length !== 1) throw new Error(`prendido llegaron ${page.sentry.length} informes`);
+      if (page.lazy.length !== 1) throw new Error(`js/sentry.js se pidió ${page.lazy.length} veces`);
+      const [sent] = page.sentry;
+      const u = new URL(sent.url);
+      if (u.origin + u.pathname !== `${HOST}/api/7/envelope/`) throw new Error(`fue a ${u.origin}${u.pathname}`);
+      if (u.searchParams.get('sentry_key') !== KEY || u.searchParams.get('sentry_version') !== '7') throw new Error(`la URL lleva ${u.search}`);
+      if (sent.method !== 'POST') throw new Error(`el método fue ${sent.method}`);
+      const h = sent.headers;
+      if (h['x-sentry-auth'] || h.cookie || h.referer || h.authorization) throw new Error(`cabeceras de más: ${Object.keys(h).join(', ')}`);
+      if (!/^text\/plain/.test(h['content-type'] || '')) throw new Error(`content-type ${h['content-type']}: una consulta previa de CORS`);
+      for (const bad of [TOKEN, 'acme/orbita', 'orbita', '127.0.0.1', 'lang=es', 'api.github.com']) if (sent.body.includes(bad)) throw new Error(`el sobre lleva ${bad}`);
+      const [ev] = events(page);
+      const ex = ev.exception?.values?.[0];
+      if (ex?.type !== 'TypeError' || ex.mechanism?.type !== 'onerror' || !/^fallo de prueba prendido/.test(ex.value)) throw new Error(`el evento dice ${JSON.stringify(ex).slice(0, 300)}`);
+      if (!ex.stacktrace?.frames?.some((f) => f.filename === 'app:///js/util.js')) throw new Error(`la pila no tiene app:///js/util.js: ${JSON.stringify(ex.stacktrace).slice(0, 300)}`);
+      if (ev.tags?.process !== 'web' || ev.release !== 'graphbranch@0.1.0' || ev.sdk?.settings?.infer_ip !== 'never') throw new Error(`el evento lleva ${JSON.stringify({ tags: ev.tags, release: ev.release, sdk: ev.sdk })}`);
+      if (Object.keys(ev.contexts || {}).join() !== 'os') throw new Error(`contextos de más: ${Object.keys(ev.contexts || {}).join(', ')}`);
+      for (const k of ['user', 'request', 'breadcrumbs', 'server_name', 'extra']) if (k in ev) throw new Error(`el evento lleva ${k}`);
+      // una promesa rechazada sin catch, también
+      await page.evaluate(() => void Promise.reject(new Error('fallo de prueba en una promesa')));
+      for (let i = 0; i < T(50) && page.sentry.length < 2; i++) await page.waitForTimeout(100);
+      if (events(page)[1]?.exception?.values?.[0]?.mechanism?.type !== 'onunhandledrejection') throw new Error('la promesa rechazada no llegó como tal');
+
+      // al volver a la página sigue prendido; apagarlo corta
+      await page.reload();
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isChecked('#errors-report'))) throw new Error('al volver, el interruptor está apagado');
+      await page.uncheck('#errors-report');
+      await save(page);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:errorReports'))) !== null) throw new Error('apagado sigue guardado');
+      const before = page.sentry.length;
+      await boom(page, 'fallo de prueba apagado otra vez');
+      await page.waitForTimeout(600);
+      if (page.sentry.length !== before) throw new Error('apagado de nuevo, se mandó un informe');
     }, { allow: /fallo de prueba/ });
     await page.context().close();
   }

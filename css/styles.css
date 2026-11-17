@@ -5526,7 +5526,10 @@ a.hl-row:focus-visible {
   height: 18px;
 }
 .hl-none,
+/* position: relative: el bloque contenedor del .sr-only de las series por semana (lo que lee un lector de pantalla),
+   para que quede dentro de su línea y del panel que se desplaza, como en .repo-tabs */
 .hl-line {
+  position: relative;
   margin: 0;
   color: var(--ink-3);
 }

@@ -2,11 +2,12 @@
 
    - Al instalarse guarda en la caché todo lo que la página puede pedir: index.html, el manifiesto,
      los íconos y todo css/, js/ y vendor/ (FILES; tools/pwa.test.mjs comprueba que no falte ni
-     sobre nada).
+     sobre nada), salvo lo de ON_DEMAND, que la página pide solo a veces y va directo a la red.
    - Con red, esos archivos se piden a la red como siempre y la copia guardada se pone al día: quien
      está conectado siempre ve la última versión. Sin red, se sirve la copia.
    - Nunca guarda nada de otro sitio: las respuestas de api.github.com llevan datos privados si hay
-     token, y los avatares van y vienen de GitHub. Esas peticiones no pasan por aquí. */
+     token, y los avatares van y vienen de GitHub. Esas peticiones no pasan por aquí, ni los informes de
+     errores a Sentry (un POST a otro sitio). */
 'use strict';
 
 const CACHE = 'graphbranch';
@@ -41,6 +42,10 @@ const FILES = [
   'vendor/fonts/JetBrainsMono-latin-italic.woff2', 'vendor/fonts/JetBrainsMono-latin.woff2',
   'vendor/fonts/JetBrainsMono-vietnamese-italic.woff2', 'vendor/fonts/JetBrainsMono-vietnamese.woff2',
 ];
+
+/* Lo que no se guarda: js/sentry.js solo se pide al mandar un informe de errores, prendido en Ajustes y con un DSN
+   en la página (tools/sentry-web.mjs). Quien no los usa no lo baja nunca, y sin red tampoco habría a quién mandarlo. */
+const ON_DEMAND = ['js/sentry.js'];
 
 /** La carpeta del sitio (en GitHub Pages, /GraphBranch/), con barra al final. */
 const BASE = new URL('./', self.location).href;

@@ -814,5 +814,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/311, sin colisión
 - Issues: sin pedidos
 - Web publicada: no se pudo comprobar (Request was cancelled.)
-- Validado: pendiente
+- Validado: 842 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 31 e2e en verde. A la primera, con carga de 2 a 5 en 2 CPU: 24 min 36 s, el smoke 267 pasos en 20 min 16 s, sin intermitentes.
 - **Siguiente:** iteración 312, expansión: ítem 226 (Informes de errores con Sentry: la web, Salidas)

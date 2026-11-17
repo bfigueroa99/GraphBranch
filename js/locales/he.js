@@ -600,6 +600,8 @@ GB.i18n.define('he', {
   'health.scorecardCheck': '{name}: {score} מתוך 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard עדיין לא ניתח את המאגר הזה. הוא מנתח מדי שבוע את הפרויקטים הנפוצים ביותר, וכל מאגר שמריץ את ה-GitHub Action שלו.',
   'health.scorecardError': 'לא ניתן היה לקרוא את הציון של OpenSSF Scorecard. ננסה שוב בפעם הבאה שתפתחו את החלונית הזו.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard עדיין לא ניתח את הפרויקט הזה. ב-gitlab.com הוא מנתח מדי שבוע את הפרויקטים שברשימה הציבורית שלו, ואפשר לבקש להוסיף אליה פרויקט.',
+  'health.scorecardSubgroup': 'ה-API של OpenSSF Scorecard לא נותן ציון לפרויקטים בתת-קבוצה של GitLab, כמו זה.',
   'health.merges7': 'מיזוגים, 7 הימים האחרונים',
   'health.merges30': 'מיזוגים, 30 הימים האחרונים',
   'health.releases30': 'גרסאות, 30 הימים האחרונים',

@@ -559,6 +559,8 @@ GB.i18n.define('ru', {
   'health.scorecardCheck': '{name}: {score} из 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard ещё не анализировал этот репозиторий. Каждую неделю он анализирует самые используемые проекты и любой репозиторий, где запущен его GitHub Action.',
   'health.scorecardError': 'Не удалось прочитать оценку OpenSSF Scorecard. Попытка повторится, когда вы в следующий раз откроете эту панель.',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard ещё не анализировал этот проект. На gitlab.com он каждую неделю анализирует проекты из своего публичного списка, и можно попросить добавить в него проект.',
+  'health.scorecardSubgroup': 'API OpenSSF Scorecard не даёт оценку проектов из подгруппы GitLab, как этот.',
   'health.merges7': 'Слияния, за 7 дней',
   'health.merges30': 'Слияния, за 30 дней',
   'health.releases30': 'Релизы, за 30 дней',

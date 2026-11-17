@@ -544,6 +544,8 @@ GB.i18n.define('th', {
   'health.scorecardCheck': '{name}: {score} จาก 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard ยังไม่ได้วิเคราะห์ repository นี้ โดยจะวิเคราะห์โปรเจกต์ที่ใช้กันมากที่สุดทุกสัปดาห์ และ repository ใดก็ตามที่รัน GitHub Action ของมัน',
   'health.scorecardError': 'อ่านคะแนนของ OpenSSF Scorecard ไม่ได้ จะลองอีกครั้งเมื่อคุณเปิดแผงนี้ครั้งถัดไป',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard ยังไม่ได้วิเคราะห์โปรเจกต์นี้ บน gitlab.com จะวิเคราะห์โปรเจกต์ในรายการสาธารณะของตนทุกสัปดาห์ และสามารถขอให้เพิ่มโปรเจกต์เข้าไปได้',
+  'health.scorecardSubgroup': 'API ของ OpenSSF Scorecard ไม่ให้คะแนนของโปรเจกต์ที่อยู่ในกลุ่มย่อยของ GitLab เช่นโปรเจกต์นี้',
   'health.merges7': 'การรวม 7 วันที่ผ่านมา',
   'health.merges30': 'การรวม 30 วันที่ผ่านมา',
   'health.releases30': 'รีลีส 30 วันที่ผ่านมา',

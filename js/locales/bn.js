@@ -543,6 +543,8 @@ GB.i18n.define('bn', {
   'health.scorecardCheck': '{name}: 10-এর মধ্যে {score} — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard এখনও এই রিপোজিটরি বিশ্লেষণ করেনি। এটি প্রতি সপ্তাহে সবচেয়ে বেশি ব্যবহৃত প্রকল্পগুলি বিশ্লেষণ করে, আর যে কোনো রিপোজিটরি যা এর GitHub Action চালায়।',
   'health.scorecardError': 'OpenSSF Scorecard-এর স্কোর পড়া যায়নি। পরের বার এই প্যানেল খুললে আবার চেষ্টা করা হবে।',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard এখনও এই প্রজেক্টটি বিশ্লেষণ করেনি। gitlab.com-এ এটি প্রতি সপ্তাহে তার সর্বজনীন তালিকার প্রজেক্টগুলো বিশ্লেষণ করে, এবং সেই তালিকায় কোনো প্রজেক্ট যোগ করার অনুরোধ করা যায়।',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard-এর API GitLab-এর কোনো সাবগ্রুপের প্রজেক্টের স্কোর দেয় না, যেমন এই প্রজেক্টটি।',
   'health.merges7': 'মার্জ, গত ৭ দিন',
   'health.merges30': 'মার্জ, গত ৩০ দিন',
   'health.releases30': 'রিলিজ, গত ৩০ দিন',

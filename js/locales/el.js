@@ -543,6 +543,8 @@ GB.i18n.define('el', {
   'health.scorecardCheck': '{name}: {score} στα 10 — {reason}',
   'health.scorecardNone': 'Το OpenSSF Scorecard δεν έχει αναλύσει ακόμη αυτό το αποθετήριο. Αναλύει κάθε εβδομάδα τα πιο διαδεδομένα έργα και κάθε αποθετήριο που εκτελεί το GitHub Action του.',
   'health.scorecardError': 'Δεν ήταν δυνατή η ανάγνωση της βαθμολογίας του OpenSSF Scorecard. Θα γίνει νέα προσπάθεια την επόμενη φορά που θα ανοίξετε αυτό το πλαίσιο.',
+  'health.scorecardNoneGitlab': 'Το OpenSSF Scorecard δεν έχει αναλύσει ακόμη αυτό το έργο. Στο gitlab.com αναλύει κάθε εβδομάδα τα έργα της δημόσιας λίστας του, και μπορείτε να ζητήσετε να προστεθεί ένα.',
+  'health.scorecardSubgroup': 'Το API του OpenSSF Scorecard δεν δίνει βαθμολογία για έργα σε υποομάδα του GitLab, όπως αυτό.',
   'health.merges7': 'Συγχωνεύσεις, τελευταίες 7 ημέρες',
   'health.merges30': 'Συγχωνεύσεις, τελευταίες 30 ημέρες',
   'health.releases30': 'Εκδόσεις, τελευταίες 30 ημέρες',

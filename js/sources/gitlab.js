@@ -237,6 +237,37 @@
         stars: Number.isFinite(p.star_count) ? p.star_count : null,
         forks: Number.isFinite(p.forks_count) ? p.forks_count : null,
       });
+      // OpenSSF Scorecard (ítem 225) solo se consulta de un proyecto que se sabe público: el que GitLab dice público o, si
+      // la respuesta no trae la visibilidad, el que se pudo leer sin token (gitlab.com esconde los privados y los internos
+      // tras un 404 a quien no inició sesión). Con token y sin visibilidad, podría ser privado: no se consulta.
+      this.publicProject = p.visibility === 'public' || (!p.visibility && !this.gitlabToken);
+    }
+
+    /** El proyecto que se le pregunta a OpenSSF Scorecard (`gitlab.com/grupo/proyecto`, ya escapado), o null si no se
+        consulta: solo uno público de gitlab.com (un GitLab propio no está en Scorecard), ya cargado, y con la ruta que da
+        su API (Scorecard distingue mayúsculas). Uno de un subgrupo tampoco: la ruta de Scorecard es
+        `/projects/{plataforma}/{dueño}/{repo}`, un segmento cada uno, y no tiene dónde preguntarse (ver `syncScorecard`). */
+    scorecardProject() {
+      const { owner, name } = this.data.repo;
+      if (!this.scorecardPublic() || !owner || owner.includes('/')) return null;
+      return 'gitlab.com/' + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+    }
+
+    scorecardPublic() {
+      return this.ep.web === WEB && this.publicProject === true;
+    }
+
+    /** El puntaje de OpenSSF Scorecard (ítem 225), como el de GitHub: una consulta al abrir la salud y una sola por pestaña.
+        De un proyecto público de gitlab.com en un subgrupo, que la API de Scorecard no da, la salud lo dice sin consultar
+        (devuelve true la primera vez, para que el panel se vuelva a dibujar con el aviso). */
+    syncScorecard() {
+      const { owner } = this.data.repo;
+      if (this.scorecardPublic() && owner && owner.includes('/')) {
+        if (this.data.scorecard) return Promise.resolve(false);
+        this.data.scorecard = { state: 'subgroup' };
+        return Promise.resolve(true);
+      }
+      return super.syncScorecard();
     }
 
     /** Una página de ramas, las actualizadas más recientemente primero. */

@@ -543,6 +543,8 @@ GB.i18n.define('zh-Hans', {
   'health.scorecardCheck': '{name}：{score} / 10 — {reason}',
   'health.scorecardNone': 'OpenSSF Scorecard 尚未分析此仓库。它每周分析使用最广泛的项目，以及任何运行其 GitHub Action 的仓库。',
   'health.scorecardError': '无法读取 OpenSSF Scorecard 的得分。下次打开此面板时会重试。',
+  'health.scorecardNoneGitlab': 'OpenSSF Scorecard 尚未分析此项目。在 gitlab.com 上，它每周分析其公开列表中的项目，也可以申请把项目加入该列表。',
+  'health.scorecardSubgroup': 'OpenSSF Scorecard 的 API 不提供 GitLab 子组中项目的得分，此项目即是如此。',
   'health.merges7': '合并数，近 7 天',
   'health.merges30': '合并数，近 30 天',
   'health.releases30': '发布数，近 30 天',

@@ -490,6 +490,8 @@ GB.i18n.define('de', {
   'settings.depth': 'Commits pro Branch',
   'settings.marks': 'Tags und Bereitstellungsumgebungen anzeigen',
   'settings.marksHelp': 'Fähnchen an Commits mit Tag und ein Schild an dem Commit, den jede Umgebung (Produktion, Staging) ausführt. Zwei zusätzliche Anfragen beim Öffnen eines Repos, danach zwei alle 15 Minuten.',
+  'settings.errors': 'Fehlerberichte senden',
+  'settings.errorsHelp': 'Aus, bis du es einschaltest. Wenn in der App etwas kaputtgeht, schickt sie Sentry die Art des Fehlers, seine Meldung und die Stelle im Code von GraphBranch, an der er passiert ist, zusammen mit der App-Version und deinem Betriebssystem. Tokens, Webadressen, die Namen von Repositorys, Branches und Personen, die Ordner auf diesem Computer und deine IP-Adresse bleiben außen vor.',
   'settings.branchesHelp': 'GraphBranch zeigt alle Branches des Repositorys, die aktivsten am nächsten am Standard-Branch. Bei großen Repositorys erscheinen sie nach und nach, die aktivsten zuerst. Angeheftete Branches (Branch anklicken → <strong>Anheften</strong>) stehen direkt unter dem Standard-Branch, auch mit Filter. Mit dem Graph-Filter kannst du dich auf ein Präfix konzentrieren, zum Beispiel <code>release/</code>.',
   'settings.clearTokens': 'Tokens löschen',
   'settings.cancel': 'Abbrechen',

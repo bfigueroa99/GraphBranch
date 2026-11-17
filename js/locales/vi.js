@@ -489,6 +489,8 @@ GB.i18n.define('vi', {
   'settings.depth': 'Số commit mỗi nhánh',
   'settings.marks': 'Hiện thẻ và môi trường triển khai',
   'settings.marksHelp': 'Cờ trên các commit có thẻ và một tấm biển trên commit mà mỗi môi trường (production, staging) đang chạy. Thêm hai yêu cầu khi mở kho và sau đó hai yêu cầu mỗi 15 phút.',
+  'settings.errors': 'Gửi báo cáo lỗi',
+  'settings.errorsHelp': 'Tắt cho đến khi bạn bật. Khi có gì đó trong ứng dụng bị hỏng, ứng dụng gửi cho Sentry loại lỗi, thông báo của lỗi và vị trí trong mã của GraphBranch nơi lỗi xảy ra, kèm phiên bản ứng dụng và hệ điều hành của bạn. Token, địa chỉ web, tên kho mã, nhánh và người, các thư mục trên máy tính này và địa chỉ IP của bạn đều được loại bỏ.',
   'settings.branchesHelp': 'GraphBranch hiển thị mọi nhánh của repo, nhánh càng hoạt động nhiều càng gần nhánh mặc định. Với các repo lớn, các nhánh xuất hiện dần dần, nhánh hoạt động nhiều nhất trước. Các nhánh đã ghim (nhấp vào một nhánh → <strong>Ghim</strong>) nằm ngay dưới nhánh mặc định, kể cả khi đang lọc. Hãy dùng bộ lọc của biểu đồ để tập trung vào một tiền tố, ví dụ <code>release/</code>.',
   'settings.clearTokens': 'Xóa các token',
   'settings.cancel': 'Hủy',

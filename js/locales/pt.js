@@ -490,6 +490,8 @@ GB.i18n.define('pt', {
   'settings.depth': 'Commits por branch',
   'settings.marks': 'Mostrar tags e ambientes de implantação',
   'settings.marksHelp': 'Bandeirinhas nos commits com tag e uma placa no commit que cada ambiente (produção, staging) executa. Duas requisições a mais ao abrir um repositório e duas a cada 15 minutos.',
+  'settings.errors': 'Enviar relatórios de erro',
+  'settings.errorsHelp': 'Desligado até você ligar. Quando algo no app quebra, ele envia ao Sentry o tipo de erro, a mensagem e em que parte do código do GraphBranch aconteceu, com a versão do app e o seu sistema operacional. Tokens, endereços web, nomes de repositórios, branches e pessoas, as pastas deste computador e o seu endereço IP ficam de fora.',
   'settings.branchesHelp': 'O GraphBranch mostra todos os branches do repositório, com os mais ativos mais perto do branch padrão. Em repositórios grandes, eles vão aparecendo aos poucos, os mais ativos primeiro. Os branches fixados (clique em um branch → <strong>Fixar</strong>) ficam logo abaixo do branch padrão, mesmo com um filtro. Use o filtro do grafo para focar em um prefixo, por exemplo <code>release/</code>.',
   'settings.clearTokens': 'Excluir os tokens',
   'settings.cancel': 'Cancelar',

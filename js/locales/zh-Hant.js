@@ -489,6 +489,8 @@ GB.i18n.define('zh-Hant', {
   'settings.depth': '每個分支的提交數',
   'settings.marks': '顯示標籤與部署環境',
   'settings.marksHelp': '在帶標籤的提交上顯示旗幟，在各環境（正式、預備）執行的提交上顯示銘牌。開啟儲存庫時多 2 次請求，之後每 15 分鐘 2 次。',
+  'settings.errors': '傳送錯誤報告',
+  'settings.errorsHelp': '在你開啟之前一直關閉。應用程式出錯時，會把錯誤類型、錯誤訊息以及它發生在 GraphBranch 程式碼中的位置，連同應用程式版本和你的作業系統傳送給 Sentry。權杖、網址、儲存庫、分支和人員的名稱、這台電腦上的資料夾以及你的 IP 位址都不會包含在內。',
   'settings.branchesHelp': 'GraphBranch 會顯示儲存庫的所有分支，越活躍的分支離預設分支越近。在大型儲存庫中，分支會逐步出現，最活躍的最先顯示。已釘選的分支（按一下分支 → <strong>釘選</strong>）一律位於預設分支正下方，即使正在篩選也一樣。可使用圖上的篩選功能聚焦於某個前綴，例如 <code>release/</code>。',
   'settings.clearTokens': '刪除所有權杖',
   'settings.cancel': '取消',

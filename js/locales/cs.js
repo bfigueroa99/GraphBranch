@@ -500,6 +500,8 @@ GB.i18n.define('cs', {
   'settings.depth': 'Commitů na větev',
   'settings.marks': 'Zobrazit tagy a prostředí nasazení',
   'settings.marksHelp': 'Praporky u commitů s tagem a štítek u commitu, který běží v každém prostředí (produkce, staging). Dva další požadavky při otevření repozitáře, pak dva každých 15 minut.',
+  'settings.errors': 'Odesílat hlášení o chybách',
+  'settings.errorsHelp': 'Vypnuto, dokud to nezapnete. Když se v aplikaci něco rozbije, pošle do Sentry druh chyby, její zprávu a místo v kódu GraphBranch, kde k ní došlo, spolu s verzí aplikace a vaším operačním systémem. Tokeny, webové adresy, názvy repozitářů, větví a lidí, složky v tomto počítači a vaše IP adresa se neposílají.',
   'settings.branchesHelp': 'GraphBranch zobrazuje všechny větve repozitáře, nejaktivnější nejblíže výchozí větvi. U velkých repozitářů se objevují postupně, nejaktivnější jako první. Připnuté větve (klikněte na větev → <strong>Připnout</strong>) jsou hned pod výchozí větví, i když je zapnutý filtr. Pomocí filtru grafu se zaměříte na prefix, například <code>release/</code>.',
   'settings.clearTokens': 'Smazat tokeny',
   'settings.cancel': 'Zrušit',

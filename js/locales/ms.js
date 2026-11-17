@@ -489,6 +489,8 @@ GB.i18n.define('ms', {
   'settings.depth': 'Commit bagi setiap branch',
   'settings.marks': 'Papar tag dan persekitaran penempatan',
   'settings.marksHelp': 'Bendera pada commit bertag dan papan pada commit yang dijalankan setiap persekitaran (pengeluaran, staging). Dua permintaan tambahan apabila repositori dibuka, kemudian dua setiap 15 minit.',
+  'settings.errors': 'Hantar laporan ralat',
+  'settings.errorsHelp': 'Dimatikan sehingga anda menghidupkannya. Apabila sesuatu dalam apl rosak, apl menghantar kepada Sentry jenis ralat, mesejnya dan di mana dalam kod GraphBranch ia berlaku, bersama versi apl dan sistem pengendalian anda. Token, alamat web, nama repositori, cabang dan orang, folder pada komputer ini dan alamat IP anda tidak disertakan.',
   'settings.branchesHelp': 'GraphBranch memaparkan semua branch dalam repo, dengan yang paling aktif paling hampir dengan branch lalai. Pada repo besar, branch muncul sedikit demi sedikit, yang paling aktif dahulu. Branch yang disematkan (klik pada branch → <strong>Sematkan</strong>) berada tepat di bawah branch lalai, walaupun dengan penapis. Gunakan penapis graf untuk menumpukan pada satu awalan, contohnya <code>release/</code>.',
   'settings.clearTokens': 'Padam semua token',
   'settings.cancel': 'Batal',

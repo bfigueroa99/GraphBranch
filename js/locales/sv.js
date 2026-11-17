@@ -489,6 +489,8 @@ GB.i18n.define('sv', {
   'settings.depth': 'Commits per branch',
   'settings.marks': 'Visa taggar och driftsättningsmiljöer',
   'settings.marksHelp': 'Flaggor på commits med tagg och en skylt på den commit som varje miljö (produktion, staging) kör. Två extra förfrågningar när ett repo öppnas, sedan två var 15:e minut.',
+  'settings.errors': 'Skicka felrapporter',
+  'settings.errorsHelp': 'Av tills du slår på det. När något i appen går sönder skickar den Sentry vilken sorts fel det är, dess meddelande och var i GraphBranchs kod det hände, tillsammans med appens version och ditt operativsystem. Token, webbadresser, namn på repon, grenar och personer, mapparna på den här datorn och din IP-adress lämnas utanför.',
   'settings.branchesHelp': 'GraphBranch visar alla brancher i repot, de mest aktiva närmast standardbranchen. I stora repon dyker de upp lite i taget, de mest aktiva först. Fästa brancher (klicka på en branch → <strong>Fäst</strong>) hamnar direkt under standardbranchen, även med ett filter. Använd grafens filter för att fokusera på ett prefix, till exempel <code>release/</code>.',
   'settings.clearTokens': 'Ta bort alla token',
   'settings.cancel': 'Avbryt',

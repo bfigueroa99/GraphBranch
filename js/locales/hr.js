@@ -497,6 +497,8 @@ GB.i18n.define('hr', {
   'settings.depth': 'Commitova po grani',
   'settings.marks': 'Prikaži oznake i okruženja za postavljanje',
   'settings.marksHelp': 'Zastavice na commitovima s oznakom i pločica na commitu koji pokreće svako okruženje (produkcija, staging). Dva dodatna zahtjeva pri otvaranju repozitorija, zatim dva svakih 15 minuta.',
+  'settings.errors': 'Šalji izvješća o pogreškama',
+  'settings.errorsHelp': 'Isključeno dok ga ne uključite. Kad se nešto u aplikaciji pokvari, ona Sentryju šalje vrstu pogreške, njezinu poruku i mjesto u kodu GraphBrancha gdje se dogodila, uz verziju aplikacije i vaš operacijski sustav. Tokeni, web-adrese, imena repozitorija, grana i ljudi, mape na ovom računalu i vaša IP adresa ne šalju se.',
   'settings.branchesHelp': 'GraphBranch prikazuje sve grane repozitorija, a najaktivnije su najbliže zadanoj grani. U velikim repozitorijima pojavljuju se postupno, najprije najaktivnije. Prikvačene grane (kliknite granu → <strong>Prikvačite</strong>) stoje odmah ispod zadane grane, čak i uz filtar. Filtrom grafa usredotočite se na prefiks, na primjer <code>release/</code>.',
   'settings.clearTokens': 'Obrišite tokene',
   'settings.cancel': 'Odustanite',

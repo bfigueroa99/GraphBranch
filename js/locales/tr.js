@@ -489,6 +489,8 @@ GB.i18n.define('tr', {
   'settings.depth': 'Dal başına commit sayısı',
   'settings.marks': 'Etiketleri ve dağıtım ortamlarını göster',
   'settings.marksHelp': 'Etiketli commit\'lerde bayraklar ve her ortamın (üretim, staging) çalıştırdığı commit\'te bir levha. Depo açılırken iki ek istek, sonra her 15 dakikada iki.',
+  'settings.errors': 'Hata raporları gönder',
+  'settings.errorsHelp': 'Siz açana kadar kapalıdır. Uygulamada bir şey bozulduğunda Sentry\'ye hatanın türünü, iletisini ve GraphBranch kodunun neresinde olduğunu, uygulama sürümü ve işletim sisteminizle birlikte gönderir. Token\'lar, web adresleri, depo, dal ve kişi adları, bu bilgisayardaki klasörler ve IP adresiniz gönderilmez.',
   'settings.branchesHelp': 'GraphBranch deponun tüm dallarını gösterir; en etkin olanlar varsayılan dala en yakındır. Büyük depolarda dallar yavaş yavaş görünür, önce en etkin olanlar. Sabitlenen dallar (bir dala tıklayın → <strong>Sabitle</strong>) filtre varken bile varsayılan dalın hemen altında yer alır. Bir önek üzerine odaklanmak için grafik filtresini kullanın, örneğin <code>release/</code>.',
   'settings.clearTokens': 'Token’ları sil',
   'settings.cancel': 'İptal',

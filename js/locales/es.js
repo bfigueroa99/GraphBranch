@@ -489,6 +489,8 @@ GB.i18n.define('es', {
   'settings.depth': 'Commits por rama',
   'settings.marks': 'Mostrar tags y entornos de despliegue',
   'settings.marksHelp': 'Banderines en los commits con tag y una placa en el commit que corre cada entorno (producción, staging). Dos consultas más al abrir un repositorio y dos cada 15 minutos.',
+  'settings.errors': 'Enviar informes de errores',
+  'settings.errorsHelp': 'Apagado hasta que lo actives. Cuando algo en la app falla, envía a Sentry el tipo de error, su mensaje y en qué parte del código de GraphBranch pasó, con la versión de la app y tu sistema operativo. Quedan fuera los tokens, las direcciones web, los nombres de repositorios, ramas y personas, las carpetas de este equipo y tu dirección IP.',
   'settings.branchesHelp': 'GraphBranch muestra todas las ramas del repo, las más activas más cerca de la rama por defecto. En repos grandes van apareciendo de a poco, las más activas primero. Las ramas fijadas (clic en una rama → <strong>Fijar</strong>) van justo debajo de la rama por defecto, incluso con un filtro. Usa el filtro del grafo para concentrarte en un prefijo, por ejemplo <code>release/</code>.',
   'settings.clearTokens': 'Borrar los tokens',
   'settings.cancel': 'Cancelar',

@@ -171,6 +171,8 @@
     accountAdd: $('#account-add'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
+    errorsField: $('#errors-field'),
+    errorsReport: $('#errors-report'),
     depth: $('#depth'),
     marks: $('#marks'),
     settingsCancel: $('#settings-cancel'),
@@ -4415,6 +4417,7 @@
     }
     el.depth.value = settings.depth;
     el.marks.checked = settings.marks;
+    errorReports.show();
     for (const f of hookFields) {
       f.input.value = hookUrls[f.service];
       f.state.textContent = '';
@@ -4530,6 +4533,70 @@
         return field;
       });
 
+  /* El reporte de errores opcional con Sentry (solo en la app de escritorio, electron/sentry.js). Ajustes lo ofrece
+     solo si la app tiene un DSN, apagado mientras quien la usa no lo prenda; prendido, la página escucha sus errores
+     sin atrapar y los pasa al proceso principal junto con los nombres que conoce (repos, alias, ramas, autores) para
+     que los quite antes de mandarlos. El DSN y el envío nunca están en la página. En la web no hay nada de esto. */
+  const errorReports = (() => {
+    const bridge = desktop?.errors;
+    let state = { available: false, enabled: false };
+    let listening = false;
+    /** Los nombres de lo cargado que no pueden salir en un informe, hasta 5000. */
+    function knownNames() {
+      const out = new Set();
+      const add = (v) => typeof v === 'string' && v.trim().length >= 3 && out.size < 5000 && out.add(v.trim());
+      try {
+        for (const tab of tabs) {
+          const data = tab.source?.data;
+          add(tab.key);
+          add(tab.alias);
+          if (!data) continue;
+          add(data.repo?.owner);
+          add(data.repo?.name);
+          for (const name of data.branches?.keys?.() || []) add(name);
+          for (const c of data.commits?.values?.() || []) {
+            add(c.author?.login);
+            add(c.author?.name);
+            if (out.size >= 5000) break;
+          }
+          for (const p of data.pulls?.values?.() || []) add(p.user?.login);
+        }
+      } catch {
+        /* a medio cargar: se manda con lo que se juntó, y el proceso principal quita igual lo que reconoce */
+      }
+      return [...out];
+    }
+    const send = (kind, err) => {
+      const e = err && typeof err === 'object' ? err : { message: String(err ?? '') };
+      bridge.report({ kind, type: String(e.name || ''), message: String(e.message || ''), stack: String(e.stack || '') }, knownNames()).catch(() => {});
+    };
+    const onError = (ev) => send('error', ev.error || { message: ev.message });
+    const onRejection = (ev) => send('rejection', ev.reason);
+    function listen(on) {
+      if (on === listening) return;
+      listening = on;
+      const fn = on ? 'addEventListener' : 'removeEventListener';
+      window[fn]('error', onError);
+      window[fn]('unhandledrejection', onRejection);
+    }
+    function apply(s) {
+      state = { available: !!s?.available, enabled: !!s?.available && !!s?.enabled };
+      el.errorsField.hidden = !state.available;
+      el.errorsReport.checked = state.enabled;
+      listen(state.enabled);
+    }
+    if (bridge) bridge.state().then(apply, () => apply(null));
+    return {
+      /** Al abrir Ajustes: la casilla como está guardado. */
+      show: () => (el.errorsReport.checked = state.enabled),
+      /** Al guardar Ajustes: si cambió, se guarda en el proceso principal y se empieza o deja de escuchar. */
+      save() {
+        if (!bridge || !state.available || el.errorsReport.checked === state.enabled) return;
+        bridge.set(el.errorsReport.checked).then(apply, (err) => console.error('No se pudo guardar el informe de errores:', err));
+      },
+    };
+  })();
+
   /** Los campos de los tokens, cada uno con su botón de mostrar u ocultar. */
   const tokenFields = [
     [el.tokenInput, el.tokenToggle],
@@ -4608,6 +4675,7 @@
       desktop.setToken(hookUrls[f.service], f.service).catch((err) => console.error('No se pudo guardar el webhook:', err));
     }
     if (hookFields.length) U.store.set('hooks', hookPrefs);
+    errorReports.save();
     closeSettings();
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón

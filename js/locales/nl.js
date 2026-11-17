@@ -490,6 +490,8 @@ GB.i18n.define('nl', {
   'settings.depth': 'Commits per branch',
   'settings.marks': 'Tags en implementatieomgevingen tonen',
   'settings.marksHelp': 'Vlaggetjes op commits met een tag en een bordje op de commit die elke omgeving (productie, staging) draait. Twee extra verzoeken bij het openen van een repository, daarna twee per 15 minuten.',
+  'settings.errors': 'Foutrapporten versturen',
+  'settings.errorsHelp': 'Uit tot je het aanzet. Als er iets in de app misgaat, stuurt die Sentry het soort fout, de melding en waar in de code van GraphBranch het gebeurde, samen met de appversie en je besturingssysteem. Tokens, webadressen, de namen van repositories, branches en mensen, de mappen op deze computer en je IP-adres blijven erbuiten.',
   'settings.branchesHelp': 'GraphBranch toont alle branches van de repo, de meest actieve het dichtst bij de standaardbranch. Bij grote repo’s verschijnen ze geleidelijk, de meest actieve eerst. Vastgezette branches (klik op een branch → <strong>Vastzetten</strong>) staan direct onder de standaardbranch, ook met een filter. Gebruik het filter van de graaf om je op een prefix te richten, bijvoorbeeld <code>release/</code>.',
   'settings.clearTokens': 'Tokens verwijderen',
   'settings.cancel': 'Annuleren',

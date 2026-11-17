@@ -490,6 +490,8 @@ GB.i18n.define('fr', {
   'settings.depth': 'Commits par branche',
   'settings.marks': 'Afficher les tags et les environnements de déploiement',
   'settings.marksHelp': 'Des fanions sur les commits taggés et une plaque sur le commit que fait tourner chaque environnement (production, staging). Deux requêtes de plus à l\'ouverture d\'un dépôt, puis deux toutes les 15 minutes.',
+  'settings.errors': 'Envoyer des rapports d\'erreur',
+  'settings.errorsHelp': 'Désactivé tant que vous ne l\'activez pas. Quand quelque chose plante dans l\'app, elle envoie à Sentry le type d\'erreur, son message et l\'endroit du code de GraphBranch où c\'est arrivé, avec la version de l\'app et votre système d\'exploitation. Les jetons, les adresses web, les noms des dépôts, des branches et des personnes, les dossiers de cet ordinateur et votre adresse IP sont exclus.',
   'settings.branchesHelp': 'GraphBranch affiche toutes les branches du dépôt, les plus actives au plus près de la branche par défaut. Sur les gros dépôts, elles apparaissent peu à peu, les plus actives d’abord. Les branches épinglées (clic sur une branche → <strong>Épingler</strong>) se placent juste sous la branche par défaut, même avec un filtre. Utilisez le filtre du graphe pour vous concentrer sur un préfixe, par exemple <code>release/</code>.',
   'settings.clearTokens': 'Supprimer les jetons',
   'settings.cancel': 'Annuler',

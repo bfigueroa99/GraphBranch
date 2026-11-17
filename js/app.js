@@ -4567,9 +4567,20 @@
       }
       return [...out];
     }
+    /* Como el proceso principal, hasta 10 por sesión y cada error una vez: un error en cada cuadro de una animación
+       no junta los nombres 60 veces por segundo. Un fallo aquí no puede volver a disparar 'error'. */
+    const seen = new Set();
     const send = (kind, err) => {
-      const e = err && typeof err === 'object' ? err : { message: String(err ?? '') };
-      bridge.report({ kind, type: String(e.name || ''), message: String(e.message || ''), stack: String(e.stack || '') }, knownNames()).catch(() => {});
+      try {
+        const e = err && typeof err === 'object' ? err : { message: String(err ?? '') };
+        const rec = { kind, type: String(e.name || ''), message: String(e.message || ''), stack: String(e.stack || '') };
+        const key = `${kind}|${rec.type}|${rec.message}|${rec.stack.split('\n')[1] || ''}`;
+        if (seen.has(key) || seen.size >= 10) return;
+        seen.add(key);
+        bridge.report(rec, knownNames()).catch(() => {});
+      } catch {
+        /* un error raro (un getter que lanza): no se informa */
+      }
     };
     const onError = (ev) => send('error', ev.error || { message: ev.message });
     const onRejection = (ev) => send('rejection', ev.reason);

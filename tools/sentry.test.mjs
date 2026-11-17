@@ -100,6 +100,8 @@ test('el texto de un error sale sin tokens, cabeceras, URLs, correos, rutas, com
   assert.equal(sentry.scrubText("Cannot read properties of undefined (reading 'proyectox')", ['proyectox']).includes('proyectox'), false);
   // un texto entre comillas que no es eso, fuera
   assert.equal(sentry.scrubText("rama 'main' no está").includes('main'), false);
+  // un nombre que también es parte de una URL no deja pasar el resto de ella
+  assert.equal(sentry.scrubText('falló https://api.github.com/repos/acme-secreta/x', ['https', 'api']).includes('github.com'), false);
   // largo acotado
   assert.ok(sentry.scrubText('a'.repeat(5000)).length <= 500);
   assert.equal(sentry.scrubText(undefined), '');
@@ -122,6 +124,11 @@ test('la pila solo lleva los archivos de la app, sin la consulta ni rutas de est
   const text = JSON.stringify(frames);
   for (const [k, v] of Object.entries(SECRETOS)) assert.equal(text.includes(v), false, `${k} quedó en la pila`);
   assert.equal(text.includes('juanita'), false);
+  // una función con el nombre de algo cargado (un objeto con las ramas como claves) no lo deja salir
+  const conNombre = sentry.frames('Error: x\n    at Object.feature (app://graphbranch/js/app.js:9:9)\n    at Proyectox.draw (app://graphbranch/js/graph.js:1:1)', { names: ['feature', 'proyectox'] });
+  assert.deepEqual(conNombre.map((f) => f.function), ['?', '?']);
+  // una línea larguísima no es un cuadro de V8: se salta
+  assert.deepEqual(sentry.frames('Error: x\n    at ' + 'a:1:'.repeat(5000) + '1:1'), []);
   // como mucho 30, los más nuevos
   const larga = ['Error: x', ...Array.from({ length: 80 }, (_, i) => `    at f${i} (app://graphbranch/js/app.js:${i + 1}:1)`)].join('\n');
   const cortas = sentry.frames(larga);

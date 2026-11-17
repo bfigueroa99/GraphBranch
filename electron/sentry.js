@@ -55,8 +55,10 @@ function parseDsn(text, { allowLocal = false } = {}) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/* Lo que se quita de un texto, en orden: lo de más adentro primero (una URL lleva rutas y nombres; una cabecera,
-   un token). Mejor de más que de menos: el mensaje sirve aunque pierda un trozo. */
+/* Lo que se quita de un texto, en orden: lo de más afuera primero (una URL lleva rutas y nombres; una cabecera, un
+   token), después los nombres que conoce la página (RULES_AFTER va detrás, para que «feature/x» se quite entero antes
+   de que la regla de las rutas lo parta) y al final lo que tiene forma de commit, de ruta o de mención. Mejor de más
+   que de menos: el mensaje sirve aunque pierda un trozo. */
 const RULES = [
   [/\b[a-z][a-z0-9+.-]*:\/\/[^\s'"`<>«»“”]+/gi, '<url>'],
   [/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '<correo>'],
@@ -66,6 +68,8 @@ const RULES = [
   [/\b(token|password|passwd|secret|api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*\S+/gi, '$1=<token>'],
   // un secreto largo sin prefijo conocido: letras y números juntos, de 32 o más
   [/(?<![\w+/=-])(?=[\w+/=-]*\d)(?=[\w+/=-]*[A-Za-z])[\w+/=-]{32,}/g, '<token>'],
+];
+const RULES_AFTER = [
   // un commit (o cualquier hexadecimal de 7 a 64, con letras y números)
   [/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,64}\b/gi, '<sha>'],
   // una ruta de este equipo, «dueño/repo» o una rama con barras: todo lo que tenga una
@@ -75,19 +79,22 @@ const RULES = [
 /** Lo que V8 pone entre comillas al leer una propiedad: es un nombre del código, no un dato, y ayuda a entender el error. */
 const PROPERTY = /^\((?:reading|setting) '[A-Za-z_$][\w$]{0,40}'\)$/;
 
+/** Los nombres que manda la página, sin repetir, de 3 caracteres o más, los largos primero, hasta 5000. */
+const nameList = (names) =>
+  [...new Set((Array.isArray(names) ? names : []).slice(0, MAX_NAMES).filter((n) => typeof n === 'string').map((n) => n.trim().slice(0, 300)).filter((n) => n.length >= 3))].sort((a, b) => b.length - a.length);
+
 /** El texto de un error sin tokens, cabeceras, URLs, correos, rutas, commits, menciones, lo que va entre comillas
     (salvo la propiedad que leyó V8) ni los `names` que conoce la página (repos, ramas, autores), y acotado. */
 function scrubText(text, names = []) {
   if (typeof text !== 'string' || !text) return '';
   let s = text.slice(0, 4 * MAX_MESSAGE);
-  // los nombres van primero: «feature/x» entero, antes de que la regla de las rutas lo parta
-  const list = [...new Set((Array.isArray(names) ? names : []).slice(0, MAX_NAMES).filter((n) => typeof n === 'string').map((n) => n.trim().slice(0, 300)).filter((n) => n.length >= 3))];
-  list.sort((a, b) => b.length - a.length);
+  for (const [re, to] of RULES) s = s.replace(re, to);
+  const list = nameList(names);
   for (let i = 0; i < list.length; i += 200) {
     const re = new RegExp(`(?<![\\p{L}\\p{N}_-])(?:${list.slice(i, i + 200).map(escapeRe).join('|')})(?![\\p{L}\\p{N}_-])`, 'giu');
     s = s.replace(re, '<nombre>');
   }
-  for (const [re, to] of RULES) s = s.replace(re, to);
+  for (const [re, to] of RULES_AFTER) s = s.replace(re, to);
   s = s.replace(/\((?:reading|setting) '[^'\n]*'\)|'[^'\n]{1,200}'|"[^"\n]{1,200}"|`[^`\n]{1,200}`|«[^»\n]{1,200}»|“[^”\n]{1,200}”/g, (m) => (PROPERTY.test(m) ? m : m[0] === '(' ? m.replace(/'[^']*'/, "'<texto>'") : `${m[0]}<texto>${m.at(-1)}`));
   return s.length > MAX_MESSAGE ? s.slice(0, MAX_MESSAGE - 1) + '…' : s;
 }
@@ -107,10 +114,13 @@ function fileOf(loc, appRoot) {
 
 /** La pila de V8 → los cuadros de Sentry, del más viejo al más nuevo, solo con los archivos de la app (y los de
     node:), sin la consulta de la URL ni rutas de este equipo, como mucho los 30 más nuevos. */
-function frames(stack, { appRoot = '' } = {}) {
+function frames(stack, { appRoot = '', names = [] } = {}) {
   if (typeof stack !== 'string') return [];
   const out = [];
+  // una función con el nombre de algo cargado ({ [rama]: () => … }) sale como '?'
+  const known = new Set(nameList(names).map((n) => n.toLowerCase()));
   for (const line of stack.slice(0, 20_000).split('\n')) {
+    if (line.length > 1000) continue; // ningún cuadro de V8 es tan largo, y la expresión de abajo no tiene por qué recorrerlo
     const m = /^\s*at (?:(.+?) \()?(.+?):(\d+):(\d+)\)?\s*$/.exec(line);
     if (!m) continue;
     const filename = fileOf(m[2], appRoot);
@@ -118,7 +128,7 @@ function frames(stack, { appRoot = '' } = {}) {
     const fn = (m[1] || '').replace(/^(?:async|new) /, '').trim();
     out.push({
       filename,
-      function: /^[\w$.<>[\] ]{1,80}$/.test(fn) ? fn : '?',
+      function: /^[\w$.<>[\] ]{1,80}$/.test(fn) && !fn.split(/[.\s[\]]/).some((part) => known.has(part.toLowerCase())) ? fn : '?',
       lineno: Number(m[3]),
       colno: Number(m[4]),
       in_app: filename.startsWith('app://'),
@@ -150,7 +160,7 @@ function buildEvent(rec, { names = [], appRoot = '', release = '', environment =
     release: releaseName(release, `graphbranch@${SDK.version}`),
     environment: environmentName(environment, 'production'),
     exception: {
-      values: [{ type, value: scrubText(rec.message, names), mechanism: { type: MECHANISM[rec.kind], handled: false }, stacktrace: { frames: frames(rec.stack, { appRoot }) } }],
+      values: [{ type, value: scrubText(rec.message, names), mechanism: { type: MECHANISM[rec.kind], handled: false }, stacktrace: { frames: frames(rec.stack, { appRoot, names }) } }],
     },
     contexts: { os: { name: OS_NAMES[os] || 'Other' }, runtime: { name: 'Electron', version: /^[\w.-]{1,30}$/.test(runtime) ? runtime : 'unknown' } },
     tags: { process: rec.kind === 'main' ? 'main' : 'renderer' },

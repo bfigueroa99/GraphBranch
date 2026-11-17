@@ -50,7 +50,7 @@ export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--
     disparo de las 20:04 salió con 3 y la relevó el de las 00:05: 11,9 h sin iteración). Las iteraciones
     109 a 134 tardaron de 8 a 81 min del reclamo al merge (las 136 a 148, de 9 a 36), y cada push renueva el
     reclamo. Con el cron cada 2 h (2026-10-28), 1,5 h: vence antes del disparo siguiente y no antes de lo
-    que tardó entera la iteración más larga. Con la rotación de 5 h (2026-11-16), la siguiente llega mucho después. */
+    que tardó entera la iteración más larga. Con la rotación de 5 h y después de 6 h (2026-11-16), la siguiente llega mucho después. */
 export const RECLAMO_H = 1.5;
 /** La rama de integración: cada loop/N sale de ella, su PR se fusiona en ella y de ella se leen la hoja de
     ruta y la bitácora. Pedido de Benjamin, 2026-10-27: el loop trabaja en dev y master queda de release. */
@@ -152,13 +152,16 @@ export const PARA_BENJAMIN_MAX = 8;
     (la directiva) y `3 *\/2 * * *` desde el 2026-10-28 (pedido de Benjamin; el disparo de las 18:03 UTC es el primero
     que el cron de 4 h no tenía); desde el 2026-11-16, la tarea programada «Rotación cada 5 h» de seis proyectos, a las
     0, 5, 10, 15 y 20 h de Santiago (cinco por día: 4,8 h de promedio, con un tramo de 4 h a medianoche), con la Routine
-    pausada. Su primer disparo para GraphBranch fue el de las 13:00 UTC (las 10 de Santiago). --salud mide cada tramo
+    pausada. Su primer disparo para GraphBranch fue el de las 13:00 UTC (las 10 de Santiago). Ese mismo día pasó a
+    «Rotación cada 6 h», a las 3, 9, 15 y 21 h de Santiago (6, 12, 18 y 0 h UTC): el de las 18:00 UTC (las 15) está en
+    las dos, el de las 23:00 (las 20) ya no llegó y el de las 0:00 del 2026-11-17 (las 21) fue el primero solo de la nueva. --salud mide cada tramo
     con su intervalo: con el de ahora para toda la historia, los disparos esperados no cuadraban y cada ventana más
     larga de antes salía como un hueco (o, con un intervalo más corto que el real, cada una de ahora). */
 export const CADENCIAS = [
   { desde: '2026-10-10T04:32:04Z', horas: 4 },
   { desde: '2026-10-28T18:00:00Z', horas: 2 },
   { desde: '2026-11-16T13:00:00Z', horas: 4.8 },
+  { desde: '2026-11-16T18:00:00Z', horas: 6 },
 ];
 /** El intervalo de ahora (el último tramo): RECLAMO_H tiene que ser menor. */
 export const CRON_H = CADENCIAS[CADENCIAS.length - 1].horas;

@@ -359,7 +359,7 @@ Un issue abierto por Benjamin (o por una cuenta `MEMBER` o `COLLABORATOR` del re
 
 ## Correr el loop en OpenCode
 
-El loop de mejora (`.claude/skills/iteracion/`) lo dispara una tarea programada de Claude Code (desde el 2026-11-16, una rotación cada 5 h que reúne seis proyectos; antes, una Routine propia cada 2 h, hoy pausada), pero también corre en [OpenCode](https://opencode.ai) con el modelo que quieras detrás de [OmniRoute](https://github.com/diegosouzapw/OmniRoute):
+El loop de mejora (`.claude/skills/iteracion/`) lo dispara una tarea programada de Claude Code (desde el 2026-11-16, una rotación cada 6 h que reúne seis proyectos, cada 5 h su primer día; antes, una Routine propia cada 2 h, hoy pausada), pero también corre en [OpenCode](https://opencode.ai) con el modelo que quieras detrás de [OmniRoute](https://github.com/diegosouzapw/OmniRoute):
 
 1. OpenCode 1.19 o más nuevo (`npm i -g opencode-ai`), OmniRoute andando (`npm i -g omniroute` y `omniroute`; el panel queda en http://localhost:20128) con al menos un proveedor conectado, y `gh auth login`: con `gh` la iteración abre y fusiona su PR.
 2. El proveedor: `omniroute setup-opencode` lo deja en la configuración de OpenCode. Si no está, `tools/opencode.mjs` lo arma con `OMNIROUTE_URL` (`http://localhost:20128` por defecto) y `OMNIROUTE_API_KEY` (si OmniRoute exige clave; nunca se escribe en un archivo).

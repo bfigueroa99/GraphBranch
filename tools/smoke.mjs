@@ -3077,6 +3077,46 @@ if (seccion('Varios repos a la vez'))
     // la etiqueta borrada se deshace en polvo: se espera a que se vaya, no un tiempo
     await lab.waitForFunction(() => ![...document.querySelectorAll('#graph svg .head .h-name')].some((n) => n.textContent.trim() === 'origin/experiment'), null, { timeout: T(5000) });
   });
+  await step(lab, 'branch --merged y --no-merged en la práctica: antes del pull feature no está en main, después sí, y listar no toca el grafo', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=15`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    // la salida de cada comando: las líneas que siguen a su eco en la terminal, hasta el comando siguiente
+    const out = (c) =>
+      lab.evaluate((cmd) => {
+        const lines = document.querySelector('.pr-log').innerText.split('\n');
+        const at = lines.map((l) => l.trim()).lastIndexOf(`$ git ${cmd}`);
+        if (at < 0) return null;
+        const rest = lines.slice(at + 1);
+        const end = rest.findIndex((l) => l.trim().startsWith('$ '));
+        return rest.slice(0, end < 0 ? rest.length : end).map((l) => l.trim()).filter(Boolean);
+      }, c);
+    const said = async (c, want) => {
+      await send(c);
+      await lab.waitForFunction(([cmd, w]) => {
+        const lines = document.querySelector('.pr-log')?.innerText.split('\n').map((l) => l.trim()) || [];
+        const at = lines.lastIndexOf(`$ git ${cmd}`);
+        return at >= 0 && w.every((x) => lines.slice(at + 1).includes(x));
+      }, [c, want], { timeout: T(5000) }).catch(async () => {
+        throw new Error(`${c} dijo ${JSON.stringify(await out(c))} y se esperaba ${JSON.stringify(want)}`);
+      });
+    };
+    const nodes = await lab.locator('#graph svg .node').count();
+    await said('branch --no-merged', ['experiment', 'feature']);
+    await said('branch --merged', ['* main']);
+    if ((await out('branch --merged')).includes('feature')) throw new Error('antes del pull feature sale como contenida en main');
+    if ((await lab.locator('#graph svg .node').count()) !== nodes) throw new Error('listar las ramas cambió el grafo');
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('listar resolvió el ejercicio');
+    await send('pull');
+    await lab.waitForFunction(() => /Fast-forward/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await said('branch --merged', ['feature', '* main']);
+    await said('branch --no-merged', ['experiment']);
+    if ((await out('branch --no-merged')).includes('feature')) throw new Error('después del pull feature sigue sin estar en main');
+  });
   await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=6`);
     await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });

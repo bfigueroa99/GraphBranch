@@ -27,6 +27,7 @@
     { id: 'zoomOut', btn: '#zoom-out', key: 'zoom.out.label' },
     { id: 'fullscreen', btn: '#fullscreen-btn', key: 'fullscreen.label' },
     { id: 'snap', btn: '#snap-btn', key: 'snap.label' },
+    { id: 'mermaid', btn: '#mermaid-btn', key: 'mermaid.label' },
     { id: 'pause', btn: '#pause-btn', key: 'ctl.pause' },
     { id: 'refresh', btn: '#refresh-btn', key: 'ctl.refresh' },
     { id: 'sound', btn: '#sound-btn', key: 'ctl.sound' },

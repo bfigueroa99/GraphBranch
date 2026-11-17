@@ -40,6 +40,7 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     snapBtn: $('#snap-btn'),
+    mermaidBtn: $('#mermaid-btn'),
     snapNote: $('#snap-note'),
     flyBtn: $('#fly-btn'),
     galaxyBtn: $('#galaxy-btn'),
@@ -1684,6 +1685,28 @@
     } finally {
       snapping = false;
       el.snapBtn.removeAttribute('aria-busy');
+    }
+  }
+
+  /** El grafo como diagrama Mermaid (js/mermaid.js): lo que se dibuja (con los filtros por autor y por rama), en un
+      bloque de Markdown que se copia; sin permiso del portapapeles, se guarda como .md. No hace consultas. */
+  async function copyMermaid() {
+    if (!active || !source) return;
+    const data = source.view ? source.view() : source.data;
+    const graph = GB.mermaid.gitGraph(viewOf(data).data);
+    const text = GB.mermaid.markdown(graph);
+    try {
+      await navigator.clipboard.writeText(text);
+      snapNote(t('mermaid.copied', { commits: graph.commits, branches: graph.branches }));
+    } catch (err) {
+      // la app de escritorio solo deja bajar imágenes y videos (electron/main.js): ahí no hay .md que guardar
+      if (desktop) {
+        console.error(err);
+        return snapNote(t('mermaid.failed'));
+      }
+      const file = GB.snapshot.fileName(active.demo ? 'demo' : nameOf(active), { ext: 'md', kind: 'mermaid' });
+      GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), file);
+      snapNote(t('mermaid.saved', { file }));
     }
   }
 
@@ -4114,6 +4137,7 @@
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
   el.snapBtn.addEventListener('click', saveImage);
+  el.mermaidBtn.addEventListener('click', copyMermaid);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   setPressed(el.galaxyBtn, !!graph3d?.galaxy);
   el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));

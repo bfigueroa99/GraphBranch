@@ -4987,6 +4987,55 @@ if (seccion('Informes de errores (escritorio simulado)'))
   }
 }
 
+if (seccion('Diagrama Mermaid'))
+{
+  /* El grafo como diagrama Mermaid (ítem 228): el botón copia el gitGraph de lo que se ve, en un bloque de Markdown, y
+     lo dice; sin permiso del portapapeles lo guarda como .md. El portapapeles se reemplaza por uno que anota (en
+     Chromium sin pantalla, escribir en el de verdad pide permiso), y la paleta de comandos tiene la misma acción. */
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+  await page.addInitScript(() => {
+    window.__copied = [];
+    window.__clipOk = true;
+    const clip = { writeText: async (t) => { if (!window.__clipOk) throw new DOMException('denied', 'NotAllowedError'); window.__copied.push(String(t)); } };
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => clip });
+  });
+  await page.goto(`${base}/index.html?lang=es&view=2d`);
+  await loaded(page);
+  await step(page, 'diagrama Mermaid: el botón copia el gitGraph de la demo en un bloque de Markdown y lo dice', () => quieta(page, async () => {
+    if ((await page.getAttribute('#mermaid-btn', 'aria-label')) !== 'Copiar como diagrama Mermaid') throw new Error('el botón no tiene su nombre en español');
+    await page.click('#mermaid-btn');
+    await page.waitForFunction(() => window.__copied.length === 1, null, { timeout: T(3000) });
+    const text = await page.evaluate(() => window.__copied[0]);
+    if (!/^```mermaid\ngitGraph\n[\s\S]*\n```\n$/.test(text)) throw new Error('no es un bloque de Mermaid: ' + text.slice(0, 120));
+    const lines = text.split('\n').slice(2, -2);
+    const bad = lines.filter((l) => !/^ {2}(?:%% |commit id: "[0-9a-f]{7,}"|branch "|checkout "|merge ")/.test(l));
+    if (bad.length) throw new Error('órdenes que no son de gitGraph: ' + bad.slice(0, 3).join(' | '));
+    if (!lines.some((l) => /^ {2}merge "/.test(l)) || !lines.some((l) => /^ {2}branch "feature\//.test(l))) throw new Error('sin merges o sin ramas de trabajo: ' + lines.slice(0, 8).join(' | '));
+    // lo mismo que dice el grafo: tantas ramas como etiquetas de rama, y el aviso con las cifras
+    const note = await page.textContent('#snap-note');
+    const m = /^Diagrama Mermaid copiado \(commits: (\d+), ramas: (\d+)\)$/.exec(note || '');
+    if (!m || Number(m[2]) !== lines.filter((l) => /^ {2}branch "/.test(l)).length + 1) throw new Error(`el aviso dice «${note}»`);
+  }));
+  await step(page, 'diagrama Mermaid: sin permiso del portapapeles se guarda como .md, y la paleta de comandos tiene la acción', async () => {
+    await page.evaluate(() => (window.__clipOk = false));
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#mermaid-btn')]);
+    const name = dl.suggestedFilename();
+    if (!/^graphbranch-demo-mermaid-\d{4}-\d\d-\d\d-\d{4}\.md$/.test(name)) throw new Error(`nombre inesperado: ${name}`);
+    const body = (await readFile(await dl.path(), 'utf8')).toString();
+    if (!body.startsWith('```mermaid\ngitGraph\n')) throw new Error('el .md no trae el diagrama');
+    await page.waitForFunction((n) => document.querySelector('#snap-note').textContent === `Diagrama Mermaid guardado: ${n}`, name, { timeout: T(3000) });
+    await page.evaluate(() => (window.__clipOk = true));
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'mermaid');
+    const first = await page.textContent('#cmdk .ck-opt');
+    if (!/Copiar como diagrama Mermaid/.test(first || '')) throw new Error(`la paleta ofrece «${first}»`);
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__copied.length === 2, null, { timeout: T(3000) });
+  });
+  await page.context().close();
+}
+
 if (seccion('Informes de errores (web con DSN)'))
 {
   /* En la web (ítem 226), con el DSN que pone tools/sentry-web.mjs en index.html: aquí la página se sirve pasada por

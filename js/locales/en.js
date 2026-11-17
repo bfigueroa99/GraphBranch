@@ -495,6 +495,8 @@ GB.i18n.define('en', {
   'settings.depth': 'Commits per branch',
   'settings.marks': 'Show tags and deployment environments',
   'settings.marksHelp': 'Flags on tagged commits and a plate on the commit each environment (production, staging) runs. Two more requests when a repository opens, then two every 15 minutes.',
+  'settings.errors': 'Send error reports',
+  'settings.errorsHelp': 'Off unless you turn it on. When something in the app breaks, it sends Sentry the kind of error, its message and where in GraphBranch\'s code it happened, with the app version and your operating system. Tokens, web addresses, the names of repositories, branches and people, the folders on this computer and your IP address are left out.',
   'settings.branchesHelp': 'GraphBranch shows every branch of the repo, the most active ones closest to the default branch. On large repos they appear gradually, most active first. Pinned branches (click a branch → <strong>Pin</strong>) go right below the default branch, even with a filter. Use the graph filter to focus on a prefix, for example <code>release/</code>.',
   'settings.clearTokens': 'Delete tokens',
   'settings.cancel': 'Cancel',

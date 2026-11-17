@@ -500,6 +500,8 @@ GB.i18n.define('sk', {
   'settings.depth': 'Commity na vetvu',
   'settings.marks': 'Zobraziť tagy a prostredia nasadenia',
   'settings.marksHelp': 'Zástavky pri commitoch s tagom a štítok pri commite, ktorý beží v každom prostredí (produkcia, staging). Dve ďalšie požiadavky pri otvorení repozitára, potom dve každých 15 minút.',
+  'settings.errors': 'Odosielať hlásenia o chybách',
+  'settings.errorsHelp': 'Vypnuté, kým to nezapnete. Keď sa v aplikácii niečo pokazí, pošle do Sentry druh chyby, jej správu a miesto v kóde GraphBranch, kde k nej došlo, spolu s verziou aplikácie a vaším operačným systémom. Tokeny, webové adresy, názvy repozitárov, vetiev a ľudí, priečinky v tomto počítači a vaša IP adresa sa neposielajú.',
   'settings.branchesHelp': 'GraphBranch zobrazuje všetky vetvy repozitára, najaktívnejšie najbližšie k predvolenej vetve. Vo veľkých repozitároch sa objavujú postupne, najaktívnejšie ako prvé. Pripnuté vetvy (kliknite na vetvu → <strong>Pripnúť</strong>) sú hneď pod predvolenou vetvou, aj keď je zapnutý filter. Filter grafu použite na zameranie na predponu, napríklad <code>release/</code>.',
   'settings.clearTokens': 'Odstrániť tokeny',
   'settings.cancel': 'Zrušiť',

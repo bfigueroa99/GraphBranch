@@ -490,6 +490,8 @@ GB.i18n.define('fil', {
   'settings.depth': 'Mga commit kada branch',
   'settings.marks': 'Ipakita ang mga tag at deployment environment',
   'settings.marksHelp': 'Mga bandera sa mga commit na may tag at plaka sa commit na pinapatakbo ng bawat environment (production, staging). Dalawang dagdag na request kapag binuksan ang repository, tapos dalawa kada 15 minuto.',
+  'settings.errors': 'Magpadala ng mga ulat ng error',
+  'settings.errorsHelp': 'Nakapatay hangga\'t hindi mo binubuksan. Kapag may nasira sa app, ipinapadala nito sa Sentry ang uri ng error, ang mensahe nito at kung saan ito nangyari sa code ng GraphBranch, kasama ang bersyon ng app at ang iyong operating system. Hindi isinasama ang mga token, mga web address, ang mga pangalan ng repository, branch at tao, ang mga folder sa computer na ito at ang iyong IP address.',
   'settings.branchesHelp': 'Ipinapakita ng GraphBranch ang lahat ng branch ng repo, at ang mga pinakaaktibo ang pinakamalapit sa default branch. Sa malalaking repo, unti-unti silang lumalabas, una ang mga pinakaaktibo. Ang mga naka-pin na branch (i-click ang isang branch → <strong>I-pin</strong>) ay nasa mismong ilalim ng default branch, kahit may filter. Gamitin ang filter ng graph para mag-focus sa isang prefix, halimbawa <code>release/</code>.',
   'settings.clearTokens': 'Burahin ang mga token',
   'settings.cancel': 'Kanselahin',

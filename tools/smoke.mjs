@@ -4803,6 +4803,131 @@ if (seccion('Otras cuentas de GitHub'))
   await page.context().close();
 }
 
+if (seccion('Informes de errores (escritorio simulado)'))
+{
+  /* El reporte de errores opcional con Sentry (ítem 224) es de la app de escritorio: aquí la página corre con un
+     GBDesktop falso que anota lo que le piden (prender, apagar, cada informe), como el puente de electron/preload.js.
+     Que el proceso principal limpie y mande el sobre lo prueban tools/sentry.test.mjs y la e2e de escritorio. */
+  const fakeDesktop = (available) => {
+    const log = (window.__errors = { sets: [], reports: [] });
+    let enabled = false;
+    const ok = (v) => Promise.resolve(v);
+    const state = () => ({ available, enabled: available && enabled });
+    window.GBDesktop = {
+      getToken: () => ok({ token: '', where: 'keychain' }),
+      setToken: () => ok('keychain'),
+      setLabels: () => {},
+      git: { pick: () => ok(null), branches: () => ok([]), log: () => ok([]), isAncestor: () => ok(false), files: () => ok([]), diff: () => ok({ text: '', truncated: false }), watch: () => ok(), unwatch: () => ok(), onChange: () => () => {} },
+      webhook: () => ok({ ok: false, status: 0 }),
+      spend: () => ok({ error: 'auth', status: 0 }),
+      show: () => {},
+      errors: {
+        state: () => ok(state()),
+        set: (on) => {
+          log.sets.push(on);
+          if (available) enabled = on === true;
+          return ok(state());
+        },
+        report: (rec, names) => {
+          log.reports.push({ rec, names });
+          return ok({ sent: true });
+        },
+      },
+    };
+  };
+  // un error que nace dentro del código de la app (U.esc, de js/util.js) y una promesa rechazada sin catch
+  const boom = (page, text) => page.evaluate((m) => setTimeout(GB.U.esc, 0, { toString: () => { throw new TypeError(m); } }), text);
+  const reports = (page) => page.evaluate(() => window.__errors.reports.filter((r) => /fallo de prueba/.test(r.rec.message)));
+  const openSettings = async (page) => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+  };
+  const save = async (page) => {
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+  };
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    await step(page, 'informes de errores: en la web no hay interruptor ni nada que escuche', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('la web ofrece mandar informes de errores');
+      if (await page.evaluate(() => typeof window.GBDesktop !== 'undefined')) throw new Error('la web tiene un GBDesktop');
+    });
+    await page.context().close();
+  }
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(fakeDesktop, false);
+    await step(page, 'informes de errores: una app sin DSN no los ofrece ni los manda', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('sin DSN se ofrece el interruptor');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba sin DSN');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length) throw new Error('sin DSN se mandó un informe');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(fakeDesktop, true);
+    await step(page, 'informes de errores: apagados de fábrica; prendidos en Ajustes mandan el error con los nombres a quitar, y apagados dejan de mandar', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isVisible('#errors-field'))) throw new Error('con DSN no se ofrece el interruptor');
+      if (await page.isChecked('#errors-report')) throw new Error('el interruptor viene prendido');
+      const help = await page.textContent('#errors-help');
+      if (!/Sentry/.test(help) || !/IP/.test(help)) throw new Error(`la ayuda dice ${help}`);
+      if ((await page.getAttribute('#errors-report', 'aria-describedby')) !== 'errors-help') throw new Error('la casilla no apunta a su ayuda');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba apagado');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length) throw new Error('apagado se mandó un informe');
+
+      await openSettings(page);
+      await page.check('#errors-report');
+      await save(page);
+      await page.waitForFunction(() => window.__errors.sets.join() === 'true', null, { timeout: T(3000) });
+      await boom(page, 'fallo de prueba prendido');
+      await page.waitForFunction(() => window.__errors.reports.some((r) => /fallo de prueba prendido/.test(r.rec.message)), null, { timeout: T(5000) });
+      const [r] = await reports(page);
+      if (r.rec.kind !== 'error' || r.rec.type !== 'TypeError' || !/js\/util\.js/.test(r.rec.stack)) throw new Error(`se mandó ${JSON.stringify(r.rec).slice(0, 300)}`);
+      // los nombres de lo cargado van con el informe, para que el proceso principal los quite
+      const want = ['acme/orbita', 'acme', 'orbita', 'main'];
+      const missing = want.filter((n) => !r.names.includes(n));
+      if (missing.length) throw new Error(`faltan nombres: ${missing.join(', ')} (llegaron ${r.names.length})`);
+      if (!['vrojas', 'msoto', 'cfuentes', 'dmunoz', 'jperez'].some((n) => r.names.includes(n))) throw new Error('no va ningún autor de la demo');
+      await page.evaluate(() => void Promise.reject(new Error('fallo de prueba en una promesa')));
+      await page.waitForFunction(() => window.__errors.reports.some((x) => x.rec.kind === 'rejection' && /fallo de prueba en una promesa/.test(x.rec.message)), null, { timeout: T(5000) });
+
+      // al volver a Ajustes sigue prendido; apagarlo corta
+      await openSettings(page);
+      if (!(await page.isChecked('#errors-report'))) throw new Error('al volver, el interruptor está apagado');
+      await page.uncheck('#errors-report');
+      await save(page);
+      await page.waitForFunction(() => window.__errors.sets.join() === 'true,false', null, { timeout: T(3000) });
+      const before = (await reports(page)).length;
+      await boom(page, 'fallo de prueba apagado otra vez');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length !== before) throw new Error('apagado de nuevo, se mandó un informe');
+      // guardar sin tocarlo no lo vuelve a pedir
+      await openSettings(page);
+      await save(page);
+      await page.waitForTimeout(200);
+      if ((await page.evaluate(() => window.__errors.sets.length)) !== 2) throw new Error('guardar sin cambios volvió a guardarlo');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+}
+
 if (seccion('Fijar una rama con el teclado'))
 {
   const gh = fakeGitHub();

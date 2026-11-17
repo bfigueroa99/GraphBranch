@@ -489,6 +489,8 @@ GB.i18n.define('ko', {
   'settings.depth': '브랜치당 커밋 수',
   'settings.marks': '태그와 배포 환경 표시',
   'settings.marksHelp': '태그된 커밋에 깃발을, 각 환경(프로덕션, 스테이징)이 실행 중인 커밋에 표지판을 표시합니다. 저장소를 열 때 요청 2건이 늘고, 이후 15분마다 2건입니다.',
+  'settings.errors': '오류 보고서 보내기',
+  'settings.errorsHelp': '켜기 전까지는 꺼져 있습니다. 앱에서 문제가 생기면 오류 종류, 오류 메시지, GraphBranch 코드의 어느 부분에서 일어났는지를 앱 버전, 운영 체제와 함께 Sentry로 보냅니다. 토큰, 웹 주소, 저장소·브랜치·사람의 이름, 이 컴퓨터의 폴더, IP 주소는 보내지 않습니다.',
   'settings.branchesHelp': 'GraphBranch는 저장소의 모든 브랜치를 표시하며, 활발한 브랜치일수록 기본 브랜치 가까이에 놓습니다. 대규모 저장소에서는 가장 활발한 브랜치부터 차례로 나타납니다. 고정한 브랜치(브랜치 클릭 → <strong>고정</strong>)는 필터를 사용 중이어도 기본 브랜치 바로 아래에 표시됩니다. 그래프 필터를 사용하면 <code>release/</code> 같은 접두사로 좁혀 볼 수 있습니다.',
   'settings.clearTokens': '토큰 모두 삭제',
   'settings.cancel': '취소',

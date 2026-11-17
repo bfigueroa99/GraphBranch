@@ -500,6 +500,8 @@ GB.i18n.define('pl', {
   'settings.depth': 'Commity na gałąź',
   'settings.marks': 'Pokaż tagi i środowiska wdrożeniowe',
   'settings.marksHelp': 'Flagi na commitach z tagiem i tabliczka na commicie, który uruchamia każde środowisko (produkcja, staging). Dwa dodatkowe żądania przy otwarciu repozytorium, potem dwa co 15 minut.',
+  'settings.errors': 'Wysyłaj raporty o błędach',
+  'settings.errorsHelp': 'Wyłączone, dopóki tego nie włączysz. Gdy coś w aplikacji się zepsuje, wysyła do Sentry rodzaj błędu, jego komunikat i miejsce w kodzie GraphBranch, gdzie do niego doszło, razem z wersją aplikacji i Twoim systemem operacyjnym. Tokeny, adresy internetowe, nazwy repozytoriów, gałęzi i osób, foldery na tym komputerze i Twój adres IP są pomijane.',
   'settings.branchesHelp': 'GraphBranch pokazuje wszystkie gałęzie repozytorium, a najaktywniejsze najbliżej gałęzi domyślnej. W dużych repozytoriach pojawiają się stopniowo, najpierw najaktywniejsze. Przypięte gałęzie (kliknij gałąź → <strong>Przypnij</strong>) są tuż pod gałęzią domyślną, nawet przy włączonym filtrze. Użyj filtra grafu, aby skupić się na prefiksie, na przykład <code>release/</code>.',
   'settings.clearTokens': 'Usuń tokeny',
   'settings.cancel': 'Anuluj',

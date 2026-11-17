@@ -489,6 +489,8 @@ GB.i18n.define('zh-Hans', {
   'settings.depth': '每个分支的提交数',
   'settings.marks': '显示标签和部署环境',
   'settings.marksHelp': '在带标签的提交上显示旗帜，在各环境（生产、预发布）运行的提交上显示铭牌。打开仓库时多 2 次请求，之后每 15 分钟 2 次。',
+  'settings.errors': '发送错误报告',
+  'settings.errorsHelp': '在你开启之前一直关闭。应用出错时，会把错误类型、错误信息以及它发生在 GraphBranch 代码中的位置，连同应用版本和你的操作系统发送给 Sentry。令牌、网址、仓库、分支和人员的名称、这台电脑上的文件夹以及你的 IP 地址都不会包含在内。',
   'settings.branchesHelp': 'GraphBranch 会显示仓库的全部分支，越活跃的分支离默认分支越近。在大型仓库中，分支会逐步出现，最活跃的最先显示。已固定的分支（点击某个分支 → <strong>固定</strong>）始终位于默认分支正下方，即使使用了筛选也是如此。可使用图上的筛选框聚焦某个前缀，例如 <code>release/</code>。',
   'settings.clearTokens': '删除所有令牌',
   'settings.cancel': '取消',

@@ -490,6 +490,8 @@ GB.i18n.define('it', {
   'settings.depth': 'Commit per branch',
   'settings.marks': 'Mostra tag e ambienti di rilascio',
   'settings.marksHelp': 'Bandierine sui commit con tag e una targa sul commit che esegue ogni ambiente (produzione, staging). Due richieste in più all\'apertura di un repository, poi due ogni 15 minuti.',
+  'settings.errors': 'Invia segnalazioni di errore',
+  'settings.errorsHelp': 'Disattivato finché non lo attivi. Quando qualcosa nell\'app si rompe, invia a Sentry il tipo di errore, il suo messaggio e il punto del codice di GraphBranch in cui è successo, con la versione dell\'app e il tuo sistema operativo. Token, indirizzi web, nomi di repository, branch e persone, le cartelle di questo computer e il tuo indirizzo IP restano fuori.',
   'settings.branchesHelp': 'GraphBranch mostra tutti i branch del repository, i più attivi più vicini al branch predefinito. Nei repository grandi compaiono man mano, prima i più attivi. I branch fissati (clic su un branch → <strong>Fissa</strong>) stanno subito sotto il branch predefinito, anche con un filtro. Usa il filtro del grafo per concentrarti su un prefisso, ad esempio <code>release/</code>.',
   'settings.clearTokens': 'Elimina i token',
   'settings.cancel': 'Annulla',

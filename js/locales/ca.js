@@ -489,6 +489,8 @@ GB.i18n.define('ca', {
   'settings.depth': 'Commits per branca',
   'settings.marks': 'Mostra etiquetes i entorns de desplegament',
   'settings.marksHelp': 'Banderins als commits amb etiqueta i una placa al commit que executa cada entorn (producció, staging). Dues consultes més en obrir un repositori i dues cada 15 minuts.',
+  'settings.errors': 'Envia informes d\'errors',
+  'settings.errorsHelp': 'Desactivat fins que l\'activis. Quan alguna cosa de l\'app falla, envia a Sentry el tipus d\'error, el seu missatge i en quina part del codi de GraphBranch ha passat, amb la versió de l\'app i el teu sistema operatiu. Queden fora els tokens, les adreces web, els noms de repositoris, branques i persones, les carpetes d\'aquest ordinador i la teva adreça IP.',
   'settings.branchesHelp': 'GraphBranch mostra totes les branques del repo, les més actives més a prop de la branca per defecte. En repos grans van apareixent de mica en mica, primer les més actives. Les branques fixades (clic en una branca → <strong>Fixa</strong>) van just a sota de la branca per defecte, fins i tot amb un filtre. Fes servir el filtre del graf per centrar-te en un prefix, per exemple <code>release/</code>.',
   'settings.clearTokens': 'Esborra els tokens',
   'settings.cancel': 'Cancel·la',

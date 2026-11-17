@@ -489,6 +489,8 @@ GB.i18n.define('fi', {
   'settings.depth': 'Committeja haaraa kohti',
   'settings.marks': 'Näytä tagit ja käyttöönottoympäristöt',
   'settings.marksHelp': 'Liput tagatuissa commiteissa ja kilpi commitissa, jota kukin ympäristö (tuotanto, staging) ajaa. Kaksi lisäpyyntöä repositorion avautuessa, sitten kaksi 15 minuutin välein.',
+  'settings.errors': 'Lähetä virheraportteja',
+  'settings.errorsHelp': 'Pois päältä, kunnes kytket sen päälle. Kun jokin sovelluksessa hajoaa, se lähettää Sentrylle virheen tyypin, sen viestin ja kohdan GraphBranchin koodissa, jossa se tapahtui, sekä sovelluksen version ja käyttöjärjestelmäsi. Tunnisteet (tokenit), verkko-osoitteet, tietovarastojen, haarojen ja ihmisten nimet, tämän tietokoneen kansiot ja IP-osoitteesi jätetään pois.',
   'settings.branchesHelp': 'GraphBranch näyttää repositorion kaikki haarat, aktiivisimmat lähimpänä oletushaaraa. Suurissa repositorioissa ne ilmestyvät vähitellen, aktiivisimmat ensin. Kiinnitetyt haarat (napsauta haaraa → <strong>Kiinnitä</strong>) näkyvät heti oletushaaran alla, myös suodattimen kanssa. Keskity tiettyyn etuliitteeseen kaavion suodattimella, esimerkiksi <code>release/</code>.',
   'settings.clearTokens': 'Poista tokenit',
   'settings.cancel': 'Peruuta',

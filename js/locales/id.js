@@ -489,6 +489,8 @@ GB.i18n.define('id', {
   'settings.depth': 'Commit per branch',
   'settings.marks': 'Tampilkan tag dan lingkungan deployment',
   'settings.marksHelp': 'Bendera pada commit yang bertag dan papan pada commit yang dijalankan tiap lingkungan (produksi, staging). Dua permintaan tambahan saat repositori dibuka, lalu dua setiap 15 menit.',
+  'settings.errors': 'Kirim laporan galat',
+  'settings.errorsHelp': 'Mati sampai Anda menyalakannya. Saat ada yang rusak di aplikasi, aplikasi mengirim ke Sentry jenis galat, pesannya, dan di bagian mana kode GraphBranch itu terjadi, bersama versi aplikasi dan sistem operasi Anda. Token, alamat web, nama repositori, cabang, dan orang, folder di komputer ini, serta alamat IP Anda tidak disertakan.',
   'settings.branchesHelp': 'GraphBranch menampilkan semua branch di repo, dengan yang paling aktif paling dekat ke branch default. Pada repo besar, branch muncul bertahap, yang paling aktif lebih dulu. Branch yang disematkan (klik sebuah branch → <strong>Sematkan</strong>) berada tepat di bawah branch default, bahkan saat filter aktif. Gunakan filter grafik untuk berfokus pada sebuah awalan, misalnya <code>release/</code>.',
   'settings.clearTokens': 'Hapus semua token',
   'settings.cancel': 'Batal',

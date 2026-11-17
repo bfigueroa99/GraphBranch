@@ -23,7 +23,7 @@ test('arranca sin red: la demo, las librerías y las fuentes van dentro de la ap
   });
   expect(info.libs).toEqual(['object', 'object', 'function']);
   expect(info.node).toEqual(['undefined', 'undefined']); // la página no ve Node
-  expect(info.bridge).toEqual(['getToken', 'git', 'setLabels', 'setToken', 'show', 'spend', 'webhook']);
+  expect(info.bridge).toEqual(['errors', 'getToken', 'git', 'setLabels', 'setToken', 'show', 'spend', 'webhook']);
   expect(info.fonts).toEqual(['Bricolage Grotesque', 'Instrument Sans', 'JetBrains Mono']);
   // corre el Electron que fija package.json: con un node_modules viejo (sin npm ci tras subirlo) se probaría otro
   const fijada = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).devDependencies.electron;
@@ -410,6 +410,94 @@ test('los avisos a Slack, Discord y Teams: la URL se guarda cifrada y la prueba 
     await expect(page.locator('#hook-slack')).toHaveValue(`${base}/slack/${SECRET}`);
     await expect(page.locator('#hooks-box .hook').first().locator('[data-event=force]')).not.toBeChecked();
     await expect(page.locator('#hooks-box .hook').first().locator('[data-event=release]')).toBeChecked();
+    await app.close();
+  } finally {
+    server.close();
+  }
+});
+
+test('los informes de errores a Sentry: sin DSN no se ofrecen; con uno, apagados hasta prenderlos, y el error sale sin tokens, URLs ni nombres', async ({}, testInfo) => {
+  const got = [];
+  const server = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+      got.push({ url: req.url, auth: req.headers['x-sentry-auth'] || '', type: req.headers['content-type'] || '', cookie: req.headers.cookie || '', body });
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{}');
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const KEY = '0123456789abcdef0123456789abcdef';
+  const TOKEN = 'ghp_FAKEe2e0123456789abcdefABCDEF012345';
+  // un error dentro del código de la app (U.esc, de js/util.js, con algo que no se deja pasar a texto) con un token, una
+  // URL de la API de GitHub, la URL de la página, el repo de la demo, su rama por defecto y una ruta de este equipo
+  const boom = (token) => {
+    const bad = { toString: () => { throw new TypeError(`fallo en acme/orbita, rama 'main', de orbita con ${token} desde https://api.github.com/repos/acme/orbita en ${location.href} y /home/alguien/privado`); } };
+    setTimeout(GB.U.esc, 0, bad);
+  };
+  try {
+    // sin DSN: la página sabe que no hay, Ajustes no lo muestra y nada sale
+    let { app, page, dir } = await launch(testInfo, { args: ['--lang=es'] });
+    await loaded(page);
+    expect(await page.evaluate(() => window.GBDesktop.errors.state())).toEqual({ available: false, enabled: false });
+    expect(await page.evaluate(() => window.GBDesktop.errors.set(true))).toEqual({ available: false, enabled: false });
+    await page.click('#settings-btn');
+    await expect(page.locator('#errors-field')).toBeHidden();
+    await page.evaluate(boom, TOKEN);
+    await page.waitForTimeout(500);
+    await app.close();
+    expect(readdirSync(dir)).not.toContain('error-reports.json');
+
+    // con DSN (de un Sentry de prueba en esta máquina): aparece, apagado
+    const extraEnv = { SENTRY_DSN: `http://${KEY}@127.0.0.1:${server.address().port}/7`, SENTRY_RELEASE: 'graphbranch@e2e', SENTRY_ENVIRONMENT: 'e2e' };
+    ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'], extraEnv }));
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#errors-field')).toBeVisible();
+    await expect(page.locator('#errors-report')).not.toBeChecked();
+    await expect(page.locator('#errors-help')).toContainText('Sentry');
+    await page.click('#settings-cancel');
+    await page.evaluate(boom, TOKEN);
+    await page.waitForTimeout(800);
+    expect(got, 'apagado no sale nada').toHaveLength(0);
+
+    // prendido desde Ajustes: el error llega a Sentry, limpio
+    await page.click('#settings-btn');
+    await page.check('#errors-report');
+    await page.click('#settings-form button[type=submit]');
+    await expect.poll(() => page.evaluate(() => window.GBDesktop.errors.state())).toEqual({ available: true, enabled: true });
+    await page.evaluate(boom, TOKEN);
+    await expect.poll(() => got.length, { timeout: 10_000 }).toBe(1);
+    const [sent] = got;
+    expect(sent.url).toBe('/api/7/envelope/');
+    expect(sent.type).toBe('application/x-sentry-envelope');
+    expect(sent.auth).toBe(`Sentry sentry_version=7, sentry_client=graphbranch/0.1.0, sentry_key=${KEY}`);
+    expect(sent.cookie).toBe('');
+    const event = JSON.parse(sent.body.split('\n')[2]);
+    expect([event.release, event.environment, event.tags.process, event.sdk.settings.infer_ip]).toEqual(['graphbranch@e2e', 'e2e', 'renderer', 'never']);
+    expect(event.exception.values[0].type).toBe('TypeError');
+    // la pila: el cuadro de la app con su archivo relativo, y nada del script de la prueba (no es de la app)
+    const frames = event.exception.values[0].stacktrace.frames;
+    expect(frames.at(-1)).toMatchObject({ filename: 'app:///js/util.js', function: 'U.esc', in_app: true });
+    expect(frames.every((f) => f.filename.startsWith('app:///') || f.filename.startsWith('node:'))).toBe(true);
+    expect(event.exception.values[0].value).toContain('fallo en');
+    for (const leak of [TOKEN, 'ghp_', 'api.github.com', 'acme', 'orbita', "'main'", 'index.html', 'lang=es', '/home/', 'alguien']) expect(sent.body, leak).not.toContain(leak);
+    for (const k of ['user', 'request', 'breadcrumbs', 'server_name']) expect(event[k], k).toBeUndefined();
+    // el DSN no llega a la página
+    expect(await page.evaluate(() => JSON.stringify(localStorage) + document.documentElement.outerHTML)).not.toContain(KEY);
+    await app.close();
+
+    // al reabrir sigue prendido; apagarlo corta en el momento
+    ({ app, page } = await launch(testInfo, { dir, args: ['--lang=es'], extraEnv }));
+    await loaded(page);
+    await page.click('#settings-btn');
+    await expect(page.locator('#errors-report')).toBeChecked();
+    await page.uncheck('#errors-report');
+    await page.click('#settings-form button[type=submit]');
+    await expect.poll(() => page.evaluate(() => window.GBDesktop.errors.state())).toEqual({ available: true, enabled: false });
+    await page.evaluate(boom, 'ghp_OTROe2e0123456789abcdefABCDEF0123456');
+    await page.waitForTimeout(800);
+    expect(got).toHaveLength(1);
     await app.close();
   } finally {
     server.close();

@@ -489,6 +489,8 @@ GB.i18n.define('sw', {
   'settings.depth': 'Commit kwa kila tawi',
   'settings.marks': 'Onyesha lebo na mazingira ya usambazaji',
   'settings.marksHelp': 'Bendera kwenye commit zenye lebo na ubao kwenye commit ambayo kila mazingira (uzalishaji, staging) inaendesha. Maombi mawili zaidi hazina inapofunguliwa, kisha mawili kila dakika 15.',
+  'settings.errors': 'Tuma ripoti za hitilafu',
+  'settings.errorsHelp': 'Imezimwa hadi uiwashe. Kitu kikiharibika kwenye programu, hutuma kwa Sentry aina ya hitilafu, ujumbe wake na mahali ilipotokea katika msimbo wa GraphBranch, pamoja na toleo la programu na mfumo wako wa uendeshaji. Token, anwani za wavuti, majina ya hazina, matawi na watu, folda za kompyuta hii na anwani yako ya IP haviingizwi.',
   'settings.branchesHelp': 'GraphBranch huonyesha matawi yote ya hazina, yenye shughuli nyingi zaidi yakiwa karibu zaidi na tawi chaguomsingi. Kwenye hazina kubwa matawi huonekana kidogo kidogo, yenye shughuli nyingi zaidi kwanza. Matawi uliyoyabandika (bofya tawi → <strong>Bandika</strong>) hukaa moja kwa moja chini ya tawi chaguomsingi, hata ukiwa na kichujio. Tumia kichujio cha mchoro ili kulenga kiambishi awali, kwa mfano <code>release/</code>.',
   'settings.clearTokens': 'Futa token zote',
   'settings.cancel': 'Ghairi',

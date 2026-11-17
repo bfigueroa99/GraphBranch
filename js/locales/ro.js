@@ -497,6 +497,8 @@ GB.i18n.define('ro', {
   'settings.depth': 'Commit-uri per ramură',
   'settings.marks': 'Afișează etichetele și mediile de implementare',
   'settings.marksHelp': 'Steaguri pe commit-urile cu etichetă și o placă pe commit-ul rulat de fiecare mediu (producție, staging). Două cereri în plus la deschiderea unui depozit, apoi două la fiecare 15 minute.',
+  'settings.errors': 'Trimite rapoarte de erori',
+  'settings.errorsHelp': 'Oprit până îl pornești. Când ceva se strică în aplicație, trimite către Sentry tipul erorii, mesajul ei și locul din codul GraphBranch unde s-a produs, împreună cu versiunea aplicației și sistemul tău de operare. Tokenurile, adresele web, numele depozitelor, ramurilor și persoanelor, folderele de pe acest computer și adresa ta IP sunt lăsate deoparte.',
   'settings.branchesHelp': 'GraphBranch afișează toate ramurile depozitului, cele mai active cel mai aproape de ramura implicită. În depozitele mari apar treptat, întâi cele mai active. Ramurile fixate (clic pe o ramură → <strong>Fixați</strong>) stau imediat sub ramura implicită, chiar și cu un filtru. Folosiți filtrul grafului pentru a vă concentra pe un prefix, de exemplu <code>release/</code>.',
   'settings.clearTokens': 'Ștergeți tokenurile',
   'settings.cancel': 'Anulare',

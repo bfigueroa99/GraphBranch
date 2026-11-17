@@ -642,6 +642,10 @@
       <p class="help" data-i18n="settings.hooksHelp">Each webhook gets the events you tick: releases, merges to the default branch, CI turning red and force-pushes on it. The URL is a secret: it is stored encrypted on this computer and is sent only to its own service.</p>
       <div id="hooks-list" class="hooks-list"></div>
     </fieldset>
+    <div class="errors-field" id="errors-field" hidden>
+      <label class="marks-toggle"><input type="checkbox" id="errors-report" aria-describedby="errors-help"> <span data-i18n="settings.errors">Send error reports</span></label>
+      <p class="help" id="errors-help" data-i18n="settings.errorsHelp">Off unless you turn it on. When something in the app breaks, it sends Sentry the kind of error, its message and where in GraphBranch's code it happened, with the app version and your operating system. Tokens, web addresses, the names of repositories, branches and people, the folders on this computer and your IP address are left out.</p>
+    </div>
     <div class="grid2">
       <div class="field">
         <label for="depth" data-i18n="settings.depth">Commits per branch</label>

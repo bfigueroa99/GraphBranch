@@ -489,6 +489,8 @@ GB.i18n.define('hu', {
   'settings.depth': 'Commitok ágonként',
   'settings.marks': 'Címkék és telepítési környezetek megjelenítése',
   'settings.marksHelp': 'Zászlók a címkézett commitokon és egy tábla azon a commiton, amelyet az egyes környezetek (éles, staging) futtatnak. Két további kérés a tároló megnyitásakor, majd kettő 15 percenként.',
+  'settings.errors': 'Hibajelentések küldése',
+  'settings.errorsHelp': 'Ki van kapcsolva, amíg be nem kapcsolod. Ha valami elromlik az alkalmazásban, elküldi a Sentrynek a hiba fajtáját, az üzenetét és azt, hogy a GraphBranch kódjában hol történt, az alkalmazás verziójával és az operációs rendszereddel együtt. A tokenek, a webcímek, a tárolók, ágak és emberek nevei, a számítógép mappái és az IP-címed kimaradnak.',
   'settings.branchesHelp': 'A GraphBranch a repó összes ágát megmutatja, a legaktívabbakat az alapértelmezett ághoz legközelebb. Nagy repozitóriumoknál fokozatosan jelennek meg, elsőként a legaktívabbak. A kitűzött ágak (kattints egy ágra → <strong>Kitűzés</strong>) közvetlenül az alapértelmezett ág alatt vannak, szűrő mellett is. A gráf szűrőjével egy előtagra fókuszálhatsz, például <code>release/</code>.',
   'settings.clearTokens': 'Tokenek törlése',
   'settings.cancel': 'Mégse',

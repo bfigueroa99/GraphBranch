@@ -485,28 +485,27 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
 
 20. [Errores] Salud del repo: al llegar después de abrir el panel los forks, las líneas por semana, los despliegues o el primer commit de los PRs, `renderHealth` (`js/app.js`) rehace el panel entero y borra lo que la persona ya pidió en él: el resultado de «Comparar ramas» (`#cmp-out`), el de los choques (`#hl-clash-out`) y las ramas elegidas en los dos selectores (el foco ya se conserva desde la iteración 283). Rehacer solo las secciones de datos, o volver a poner lo pedido. Reproducción: API simulada que tarda 3 s en `/stats/code_frequency`, `index.html?repo=o/r&health=1`, comparar dos ramas antes de que llegue → `#cmp-out` vacío.
 
-21. [Accesibilidad] Salud del repo: las series por semana («Commits por semana: 3 · 0 · 5 · …») se leen como una tira de cifras separadas por «·», que según el lector se anuncia como «punto medio» en cada una y sin decir a qué semana va cada cifra (WCAG 1.3.1, menor). Una lista o un `aria-label` con las semanas separadas por comas. Reproducción: `?health=1` en la demo → `#hl-commitweeks` con `textContent` «… 3 · 0 · 5 …» y sin nombre accesible propio.
 
-22. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
+21. [Accesibilidad] Salud del repo: la línea «GitHub todavía está calculando las líneas por semana» (`#hl-codepending`) aparece después de abrir el panel, cuando responde el 202, sin región viva: quien usa lector de pantalla no se entera de que hay que volver a abrir el panel (WCAG 4.1.3, menor). Anunciarla con un `role="status"` que exista desde la apertura. Reproducción: API simulada con 202 en `/stats/code_frequency`, `?repo=o/r&health=1` → `#hl-codepending` sin `role`/`aria-live` ni ancestro vivo.
 
-23. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
-24. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
+22. [QA] Un repo vacío con token: la carga va por GraphQL, que responde 200 con `defaultBranchRef: null` y sin refs (no el 409
+23. [QA] La práctica a mitad de un conflicto de merge (iteración 289, revisión): `restore login.js` y `restore .` salen bien sin hacer nada y `restore --staged login.js` da «pathspec did not match» (git: `error: path 'login.js' is unmerged`); `reset --soft` funciona y vacía la fusión (git: `fatal: Cannot do a soft reset in the middle of a merge.`, igual que ya pasaba con `merge --no-commit`); `pull` hace el fetch y después dice «Already up to date.» o «You have not concluded your merge» (git: `error: Pulling is not possible because you have unmerged files.` sin traer nada); `stash` a secas da el error de `checkout` y no el «Cannot save the current index state» de git. Reproducción: `?practice=16`, `merge feature` y cada comando.
     de REST), así que no sale el rótulo «Repo vacío» de la iteración 287. Fijar qué muestra ese caso y darle el mismo estado.
     Reproducción: `connect(gh, 'tok')` en `tools/github.test.mjs` con `/graphql` devolviendo el repo sin ramas → sin error `empty`.
 
-25. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
-26. [Errores] La práctica a 320 px: las cartas de comandos bajo la terminal (`#practice .pr-cards`, `button.pr-card` con
+24. [Seguridad] El sha de un padre entra literal en la consulta GraphQL de historia (`object(oid: "…")` de `historyQuery` en `js/sources/github.js`, de antes y que ahora usa también «Cargar más»; iteración 293, revisión de seguridad): una API hostil (un `?api=` de GitHub Enterprise comprometido) podría cambiar la consulta, aunque solo hacia su propio host, con el mismo token y sin mutaciones. Reproducción: un commit falso con `parents: [{ oid: 'x") { __typename } } #' }]` en una prueba de `tools/github.test.mjs` y mirar la consulta enviada. Arreglo: pasar los oid como variables `GitObjectID!` (o validarlos como hex de 40).
+25. [Errores] La práctica a 320 px: las cartas de comandos bajo la terminal (`#practice .pr-cards`, `button.pr-card` con
     su `code` y su `span.pr-card-desc`) se salen del borde en es, ar, de y ta (12 hallazgos `borde` de la auditoría
     completa en la iteración 295, fuera de la base; la de la puerta no corre ese escenario). Reproducción:
     `node tools/audit.mjs` → `Baja [Errores] borde · practica-320-es · #practice > div.pr-cards[role=toolbar] > button.pr-card`.
-27. [Rendimiento] La tarea larga de la carga (unos 600 ms sin GPU, de 2 que suman unos 1.150) es la compilación de los 13
+26. [Rendimiento] La tarea larga de la carga (unos 600 ms sin GPU, de 2 que suman unos 1.150) es la compilación de los 13
     programas de shaders en el primer cuadro 3D (`acquireProgram` de three.js y trabajo nativo, medido con el perfil de
     CPU en la iteración 295), no código de la app. three.js r128 no tiene `compileAsync` (con
     `KHR_parallel_shader_compile`, desde la r158): sacarla del hilo principal pide subir la versión vendorizada de
     three.js (plan por consenso: toca todo el 3D) o juntar materiales (los nodos usan `MeshStandardMaterial`, el
     más caro, y cambia cómo se ven). La auditoría ahora cuenta los programas (`programas3d`) y `--comparar` los vigila.
     Reproducción: `node tools/audit.mjs --repetir 3` → `programas3d: 13`, `tareasLargasMs` de unos 1.150 en la nube.
-28. [Errores] «Pull requests sin ninguna revisión hace más de 7 días» (`unreviewed` de `js/health.js`) cuenta en
+27. [Errores] «Pull requests sin ninguna revisión hace más de 7 días» (`unreviewed` de `js/health.js`) cuenta en
     Codeberg, Forgejo, Bitbucket y Bitbucket Data Center cada PR abierto de más de 7 días que no es borrador, aunque esas
     fuentes no digan si se revisó: su `mapPull` no trae `review` ni votos y su actividad no trae revisiones
     (`givesReviews()` en false, iteración 300). Encontrado en la revisión de la iteración 300: el tiempo de ciclo por
@@ -514,13 +513,13 @@ que falla al validar; los números de línea son de cuando se miró y pueden hab
     la fuente no da revisiones, como el tiempo de ciclo (o se lee el estado de revisión de su API, si lo tiene).
     Reproducción: `node --test` con `compute()` sobre un PR de 10 días sin `review` y sin actividad → `unreviewed.total`
     1; en la app, `?repo=codeberg:…` con un PR de más de 7 días → sale en la lista.
-29. [Errores] El borrador de notas de la versión (`releaseNotes` de `js/digest.js`, iteración 302) cuenta a quienes
+28. [Errores] El borrador de notas de la versión (`releaseNotes` de `js/digest.js`, iteración 302) cuenta a quienes
     contribuyeron por su clave (la cuenta o, sin ella, el nombre), así que la misma persona puede salir dos veces: como
     `@bob` (autor del PR, por su cuenta) y como «Bob Smith» (sus commits firmados sin cuenta). Encontrado en la revisión
     de la iteración 302. Arreglo posible: unir un nombre sin cuenta con la cuenta cuyos commits cargados firma ese mismo
     nombre. Reproducción: `node --test` con `releaseNotes()` sobre un PR de `bob` (actividad con `author.login`) cuyos
     commits traen `author: { name: 'Bob Smith', login: null }` → `people.rows` con `bob` y `Bob Smith`.
-30. [QA] Un repo local (escritorio) cuyo `git` falla (`err.gitLocal` de `js/sources/local.js`) sale con `kind: 'http'`, así que
+29. [QA] Un repo local (escritorio) cuyo `git` falla (`err.gitLocal` de `js/sources/local.js`) sale con `kind: 'http'`, así que
     desde la iteración 303 el indicador dice «Error del servicio» (antes, «Sin conexión»): mejor, pero no hay servicio de por
     medio. Arreglo posible: su propio `kind` (`git`), que `local.js` siga tratando como hoy donde mira `'http'`, y un rótulo
     «Error de git» en los 40 idiomas. Reproducción: `toError({ message: 'fatal: bad object' })` de la fuente local →

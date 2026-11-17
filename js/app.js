@@ -1935,12 +1935,21 @@
   // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
   const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks'], ['fork', 'forkWeeks'], ['added', 'addedWeeks'], ['deleted', 'deletedWeeks']];
   const BIG_SERIES = new Set(['addedWeeks', 'deletedWeeks']); // cifras que pueden pasar de mil: con el separador del idioma
+  /* Una serie por semana en su línea: se ven las cifras con «·» (corto, de un vistazo), y un lector de pantalla lee
+     cada una con su semana y el separador del idioma («3 (hace 7 semanas), 0 (hace 6 semanas), …, 5 (esta semana)»)
+     en vez de «punto medio» entre cifras sueltas (pendiente 21, WCAG 1.3.1). `key` es el texto con {list}. */
+  function seriesLine(id, key, params, values) {
+    const vals = values.map(String);
+    const said = i18n.fmtList(vals.map((v, i) => `${v} (${i18n.fmtWeeksAgo(vals.length - 1 - i)})`));
+    const [before, after = ''] = t(key, { ...params, list: '\u0001' }).split('\u0001');
+    return `<p class="hl-line" id="${id}">${U.esc(before)}<span class="hl-vals" aria-hidden="true">${U.esc(vals.join(' · '))}</span><span class="sr-only">${U.esc(said)}</span>${U.esc(after)}</p>`;
+  }
   function weeklyLines(pace, withForks = true) {
     const shown = WEEKLY_SERIES.filter(([, k]) => (withForks || k !== 'forkWeeks') && pace[k].some(Boolean)); // ?forks=0 también calla los forks nuevos por semana
     if (!shown.length) return '';
     const n = pace[shown[0][1]].length;
     return `<div class="hl-weekly" id="hl-weekly" role="group" aria-labelledby="hl-weekly-head"><p class="hl-line hl-weekly-head" id="hl-weekly-head">${U.esc(t('health.weeksHead', { n }))}</p>${shown
-      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: (BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]).join(' · ') }))}</p>`)
+      .map(([id, k]) => seriesLine(`hl-${id}weeks`, 'health.' + k, {}, BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]))
       .join('')}</div>`;
   }
 
@@ -2048,7 +2057,7 @@
       cycleHtml(h.cycle, span) +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
-          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
+          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p>${seriesLine('hl-weeks', 'health.doraWeeks', { n: h.dora.weeks.length }, h.dora.weeks)}<p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.status === 'ok' ? t('health.deployOk') : r.status === 'failed' ? t('health.deployFailed') : r.status === 'running' ? t('health.deployRunning') : '', r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +

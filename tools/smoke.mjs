@@ -829,22 +829,22 @@ if (seccion('Escritorio (1280×800)'))
     });
     const dora = await page.$$eval('#hl-dora .hl-line', (ps) => ps.map((p) => p.textContent));
     if (dora.length !== 3) throw new Error(`${dora.length} líneas de entrega (DORA), se esperaban 3: ${dora.join(' | ')}`);
-    const weeks = await page.$eval('#hl-weeks', (p) => p.textContent);
+    const weeks = await page.$eval('#hl-weeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join(''));
     if (!/(\d+ · ){7}\d+$/.test(weeks) || /^(0 · ){7}0$/.test(weeks.split(': ').pop())) throw new Error(`la frecuencia de despliegue por semana no trae 8 cifras con algún release: ${weeks}`);
-    const mweeks = await page.$eval('#hl-mergeweeks', (p) => p.textContent).catch(() => '');
+    const mweeks = await page.$eval('#hl-mergeweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(mweeks) || /^(0 · ){7}0$/.test(mweeks.split(': ').pop())) throw new Error(`la tendencia de merges por semana no trae 8 cifras con algún PR fusionado: ${mweeks}`);
-    const oweeks = await page.$eval('#hl-openedweeks', (p) => p.textContent).catch(() => '');
+    const oweeks = await page.$eval('#hl-openedweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(oweeks) || /^(0 · ){7}0$/.test(oweeks.split(': ').pop())) throw new Error(`la tendencia de PRs abiertos por semana no trae 8 cifras con algún PR abierto: ${oweeks}`);
-    const cweeks = await page.$eval('#hl-closedweeks', (p) => p.textContent).catch(() => '');
+    const cweeks = await page.$eval('#hl-closedweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(cweeks) || /^(0 · ){7}0$/.test(cweeks.split(': ').pop())) throw new Error(`la tendencia de issues cerrados por semana no trae 8 cifras con algún issue cerrado: ${cweeks}`);
-    const bweeks = await page.$eval('#hl-branchweeks', (p) => p.textContent).catch(() => '');
+    const bweeks = await page.$eval('#hl-branchweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(bweeks) || /^(0 · ){7}0$/.test(bweeks.split(': ').pop())) throw new Error(`la tendencia de ramas nuevas por semana no trae 8 cifras con alguna rama creada: ${bweeks}`);
-    const kweeks = await page.$eval('#hl-commitweeks', (p) => p.textContent).catch(() => '');
+    const kweeks = await page.$eval('#hl-commitweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(kweeks) || /^(0 · ){7}0$/.test(kweeks.split(': ').pop())) throw new Error(`la tendencia de commits por semana no trae 8 cifras con algún commit: ${kweeks}`);
-    const aweeks = await page.$eval('#hl-authorweeks', (p) => p.textContent).catch(() => '');
+    const aweeks = await page.$eval('#hl-authorweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(aweeks) || /^(0 · ){7}0$/.test(aweeks.split(': ').pop())) throw new Error(`los autores por semana no traen 8 cifras con algún autor: ${aweeks}`);
     if (aweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(kweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores que commits: ${aweeks} frente a ${kweeks}`);
-    const nweeks = await page.$eval('#hl-newauthorweeks', (p) => p.textContent).catch(() => '');
+    const nweeks = await page.$eval('#hl-newauthorweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(nweeks) || /^(0 · ){7}0$/.test(nweeks.split(': ').pop())) throw new Error(`los autores nuevos por semana no traen 8 cifras con algún autor nuevo: ${nweeks}`);
     if (nweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(aweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores nuevos que autores distintos: ${nweeks} frente a ${aweeks}`);
     // el factor de ausencia (ítem 202): una sola cifra, al menos 1 y no más que los autores, sin nombres de la demo
@@ -854,21 +854,21 @@ if (seccion('Escritorio (1280×800)'))
     // las líneas añadidas y borradas por semana (ítem 206): 8 cifras con el separador del idioma, alguna distinta de cero, y sin «calculando» en la demo
     const lines = {};
     for (const k of ['added', 'deleted']) {
-      const txt = await page.$eval(`#hl-${k}weeks`, (p) => p.textContent).catch(() => '');
+      const txt = await page.$eval(`#hl-${k}weeks`, (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
       const nums = txt.split(': ').pop().split(' · ').map((x) => Number(x.replace(/\D/g, '')));
       if (nums.length !== 8 || nums.some((n) => !Number.isFinite(n)) || !nums.some(Boolean) || /undefined|NaN|health\./.test(txt)) throw new Error(`las líneas ${k === 'added' ? 'añadidas' : 'borradas'} por semana no traen 8 cifras con alguna distinta de cero: ${txt}`);
       lines[k] = nums;
     }
     if (lines.added.reduce((a, b) => a + b) <= lines.deleted.reduce((a, b) => a + b)) throw new Error(`la demo borra más líneas de las que añade: ${JSON.stringify(lines)}`);
     if (await page.$('#hl-codepending')) throw new Error('la demo dice que GitHub todavía calcula las líneas por semana');
-    const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
+    const tweeks = await page.$eval('#hl-tagweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
-    const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');
+    const iweeks = await page.$eval('#hl-issueweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (iweeks && (!/(\d+ · ){7}\d+$/.test(iweeks) || /^(0 · ){7}0$/.test(iweeks.split(': ').pop()))) throw new Error(`la tendencia de issues abiertos por semana no trae 8 cifras con algún issue: ${iweeks}`);
-    const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => p.textContent).catch(() => '');
+    const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (pcweeks && (!/(\d+ · ){7}\d+$/.test(pcweeks) || /^(0 · ){7}0$/.test(pcweeks.split(': ').pop()))) throw new Error(`la tendencia de PRs cerrados sin fusionar por semana no trae 8 cifras con algún PR: ${pcweeks}`);
     // los forks nuevos por semana (ítem 195): la demo trae un fork de hace unos días, así que la serie sale con 8 cifras y alguna distinta de cero
-    const fkweeks = await page.$eval('#hl-forkweeks', (p) => p.textContent).catch(() => '');
+    const fkweeks = await page.$eval('#hl-forkweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/^Forks nuevos por semana: (\d+ · ){7}\d+$/.test(fkweeks) || /^(0 · ){7}0$/.test(fkweeks.split(': ').pop())) throw new Error(`los forks nuevos por semana no traen 8 cifras con algún fork: «${fkweeks}»`);
     // El periodo de las series por semana se dice una vez, como encabezado del grupo, y no en cada línea (pendiente 12).
     const weekly = await page.evaluate(() => {
@@ -6190,6 +6190,23 @@ if (seccion('Salud del repo directa (?health=1)'))
       if (m.sw > m.cw) throw new Error(`[${lang}] el panel de salud se desborda a 320 px: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
     }
     await page.setViewportSize({ width: 1280, height: 800 });
+  });
+  await step(page, 'las series por semana de la salud se leen con su semana y comas, sin «punto medio» (pendiente 21, WCAG 1.3.1)', async () => {
+    for (const [lang, now, old] of [['es', 'esta semana', 'hace 7 semanas'], ['ar', 'هذا الأسبوع', '7']]) {
+      await page.goto(`${base}/index.html?lang=${lang}&health=1`);
+      await loaded(page);
+      await page.waitForSelector('#health[open] #hl-commitweeks', { timeout: T(5000) });
+      for (const id of ['hl-commitweeks', 'hl-weeks']) {
+        // lo que lee un lector de pantalla: el árbol de accesibilidad de la línea, no su texto
+        const said = await page.locator(`#${id}`).ariaSnapshot();
+        if (said.includes('·')) throw new Error(`[${lang}] #${id} se lee con «·»: ${said}`);
+        if (!said.includes(now) || !said.includes(old)) throw new Error(`[${lang}] #${id} no dice a qué semana va cada cifra: ${said}`);
+        if ((said.match(/\d \(/g) || []).length !== 8) throw new Error(`[${lang}] #${id} no dice las 8 semanas: ${said}`);
+        // y se ve como antes: las 8 cifras con «·»
+        const seen = await page.$eval(`#${id} .hl-vals`, (e) => [getComputedStyle(e).display, e.textContent]).catch(() => ['', '']);
+        if (seen[0] === 'none' || !/^(\d+ · ){7}\d+$/.test(seen[1])) throw new Error(`[${lang}] #${id} se ve ${JSON.stringify(seen)}`);
+      }
+    }
   });
   await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
     await page.goto(`${base}/index.html?lang=es&health=0`);

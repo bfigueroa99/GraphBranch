@@ -782,5 +782,5 @@ Las entradas anteriores están en [`docs/BITACORA.md`](docs/BITACORA.md) (las ll
 - Reclamo: loop/309, sin colisión
 - Issues: sin pedidos
 - Web publicada: no se pudo comprobar (Request was cancelled.)
-- Validado: pendiente
+- Validado: 840 pruebas (`node --test`), smoke (40 idiomas), i18n (0 errores), auditoría (0 hallazgos nuevos, 0 conocidos) y 31 e2e en verde. A la primera, con carga de 5 a 14 en 2 CPU: 35 min 12 s, el smoke 265 pasos en 27 min 44 s, sin intermitentes.
 - **Siguiente:** iteración 310, expansión: ítem 196 (Práctica: branch --merged y --no-merged, Público)

@@ -698,6 +698,7 @@ GB.i18n.define('nl', {
   'textview.fork': '{name}, laatste push {when}',
   'textview.prs': 'open PR\'s: {n}',
   'textview.drafts': 'concept-PR\'s: {n}',
+  'textview.approved': 'goedgekeurde PR\'s: {n}',
   'textview.draft': 'concept',
   'textview.noPr': 'geen open PR',
   'textview.fresh': 'in de afgelopen 7 dagen gemaakt',

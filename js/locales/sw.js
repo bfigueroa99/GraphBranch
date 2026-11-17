@@ -697,6 +697,7 @@ GB.i18n.define('sw', {
   'textview.fork': '{name}, push ya mwisho {when}',
   'textview.prs': 'PR zilizo wazi: {n}',
   'textview.drafts': 'PR za rasimu: {n}',
+  'textview.approved': 'PR zilizoidhinishwa: {n}',
   'textview.draft': 'rasimu',
   'textview.noPr': 'hakuna PR iliyo wazi',
   'textview.fresh': 'imeundwa katika siku 7 zilizopita',

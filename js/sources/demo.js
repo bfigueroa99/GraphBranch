@@ -456,8 +456,16 @@
         pr.draft = false;
         return [this.act('pr-open', { title: MSG('act.prReady', { num: pr.number }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.head, actor: pr.user, number: pr.number })];
       }
-      if (r < 0.55) return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
-      if (r < 0.8) return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      // como el reviewDecision de GitHub: la última aprobación o el último pedido de cambios queda en el PR (lo leen la
+      // salud, el Launchpad y la vista de texto); un comentario no lo cambia
+      if (r < 0.55) {
+        pr.review = 'approved';
+        return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
+      }
+      if (r < 0.8) {
+        pr.review = 'changes';
+        return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      }
       return [this.act('comment', { title: MSG('act.commentPr', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number, pr: true })];
     }
 

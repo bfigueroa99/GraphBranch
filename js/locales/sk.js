@@ -708,6 +708,7 @@ GB.i18n.define('sk', {
   'textview.fork': '{name}, posledný push {when}',
   'textview.prs': 'otvorené PR: {n}',
   'textview.drafts': 'PR ako koncept: {n}',
+  'textview.approved': 'schválené PR: {n}',
   'textview.draft': 'koncept',
   'textview.noPr': 'bez otvoreného PR',
   'textview.fresh': 'vytvorená za posledných 7 dní',

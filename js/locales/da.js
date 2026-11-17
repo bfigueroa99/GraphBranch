@@ -697,6 +697,7 @@ GB.i18n.define('da', {
   'textview.fork': '{name}, seneste push {when}',
   'textview.prs': 'åbne PR: {n}',
   'textview.drafts': 'PR som kladde: {n}',
+  'textview.approved': 'godkendte PR: {n}',
   'textview.draft': 'kladde',
   'textview.noPr': 'ingen åben PR',
   'textview.fresh': 'oprettet inden for de seneste 7 dage',

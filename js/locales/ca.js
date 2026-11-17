@@ -697,6 +697,7 @@ GB.i18n.define('ca', {
   'textview.fork': '{name}, darrer push {when}',
   'textview.prs': 'PR oberts: {n}',
   'textview.drafts': 'PR en esborrany: {n}',
+  'textview.approved': 'PR aprovats: {n}',
   'textview.draft': 'esborrany',
   'textview.noPr': 'sense cap PR obert',
   'textview.fresh': 'creada en els últims 7 dies',

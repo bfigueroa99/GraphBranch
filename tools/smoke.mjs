@@ -1197,6 +1197,18 @@ if (seccion('Escritorio (1280×800)'))
     const gotDrafts = drafts.branches.filter((m) => m.label || m.chip);
     if (gotDrafts.length !== 1 || gotDrafts[0].b !== 'wip' || !gotDrafts[0].label || !gotDrafts[0].chip) throw new Error('la vista de texto no dice la rama con un PR en borrador: ' + JSON.stringify(drafts));
     if (drafts.ci.length !== 2 || !/^#22 lista, rama lista$/.test(drafts.ci[0]) || !/^#21 a medias, rama wip, en borrador$/.test(drafts.ci[1])) throw new Error('la lista del CI en rojo no marca el PR en borrador: ' + JSON.stringify(drafts.ci));
+    // los PRs aprobados: su rama lo dice en su nombre accesible y con una marca («PRs aprobados: n»); un borrador
+    // aprobado cuenta como borrador (árbol montado aparte, con PRs fijos: en la demo una revisión cambia el estado)
+    const approvedBr = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2), c('g', ['a'], 3)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['lista', { name: 'lista', sha: 'f' }], ['espera', { name: 'espera', sha: 'g' }]]),
+        pulls: new Map([[31, { number: 31, title: 'uno', head: 'lista', sameRepo: true, review: 'approved' }], [32, { number: 32, title: 'dos', head: 'lista', sameRepo: true, review: 'approved' }], [33, { number: 33, title: 'tres', head: 'espera', sameRepo: true, review: 'changes' }], [34, { number: 34, title: 'cuatro', head: 'espera', sameRepo: true, draft: true, review: 'approved' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: (n.getAttribute('aria-label').match(/, PRs aprobados: (\d+),/) || [])[1] || '', chip: (n.querySelector('.tv-head').textContent.match(/PRs aprobados: (\d+)/) || [])[1] || '' }));
+    });
+    if (JSON.stringify(approvedBr.filter((m) => m.label || m.chip)) !== JSON.stringify([{ b: 'lista', label: '2', chip: '2' }])) throw new Error('la vista de texto no dice los PRs aprobados de cada rama: ' + JSON.stringify(approvedBr));
     // los PRs abiertos con el CI en rojo salen en una lista aparte del árbol (árbol montado aparte, con PRs fijos): el de
     // url https es un enlace, el otro solo texto, el título entra como texto y la región viva los cuenta
     const ciPulls = await page.evaluate(() => {

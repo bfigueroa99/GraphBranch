@@ -697,6 +697,7 @@ GB.i18n.define('fi', {
   'textview.fork': '{name}, viimeisin push {when}',
   'textview.prs': 'avoimet PR:t: {n}',
   'textview.drafts': 'luonnos-PR:t: {n}',
+  'textview.approved': 'hyväksytyt PR:t: {n}',
   'textview.draft': 'luonnos',
   'textview.noPr': 'ei avointa PR:ää',
   'textview.fresh': 'luotu viimeisen 7 päivän aikana',

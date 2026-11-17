@@ -740,6 +740,7 @@ GB.i18n.define('fa', {
   'textview.fork': '{name}، آخرین push {when}',
   'textview.prs': 'PR باز: {n}',
   'textview.drafts': 'PR پیش‌نویس: {n}',
+  'textview.approved': 'PR تأییدشده: {n}',
   'textview.draft': 'پیش‌نویس',
   'textview.noPr': 'بدون PR باز',
   'textview.fresh': 'در ۷ روز گذشته ساخته شده',

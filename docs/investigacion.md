@@ -325,6 +325,67 @@ se consultó y su URL, y dice solo lo que la página dice: lo que no consta, se 
   `beforeBreadcrumb`; en Electron hay que apagar lo que manda por defecto, y en la extensión va un cliente propio. Cada
   error que llegue es evidencia para Errores y QA del loop.
 
+### 2026-11-17 · Mermaid: diagramas de grafo de git (gitGraph)
+
+- **Qué es:** Mermaid dibuja diagramas a partir de texto; su `gitGraph` describe un grafo de git con `commit` (con
+  `id`, `type` NORMAL, REVERSE o HIGHLIGHT y `tag`), `branch` (crea la rama y la deja como actual; un nombre que se
+  confunde con una palabra de Mermaid va entre comillas, como `branch "cherry-pick"`), `checkout` (o `switch`),
+  `merge` (con `id`, `tag` y `type`) y `cherry-pick` (con el `id` del commit de origen y, si es un merge, su
+  `parent`). Va de izquierda a derecha, de arriba abajo o de abajo arriba, y tiene opciones como `mainBranchName` y
+  el orden de cada rama. Los colores de los temas cubren 8 ramas y después se repiten. No consta el largo máximo ni
+  qué caracteres admite un nombre, más allá de las comillas.
+- **Fuente:** https://mermaid.js.org/syntax/gitgraph.html (consultada el 2026-11-17)
+- **Implica:** GraphBranch ya tiene el grafo que quien explica una estrategia de ramas escribe a mano en Mermaid:
+  exportarlo como `gitGraph` (las ramas a la vista y sus últimos commits, con tags y merges) da un diagrama de texto
+  que se pega en la documentación, sin consultas nuevas.
+
+### 2026-11-17 · Hub de Hugging Face (repos de modelos, datasets y spaces)
+
+- **Qué es:** el Hub guarda modelos, datasets y spaces como repos de git. El cliente de JavaScript
+  (`@huggingface/hub`) lista los commits de una revisión con `GET <hub>/api/<tipo>s/<repo>/commits/<revisión>`
+  (`main` por defecto), con `limit` (100 por defecto) y la página siguiente en la cabecera `Link`; cada commit trae
+  su id, título, mensaje, autores (usuario y avatar) y fecha, y el token es opcional (sin él no manda
+  `Authorization`). El cliente de Python tiene además `list_repo_refs` para las ramas y los tags. La documentación de
+  la API remite a su especificación OpenAPI y a los límites de uso generales; no consta si responde a una página de
+  otro origen (CORS).
+- **Fuente:** https://huggingface.co/docs/hub/api,
+  https://huggingface.co/docs/huggingface_hub/en/package_reference/hf_api.md y
+  https://cdn.jsdelivr.net/npm/@huggingface/hub@2.11.0/src/lib/list-commits.ts (consultadas el 2026-11-17)
+- **Implica:** una fuente nueva con un público grande que hoy no está (quien publica modelos y datasets): su rama
+  `main` y sus commits caben en el modo lista de siempre. Falta comprobar la ruta de las refs y el CORS antes de
+  construir; sin CORS, la primera entrega es de escritorio.
+
+### 2026-11-17 · Firma de los commits en GitHub (GraphQL)
+
+- **Qué es:** el objeto `Commit` de la API GraphQL de GitHub tiene `signature`: «Commit signing information, if
+  present». Los commits que se hacen con `createCommitOnBranch` los firma GitHub y se ven como verificados. La página
+  no detalla los campos de la firma ni sus estados.
+- **Fuente:** https://docs.github.com/en/enterprise-server@3.19/graphql/reference/commits (consultada el 2026-11-17)
+- **Implica:** la consulta de commits de siempre puede pedir la firma y la app puede decir qué commits de la rama por
+  defecto no la tienen verificada, para los equipos que la exigen; los campos se comprueban en el esquema.
+
+### 2026-11-17 · La cola de fusión de GitHub (merge queue)
+
+- **Qué es:** la cola de fusión pone en fila los PRs listos para fusionar. Su API es de GraphQL: las mutaciones
+  `enqueuePullRequest` y `dequeuePullRequest`, el campo `mergeQueue` del repositorio (el contenido de la cola o su
+  configuración) y `mergeQueueEntry` del PR («its state, position in the queue, estimated time to merge»). No
+  menciona REST ni webhooks.
+- **Fuente:** https://github.blog/changelog/2023-04-19-pull-request-merge-queue-public-beta-api-support-and-recent-fixes
+  (consultada el 2026-11-17)
+- **Implica:** en un repo con cola, «aprobado» no dice cuándo se fusiona; un campo más en la consulta de PRs daría
+  su lugar y su estado en la ficha de la rama y en el Launchpad, sin consultas nuevas.
+
+### 2026-11-17 · Alertas de Dependabot (API REST de GitHub)
+
+- **Qué es:** `GET /repos/{owner}/{repo}/dependabot/alerts` lista las alertas de dependencias vulnerables de un repo,
+  filtradas por `state` (auto_dismissed, dismissed, fixed, open) y `severity` (low, medium, high, critical), hasta
+  100 por página. Pide un token con permiso de lectura de «Dependabot alerts» (en un token clásico, `security_events`,
+  o `public_repo` si solo se usa con repos públicos). La gravedad viene en `security_advisory.severity` y en
+  `security_vulnerability.severity`. No consta si responde sin autenticar.
+- **Fuente:** https://docs.github.com/en/enterprise-server@3.19/rest/dependabot/alerts (consultada el 2026-11-17)
+- **Implica:** el panel de salud podría contar las alertas abiertas por gravedad con una consulta al abrirlo, con el
+  token de siempre y solo si tiene el permiso; sin él, decirlo y no insistir.
+
 ## Ideas puntuadas
 
 Las de la hoja de ruta (su puntaje está también en `IMPROVEMENTS.md`) y las candidatas que salen de esta
@@ -497,6 +558,7 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Resumen de la semana: forks nuevos | Salidas | 1×2/2 | 1,0 | GitHub Pulse | ítem 199 |
 | Salud del repo: estrellas nuevas por semana | Análisis | 1×2/2 | 1,0 | DORA | ítem 200 |
 | Salud del repo: factor de ausencia (CHAOSS) | Análisis | 2×2/1 | 4,0 | Contributor Absence Factor (CHAOSS) | ítem 202 |
+| Exportar el grafo como diagrama Mermaid | Salidas | 2×2/1 | 4,0 | Mermaid (gitGraph) | ítem 228 |
 | Práctica: un remoto con push y fetch | Público | 2×3/2 | 3,0 | Oh My Git! | ítem 203 |
 | Práctica: cartas de comandos | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 204 |
 | Práctica: el índice y el árbol de trabajo a la vista | Público | 2×2/2 | 2,0 | Oh My Git! | ítem 205 |
@@ -517,8 +579,12 @@ investigación, para la próxima reposición. Ordenadas por puntaje.
 | Constelación: organizaciones de más de 100 repos | Escala | 1×2/2 | 1,0 | (ítem 214) | ítem 221 |
 | Tiempo de ciclo por etapas: las revisiones que el feed no trajo | Análisis | 2×2/2 | 2,0 | (ítem 217) | ítem 223 |
 | Reporte de errores opcional con Sentry | Salidas | 2×2/3 | 1,3 | Sentry (reporte de errores) | ítem 224 |
-| CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | candidata |
+| CI de Codeberg y Forgejo en el grafo | Datos | 1×2/2 | 1,0 | API de Gitea | ítem 233 |
 | Curva de estrellas en el tiempo | Análisis | 2×2/2 | 2,0 | Star History | descartada: la lista de stargazers con su fecha queda para administradores y colaboradores |
+| Commits sin firma verificada | Datos | 2×2/2 | 2,0 | Firma de los commits en GitHub | ítem 230 |
+| La cola de fusión de GitHub | Datos | 2×2/2 | 2,0 | Cola de fusión de GitHub | ítem 231 |
+| Alertas de Dependabot en la salud | Análisis | 2×2/2 | 2,0 | Alertas de Dependabot | ítem 232 |
+| Repos del Hub de Hugging Face | Fuentes | 2×2/3 | 1,3 | Hub de Hugging Face | ítem 229 |
 
 ## Públicos
 

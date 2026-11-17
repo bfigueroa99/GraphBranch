@@ -754,6 +754,7 @@ GB.i18n.define('he', {
   'textview.fork': '{name}, push אחרון {when}',
   'textview.prs': 'PRs פתוחים: {n}',
   'textview.drafts': 'PRs בטיוטה: {n}',
+  'textview.approved': 'PRs שאושרו: {n}',
   'textview.draft': 'טיוטה',
   'textview.noPr': 'אין PR פתוח',
   'textview.fresh': 'נוצר ב-7 הימים האחרונים',

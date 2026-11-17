@@ -4553,6 +4553,7 @@
           if (!data) continue;
           add(data.repo?.owner);
           add(data.repo?.name);
+          if (data.repo?.owner && data.repo?.name) add(`${data.repo.owner}/${data.repo.name}`);
           for (const name of data.branches?.keys?.() || []) add(name);
           for (const c of data.commits?.values?.() || []) {
             add(c.author?.login);

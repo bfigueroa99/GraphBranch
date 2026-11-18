@@ -244,3 +244,17 @@ test('la firma de los commits de la demo (ítem 230): cada autor siempre igual, 
   const s = ctx.window.GB.health.compute(src.data, [], Date.now()).signed;
   assert.ok(s?.invalid >= 1 && s.unsigned >= 1, JSON.stringify(s));
 });
+
+test('la demo trae sus alertas de Dependabot (ítem 232) sin consultar nada: abiertas de las cuatro gravedades, sin enlace', () => {
+  const { src, GB } = demo(7);
+  const health = vm.createContext({ window: { GB: {} } });
+  vm.runInContext(code('health.js'), health, { filename: 'health.js' });
+  const d = health.window.GB.health.compute(src.view(), [], Date.now()).dependabot;
+  assert.equal(d?.state, 'ok', 'la salud de la demo muestra la sección');
+  assert.ok(d.critical > 0 && d.high > 0 && d.medium > 0 && d.low > 0, 'una de cada gravedad, para que se vean todas');
+  assert.equal(d.total, d.critical + d.high + d.medium + d.low);
+  assert.equal(d.more, false);
+  assert.equal(d.url, null, 'la demo no es un repo de GitHub: sin enlace');
+  assert.equal(typeof src.syncDependabot, 'undefined', 'y no tiene a quién preguntar');
+  assert.ok(GB);
+});

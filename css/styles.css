@@ -5517,6 +5517,12 @@ a.hl-row:focus-visible {
 #hl-signed .hl-main {
   flex: 1 1 14em;
 }
+/* el enlace a las alertas de Dependabot (ítem 232) es una frase, no un nombre: en un idioma largo a 320 px se parte en
+   líneas en vez de cortarse con «…» */
+#hl-dependabot-link .hl-main {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 #hl-signed .hl-aside {
   flex: 0 1 auto;
   min-width: 0;

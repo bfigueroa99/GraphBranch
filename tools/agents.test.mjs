@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'agents.js'), 'utf8'), ctx, { filename: 'agents.js' });
-const { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS } = ctx.window.GB.agents;
+const { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, allParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS } = ctx.window.GB.agents;
 const plain = (x) => JSON.parse(JSON.stringify(x));
 
 const S1 = '01CqYLDWb4ozXDK5nmAkKCeJ';
@@ -93,6 +93,13 @@ test('sesiones, co-autores y números de PR', () => {
   assert.equal(openParam(new URLSearchParams('agents')), true);
   assert.equal(openParam(new URLSearchParams('agents=0')), false);
   assert.equal(openParam(new URLSearchParams('repo=a/b')), false);
+  // ?agents=all: el panel con todos los repos seguidos (y abierto, como ?agents=1)
+  assert.equal(openParam(new URLSearchParams('agents=all')), true);
+  assert.equal(allParam(new URLSearchParams('agents=all')), true);
+  assert.equal(allParam(new URLSearchParams('agents=TODOS')), true);
+  assert.equal(allParam(new URLSearchParams('agents=1')), false);
+  assert.equal(allParam(new URLSearchParams('agents')), false);
+  assert.equal(allParam(new URLSearchParams('repo=a/b')), false);
   assert.equal(graphParam(new URLSearchParams('interactions=1')), true);
   assert.equal(graphParam(new URLSearchParams('interactions')), true);
   assert.equal(graphParam(new URLSearchParams('interactions=off')), false);

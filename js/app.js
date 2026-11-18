@@ -49,6 +49,12 @@
     tvClock: $('#tv-clock'),
     tvAgents: $('#tv-agents'),
     tvAll: $('#tv-all'),
+    tvAll3d: $('#tv-all3d'),
+    all3d: $('#all-3d'),
+    all2d: $('#all-2d'),
+    allSpace: $('#all-space'),
+    allSpaceHint: $('#all-space-hint'),
+    allHint: $('#all-hint'),
     allTvBtn: $('#all-tv-btn'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
@@ -1275,13 +1281,7 @@
     num: (n) => U.fmtNum(n),
     ago: (ms) => U.timeAgo(ms),
     dateTime: (ms) => U.fmtDateTime(ms),
-    onOpen: (key) => {
-      const tab = tabs.find((x) => x.key === key);
-      if (!tab) return;
-      openTab(tab);
-      // la tarjeta ya no se ve: el foco queda en la pestaña del repo, que es donde se está ahora
-      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
-    },
+    onOpen: (key) => openFromAll(key), // la tarjeta ya no se ve: el foco queda en la pestaña del repo
     onDiff: (key, sha) => openDiff(sha, tabs.find((x) => x.key === key)),
     canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
     diffing: () => diffView.isOpen,
@@ -1340,8 +1340,69 @@
   /** Las tarjetas al día con las pestañas; las de repos nuevos se dibujan con lo que ya cargaron. */
   function syncAll() {
     overview.sync(allItems());
+    if (spaceOn()) allSpace.sync(allItems());
     for (const x of tabs) if (!overview.layoutOf(x.key)) drawCard(x, { initial: true });
   }
+
+  /* ---------- la vista conjunta en 3D (js/allspace.js): todos los repos como torres de una misma escena ----------
+     Las tarjetas siguen calculando el layout de cada repo (es lo que dibuja la escena), pero no sus grafos 2D. Se
+     recuerda (y viaja en la URL: ?all=3d); sin WebGL no hay. */
+  let allView = U.store.get('allView', '2d') === '3d' ? '3d' : '2d';
+  let allSpace = null; // se crea la primera vez que se pide: un contexto WebGL cuesta
+  const spaceOn = () => allOn && allView === '3d' && !!graph3d && !!allSpace;
+
+  /** Cambia entre las tarjetas y el 3D. En el modo TV no se guarda. */
+  function setAllView(v, { save = true } = {}) {
+    v = v === '3d' && graph3d ? '3d' : '2d';
+    const was = allView;
+    allView = v;
+    if (save && !tv.on) U.store.set('allView', v === '3d' ? '3d' : null);
+    paintAllView();
+    // de vuelta a las tarjetas: sus grafos no se dibujaban mientras se veía el 3D
+    if (allOn && was === '3d' && v === '2d') for (const x of tabs) drawCard(x, { initial: true });
+    if (allOn && tv.on) fitTvGrid();
+  }
+
+  /** La vista conjunta como se eligió: las tarjetas o la escena (que se crea, se llena y se anima solo mientras se ve). */
+  function paintAllView() {
+    const on3d = allOn && allView === '3d' && !!graph3d;
+    setPressed(el.all3d, allView === '3d' && !!graph3d);
+    setPressed(el.all2d, !(allView === '3d' && graph3d));
+    setPressed(el.tvAll3d, on3d);
+    el.all3d.disabled = !graph3d;
+    el.tvAll3d.hidden = !allOn || !graph3d;
+    $('#all-grid').hidden = on3d;
+    el.allSpace.hidden = !on3d;
+    el.allSpaceHint.hidden = !on3d;
+    el.allHint.hidden = on3d;
+    el.allPanel.classList.toggle('as-on', on3d);
+    overview.setGraphs(!on3d);
+    if (on3d) {
+      if (!allSpace) {
+        allSpace = GB.allspace.create(el.allSpace, { onOpen: openFromAll, text: (k, p) => t(k, p), num: (n) => U.fmtNum(n) });
+        allSpace.setHold(paused);
+        U.onThemeChange(() => allSpace.retheme());
+      }
+      allSpace.sync(allItems());
+      for (const x of tabs) {
+        const L = overview.layoutOf(x.key);
+        if (L) allSpace.update(x.key, L, overview.statsOf(x.key));
+      }
+    }
+    allSpace?.setActive(on3d);
+    if (allOn) setUrlParam('all', on3d ? '3d' : '1');
+  }
+
+  /** El nombre de un repo (en su tarjeta o en su torre) lo abre en su pestaña; el foco queda en ella. */
+  function openFromAll(key) {
+    const tab = tabs.find((x) => x.key === key);
+    if (!tab) return;
+    openTab(tab);
+    tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+  }
+  el.all3d.addEventListener('click', () => setAllView('3d'));
+  el.all2d.addEventListener('click', () => setAllView('2d'));
+  el.tvAll3d.addEventListener('click', () => setAllView(allView === '3d' ? '2d' : '3d', { save: false }));
 
   /** Dibuja la tarjeta de un repo con lo suyo, y los efectos de lo que acaba de llegar. Solo con la vista conjunta. */
   function drawCard(tab, { initial = false, calm = false, activities = [] } = {}) {
@@ -1349,8 +1410,12 @@
     const data = tab.source.view ? tab.source.view() : tab.source.data;
     // un issue que se abre o se cierra no cambia el grafo: el Launchpad se pone al día igual
     if (activities.some((a) => a.kind === 'issue-open' || a.kind === 'issue-close')) renderAllPrs();
-    if (!overview.draw(tab.key, data, liveCtx(data, initial, calm, tab))) return;
-    if (!initial && activities.length) overview.celebrate(tab.key, activities);
+    const L = overview.draw(tab.key, data, liveCtx(data, initial, calm, tab));
+    if (!L) return;
+    if (spaceOn()) allSpace.update(tab.key, L, overview.statsOf(tab.key));
+    if (initial || !activities.length) return;
+    overview.celebrate(tab.key, activities);
+    if (spaceOn()) allSpace.celebrate(tab.key);
   }
 
   /** «Todos»: la pestaña de la vista conjunta, con las novedades sin ver de todos los repos. */
@@ -1388,6 +1453,7 @@
     allOn = on;
     el.app.classList.toggle('all-on', on);
     el.allPanel.hidden = !on;
+    paintAllView(); // antes de dibujar las tarjetas: en 3D no dibujan sus grafos
     if (on) {
       if (replay.active) replay.stop(true);
       graph.unpin?.();
@@ -1400,7 +1466,7 @@
     graph3d?.setActive(view === '3d' && !on && !agentsOn);
     renderTabs();
     if (save) U.store.set('all', on || null);
-    setUrlParam('all', on ? '1' : null);
+    setUrlParam('all', on ? (allView === '3d' && graph3d ? '3d' : '1') : null);
     setPressed(el.tvAll, on);
     if (tv.on) {
       placeTvBar();
@@ -4172,6 +4238,7 @@
     renderPause();
     for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
+    allSpace?.setHold(v);
     cortex?.setActive(cortexLive());
     if (tv.attract && replay.active) {
       if (v) replay.pause();
@@ -4512,6 +4579,9 @@
     } else if (k === 'r' && tabs.length > 1) {
       ev.preventDefault();
       tvShowAll(!allOn);
+    } else if (k === '3' && allOn && graph3d) {
+      ev.preventDefault();
+      setAllView(allView === '3d' ? '2d' : '3d', { save: false }); // la vista conjunta: tarjetas o todos en 3D
     }
   });
 
@@ -4993,6 +5063,7 @@
     feed.relocalize();
     renderTabs();
     overview.relocalize();
+    allSpace?.relocalize();
     editor.relocalize();
     if (allOn) renderAllSum();
     diffView.relocalize();
@@ -5060,6 +5131,8 @@
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
     initialAll = EMBED ? false : GB.overview.allParam(q);
+    const av = EMBED ? null : GB.allspace.viewParam(q); // ?all=3d: la vista conjunta en 3D (sin guardarlo)
+    if (av) allView = av;
   } catch {
     /* sin query string */
   }

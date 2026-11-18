@@ -2803,6 +2803,73 @@ if (seccion('Varios repos a la vez'))
     if (page.errors.length) throw new Error(page.errors.join(' | '));
   });
 
+  await step(page, 'vista conjunta en 3D: cada repo es una torre de la misma escena, con su rótulo, en vivo, y el rótulo abre el repo', async () => {
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    await page.click('#all-3d');
+    await page.waitForSelector('#all-space:not([hidden]) canvas.as-canvas', { timeout: T(5000) });
+    // un rótulo por repo, sobre su torre (dentro de la escena) y con sus cifras
+    await page.waitForFunction(
+      () => {
+        const box = document.querySelector('#all-space').getBoundingClientRect();
+        const shown = [...document.querySelectorAll('#all-space .as-label')].filter((b) => {
+          const r = b.getBoundingClientRect();
+          return b.checkVisibility({ visibilityProperty: true }) && r.top >= box.top - 1 && r.bottom <= box.bottom + 1 && r.left >= box.left - 1 && r.right <= box.right + 1;
+        });
+        return shown.length === 2 && shown.every((b) => /\d/.test(b.querySelector('.as-stats').textContent));
+      },
+      null,
+      { timeout: T(10000) },
+    );
+    const st = await page.evaluate(() => ({
+      grid: document.querySelector('#all-grid').checkVisibility(),
+      pressed: [document.querySelector('#all-3d').getAttribute('aria-pressed'), document.querySelector('#all-2d').getAttribute('aria-pressed')].join(' '),
+      url: new URL(location.href).searchParams.get('all'),
+      saved: localStorage.getItem('graphbranch:allView'),
+      names: [...document.querySelectorAll('#all-space .as-label .as-name')].map((n) => n.textContent).join(' '),
+      aria: document.querySelector('#all-space').getAttribute('aria-label'),
+      label: document.querySelector('.as-label[data-key="o/b"]').getAttribute('aria-label'),
+    }));
+    if (st.grid || st.pressed !== 'true false' || st.url !== '3d' || st.saved !== '"3d"') throw new Error('el 3D no tomó el lugar de las tarjetas: ' + JSON.stringify(st));
+    if (st.names !== 'o/a o/b' || !/\(2\)/.test(st.aria || '') || !/^o\/b, .*abrir en su pestaña$/.test(st.label || '')) throw new Error('rótulos: ' + JSON.stringify(st));
+    // la escena dibuja algo: las torres tienen el color de sus ramas
+    const png = await page.locator('#all-space').screenshot();
+    const colors = await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set();
+      for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+      return seen.size;
+    }, png.toString('base64'));
+    if (colors < 40) throw new Error(`la escena casi no tiene dibujo: ${colors} colores`);
+    // lo que llega a un repo enciende su torre
+    gh.push('o/b', 'main', 'llega a la torre');
+    await page.waitForSelector('.as-label[data-key="o/b"].as-news', { timeout: T(15000) });
+    // de vuelta a las tarjetas: se dibujan sus grafos (en 3D no se dibujaban)
+    await page.click('#all-2d');
+    await page.waitForFunction(() => document.querySelector('#all-space').hidden && [...document.querySelectorAll('#all-grid .rc-card')].every((c) => c.querySelector('.graph-svg .node')) && document.querySelector('.rc-card[data-key="o/b"] .rc-lmsg')?.textContent === 'llega a la torre', null, { timeout: T(5000) });
+    if ((await page.evaluate(() => new URL(location.href).searchParams.get('all'))) !== '1') throw new Error('con las tarjetas la URL sigue diciendo all=3d');
+    // y el rótulo de una torre abre su repo, con el foco en su pestaña
+    await page.click('#all-3d');
+    await page.locator('.as-label[data-key="o/b"]').press('Enter'); // con el teclado: la ciudad gira y el rótulo con ella
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const focus = await page.evaluate(() => document.activeElement?.closest('.rt')?.querySelector('.rt-name')?.textContent);
+    if (focus !== 'o/b') throw new Error(`el foco quedó en ${focus || 'otro lado'} y no en la pestaña de o/b`);
+    // deja la vista conjunta con las tarjetas, como estaba, para los pasos que siguen
+    await page.click('#all-tab');
+    await page.click('#all-2d');
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+
   await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
     for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
       const p = await openPage({ viewport: { width: 1280, height: 800 } });

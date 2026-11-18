@@ -366,6 +366,9 @@
           <button class="icon-btn" type="button" id="tv-all" aria-pressed="false" aria-keyshortcuts="R" hidden title="Every followed repository at once, each in its card (R)" aria-label="All repositories" data-i18n-attr="title:tv.allTitle;aria-label:all.title">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
           </button>
+          <button class="icon-btn" type="button" id="tv-all3d" aria-pressed="false" aria-keyshortcuts="3" hidden title="Every repository together in one 3D scene (3)" aria-label="Every repository together in one 3D scene" data-i18n-attr="title:all.view3dKey;aria-label:all.view3d">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 13.5 5v6L8 14.2 2.5 11V5z"/><path d="M2.5 5 8 8.2 13.5 5M8 8.2v6"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="tv-agents" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
           </button>
@@ -464,6 +467,11 @@
         <!-- el modo TV también desde aquí: el botón de la barra del grafo no se ve con la vista conjunta, y en TV se queda
              con todos los repos a la vista -->
         <div class="toolbar">
+          <!-- cada repo en su tarjeta (2D) o todos juntos en una sola escena 3D (js/allspace.js) -->
+          <div class="view-switch" role="group" aria-label="View type" data-i18n-attr="aria-label:view.aria">
+            <button type="button" id="all-3d" aria-pressed="false" title="Every repository together in one 3D scene" data-i18n-attr="title:all.view3d">3D</button>
+            <button type="button" id="all-2d" aria-pressed="true" title="Each repository in its card" data-i18n-attr="title:all.view2d">2D</button>
+          </div>
           <button class="icon-btn" type="button" id="all-tv-btn" aria-pressed="false" title="TV mode" aria-label="TV mode" data-i18n-attr="title:tv.title;aria-label:tv.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.4"/><path d="M5.5 14h5M8 11.5V14"/></svg>
           </button>
@@ -471,7 +479,9 @@
       </div>
       <section class="ap" id="all-prs" hidden></section>
       <div class="rc-grid" id="all-grid"></div>
-      <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
+      <div class="as-stage" id="all-space" hidden></div>
+      <p class="hint" id="all-space-hint" hidden data-i18n="all.spaceHint">Each tower is a repository: its default branch up the middle, the others around it and the newest on top. Drag to turn it, the wheel zooms; the name opens the repository.</p>
+      <p class="hint" id="all-hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
     </section>
 
     <!-- el panel de actividad se ensancha o se angosta arrastrando su borde (o con las flechas sobre él) y se pliega a una
@@ -978,6 +988,7 @@
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
 <script src="js/overview.js"></script>
+<script src="js/allspace.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/search.js"></script>
 <script src="js/cmdk.js"></script>

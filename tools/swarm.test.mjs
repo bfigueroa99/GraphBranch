@@ -231,3 +231,60 @@ test('cloud: la misma nube cada vez, con la corteza dentro de su forma', () => {
   }
   assert.ok(inside / 3000 > 0.8, `solo ${inside} de 3000 dentro`);
 });
+
+test('combine: dos repos en una sola consola, sin mezclar sus ramas ni sus PRs', () => {
+  const { combine } = ctx.window.GB.agents;
+  // el mismo repo dos veces con otros nombres: cada commit lleva su repo en el sha (dos repos no comparten commits)
+  const copy = (pre) => {
+    const d = repo();
+    const sha = (s) => `${pre}-${s}`;
+    const commits = new Map([...d.commits.values()].map((c) => [sha(c.sha), { ...c, sha: sha(c.sha), parents: c.parents.map(sha) }]));
+    const branches = new Map([...d.branches].map(([n, b]) => [n, { ...b, sha: sha(b.sha) }]));
+    return { ...d, commits, branches };
+  };
+  const one = compute(copy('a'), acts, { max: Infinity });
+  const both = combine([
+    { key: 'gh:o/a', name: 'o/a', data: copy('a'), acts },
+    { key: 'gh:o/b', name: 'o/b', data: copy('b'), acts: [] },
+  ], { max: Infinity });
+  // la misma sesión de Claude en los dos repos es una sola, con los commits de los dos
+  const s1 = both.actors.find((a) => a.agent?.session === S1);
+  assert.equal(s1.commits, 2 * one.actors.find((a) => a.agent?.session === S1).commits);
+  assert.equal(both.actors.length, one.actors.length, 'nadie aparece dos veces');
+  // las interacciones de cada repo, con el suyo; las de la actividad (la revisión de #201) solo en o/a
+  assert.equal(both.total, 2 * one.total - acts.length);
+  assert.ok(both.events.every((e) => e.repo === 'gh:o/a' || e.repo === 'gh:o/b'));
+  assert.ok(both.events.filter((e) => e.kind === 'reviewed').every((e) => e.repo === 'gh:o/a'));
+  assert.equal(both.repoOf.get('b-c1'), 'gh:o/b');
+  assert.equal(both.owners.get('a-c1'), s1.key);
+  // las ramas y los PRs de cada repo, con su nombre adelante: dos `dev` y dos #201 no se pisan
+  assert.equal(both.data.branches.size, 10);
+  // (por la clave del repo, que lleva el servicio: un mismo owner/name en dos servicios tampoco se pisa)
+  assert.ok(both.data.branches.has('gh:o/a:dev') && both.data.branches.has('gh:o/b:dev'));
+  assert.deepEqual([...both.data.mains].sort(), ['gh:o/a:dev', 'gh:o/b:dev']);
+  assert.equal(both.data.pulls.size, 6);
+  assert.equal(both.data.pulls.get('gh:o/b#201').head, 'gh:o/b:claude/otra');
+  assert.equal(both.data.pulls.get('gh:o/b#201').branch, 'claude/otra');
+  assert.equal(both.data.ci.get('gh:o/b:dependabot/x'), 'failure');
+  // los indicadores y el ingreso, sobre lo de los dos: el doble de cola, y la principal de cada uno queda fuera
+  const k1 = kpis(one, copy('a'), { now: NOW });
+  const k2 = kpis(both, both.data, { now: NOW });
+  assert.equal(k2.queue, 2 * k1.queue);
+  assert.equal(k2.ci.known, 2 * k1.ci.known);
+  const g = ingest(both, both.data, { max: 50 });
+  assert.equal(g.total, 2 * ingest(one, copy('a'), { max: 50 }).total);
+  assert.ok(g.items.every((x) => x.repo === 'o/a' || x.repo === 'o/b'));
+  assert.ok(!g.items.some((x) => x.branch === 'dev'), 'la rama por defecto de cada repo no es una tarea');
+  assert.ok(g.items.every((x) => !x.branch.includes('o/')), 'cada tarea con su rama sin la clave del repo (que ya va aparte)');
+  // el log lleva el repo de cada interacción (#201 de o/a no es #201 de o/b)
+  const ev = lines(both, both.data, null, { max: 100 }).filter((x) => x.type === 'event');
+  assert.ok(ev.length && ev.every((x) => x.repo === 'gh:o/a' || x.repo === 'gh:o/b'));
+  // un solo repo: lo mismo que compute
+  const solo = combine([{ key: 'gh:o/a', name: 'o/a', data: copy('a'), acts }], { max: Infinity });
+  assert.deepEqual(plain(solo.actors), plain(one.actors));
+  assert.equal(solo.total, one.total);
+  // sin repos (o sin datos), vacío y sin romperse
+  const none = combine([{ key: 'x', name: 'x', data: null }]);
+  assert.equal(none.actors.length + none.events.length + none.total, 0);
+  assert.equal(none.data.repo.demo, false);
+});

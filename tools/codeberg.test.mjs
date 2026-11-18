@@ -611,3 +611,13 @@ test('sin X-Total-Count el total sigue siendo lo que llegó', async () => {
   await src.cycle();
   assert.equal(src.data.totalPulls, 1);
 });
+
+test('la firma de los commits (ítem 230) es solo de GitHub: el verification de Forgejo, con sus otros motivos, no se lee', async () => {
+  const cb = repo();
+  // como lo da Forgejo: verified y un motivo en texto libre
+  cb.commits.get('m2').commit.verification = { verified: false, reason: 'gpg.error.not_signed_commit', signature: '', payload: '' };
+  cb.commits.get('m3').commit.verification = { verified: true, reason: '', signature: 'x', payload: 'x' };
+  const { src } = connect(cb);
+  await src.cycle();
+  for (const sha of ['m1', 'm2', 'm3']) assert.equal(src.data.commits.get(sha).sig, undefined, `${sha} no dice nada de su firma`);
+});

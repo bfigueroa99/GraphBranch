@@ -2044,6 +2044,22 @@
     return `<section class="hl-sec" id="hl-scorecard"><h3>${U.esc(t('health.scorecard'))}</h3>${body}</section>`;
   }
 
+  /** La firma de un commit en palabras (ítem 230), para las filas de la salud: sin firma, o firmado sin verificar con el
+      motivo que da GitHub. */
+  const sigText = (r) => (r.state === 'UNSIGNED' ? t('tip.sigNone') : t('tip.sigBad', { reason: r.state }));
+
+  /** Los commits de la rama por defecto de las últimas 4 semanas sin firma verificada (ítem 230): cuántos de los que entraron
+      y los más recientes, cada uno con su motivo, que llevan a su commit en el grafo. Sin la firma (otra fuente, un repo
+      local), la sección no sale. */
+  function signedHtml(s) {
+    if (!s) return '';
+    const rows = s.rows
+      .map((r, i) => `<li><button type="button" class="hl-row" data-go="${i}" data-key="${U.esc(r.sha)}" title="${U.esc(t('feed.locate'))}"><span class="hl-main">${U.esc(`${r.sha.slice(0, 7)} ${r.message}`)}</span><span class="hl-aside">${U.esc(sigText(r))}</span></button></li>`)
+      .join('');
+    // la rama va aislada (FSI…PDI): en árabe o hebreo un nombre en caracteres latinos no desordena la frase
+    return `<section class="hl-sec" id="hl-signed"><h3>${U.esc(t('health.signed'))}</h3><p class="hl-line" id="hl-signed-count">${U.esc(t('health.signedCount', { branch: '\u2068' + s.branch + '\u2069', weeks: GB.health.SIGN_DAYS / 7, n: U.fmtNum(s.unverified), total: U.fmtNum(s.total) }))}</p>${rows ? `<ul class="hl-list" data-list="signed">${rows}</ul>` : ''}</section>`;
+  }
+
   function renderHealth() {
     const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
@@ -2090,6 +2106,7 @@
             `<p class="hl-line">${U.esc(t('health.ciFeed', { n: h.ci.fails30 }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      signedHtml(h.signed) +
       scorecardHtml(h.scorecard, data.repo?.host) +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
@@ -2122,7 +2139,8 @@
           const id = ul.dataset.list;
           const r = (id.startsWith('prs-') ? h.prStates[id.slice(4)] : h[id]).rows[Number(b.dataset.go)];
           closeHealth();
-          shownGraph().focusBranch(r.name || r.head);
+          if (id === 'signed') shownGraph().focusSha?.(r.sha); // un commit sin firma verificada: a ese commit
+          else shownGraph().focusBranch(r.name || r.head);
         }),
       ),
     );

@@ -1505,7 +1505,8 @@ kbd {
 }
 .head .h-ci,
 .h3-ci,
-.tip-ci {
+.tip-ci,
+.tip-sig {
   fill: var(--ci);
   color: var(--ci);
 }

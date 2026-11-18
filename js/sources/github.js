@@ -42,8 +42,9 @@
       return null;
     }
   };
+  // con la firma de cada commit (ítem 230): si GitHub la verificó y, si no, por qué (`signature` es null sin firma)
   const GQL_COMMIT =
-    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
+    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } } signature { isValid state }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
   /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null) ni los
@@ -55,6 +56,22 @@
     if (s === 'SUCCESS') return 'success';
     if (s === 'FAILURE' || s === 'ERROR') return 'failure';
     return s ? 'pending' : null;
+  };
+  /** La firma de un commit (ítem 230) en una sola forma: `{ ok: true }` si GitHub la verificó; si no, `{ ok: false, state }`
+      con su motivo: `UNSIGNED` sin firma, o el estado de una firma que no se pudo verificar (`EXPIRED_KEY`, `UNKNOWN_KEY`,
+      `INVALID`…), en mayúsculas y solo con letras y `_` (llega a la ficha como texto). `sigOf` lee la de GraphQL
+      (`signature { isValid state }`, null sin firma) y `restSig`, la del REST (`commit.verification { verified, reason }`,
+      la misma lista de commits de siempre); las dos dan `undefined` si la respuesta no dice nada de la firma. */
+  const sigState = (s) => String(s || '').toUpperCase().replace(/[^A-Z_]/g, '').slice(0, 32) || 'INVALID';
+  const sigOf = (c) => {
+    if (!c || typeof c !== 'object' || !('signature' in c)) return undefined;
+    const s = c.signature;
+    if (!s || typeof s !== 'object') return { ok: false, state: 'UNSIGNED' };
+    return s.isValid === true ? { ok: true } : { ok: false, state: sigState(s.state) };
+  };
+  const restSig = (v) => {
+    if (!v || typeof v !== 'object' || typeof v.verified !== 'boolean') return undefined;
+    return v.verified ? { ok: true } : { ok: false, state: sigState(v.reason) };
   };
   /** El agente de un commit al traerlo (js/agents.js): `{ agent }` para sumarlo al commit, o nada si no se cargó. */
   const agentOf = (author, message) => (GB.agents ? { agent: GB.agents.detect(author, message) } : {});
@@ -954,6 +971,13 @@
       return !this.host || this.host === 'github';
     }
 
+    /** `{ sig }` para sumarle a un commit su firma (ítem 230), o nada: solo GitHub (y GitHub Enterprise) la da así. Las
+        fuentes que heredan de esta pasan su commit por `addCommit`, y la de Codeberg y Forgejo trae su propio
+        `verification` (con otros motivos, en texto libre): ninguna dice la firma hasta que la lea a su manera. */
+    signed(sig) {
+      return sig && (!this.host || this.host === 'github') ? { sig } : {};
+    }
+
     /** null si se puede intentar un commit; si no, la clave del texto que dice por qué (sin token, nada que escribir). */
     canWrite() {
       return this.token ? null : 'editor.noToken';
@@ -1820,6 +1844,7 @@
         date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || Date.now(),
         url: c.html_url || `${this.data.repo.url}/commit/${c.sha}`,
         ...agentOf({ name: c.commit?.author?.name, login: c.author?.login, email: c.commit?.author?.email }, c.commit?.message),
+        ...this.signed(restSig(c.commit?.verification)),
       });
       this.kids = null;
       return true;
@@ -1840,6 +1865,7 @@
         url: c.url || `${this.data.repo.url}/commit/${c.oid}`,
         // el cuerpo no se guarda (solo el titular): de él sale el agente, si lo firma uno (Co-Authored-By, sesión)
         ...agentOf({ name: c.author?.name, login: c.author?.user?.login, email: c.author?.email }, c.messageBody ? `${c.messageHeadline || ''}\n\n${c.messageBody}` : c.messageHeadline),
+        ...this.signed(sigOf(c)),
       });
       this.kids = null;
       return true;
@@ -2445,6 +2471,8 @@
 
   GitHubSource.endpoints = endpoints;
   GitHubSource.scorecardOf = scorecardOf;
+  GitHubSource.sigOf = sigOf;
+  GitHubSource.restSig = restSig;
   GitHubSource.ApiError = ApiError;
   GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)
   GitHubSource.editKey = editKey;

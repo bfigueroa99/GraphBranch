@@ -211,3 +211,36 @@ test('una aprobación o un pedido de cambios de la demo queda en su PR, como el 
   }
   assert.ok(aprobados > 10 && cambios > 10, `${aprobados} aprobaciones y ${cambios} pedidos de cambios`);
 });
+
+test('la firma de los commits de la demo (ítem 230): cada autor siempre igual, y la salud tiene verificados, sin firma y firmados sin verificar en main', () => {
+  for (const seed of [1, 7, 42, 2026, 31337]) {
+    const { src, flush } = demo(seed);
+    for (let i = 0; i < 300; i++) {
+      src.publish(src.actions() || []);
+      flush();
+    }
+    const by = new Map(); // autor -> la firma de sus commits
+    for (const c of src.data.commits.values()) {
+      assert.ok(c.sig, `semilla ${seed}: ${c.sha} sin firma conocida`);
+      const key = c.author.login || c.author.name;
+      const s = c.sig.ok ? 'ok' : c.sig.state;
+      assert.equal(by.get(key) ?? s, s, `semilla ${seed}: ${key} firma distinto en dos commits`);
+      by.set(key, s);
+    }
+    assert.equal(by.get('vrojas'), 'ok');
+    assert.equal(by.get('msoto'), 'UNSIGNED');
+    assert.equal(by.get('dmunoz'), 'EXPIRED_KEY');
+    if (by.has('taraya')) assert.equal(by.get('taraya'), 'UNSIGNED');
+    const ctx = vm.createContext({ window: { GB: {} } });
+    vm.runInContext(code('health.js'), ctx, { filename: 'health.js' });
+    const now = Math.max(...[...src.data.commits.values()].map((c) => c.date)) + 60e3;
+    const s = ctx.window.GB.health.compute(src.data, [], now).signed;
+    assert.ok(s && s.total > s.unverified && s.unsigned >= 1, `semilla ${seed}: main tiene commits verificados y sin firma en las 4 semanas: ${JSON.stringify(s)}`);
+  }
+  // la semilla de la página: la demo recién abierta ya muestra un firmado sin verificar en main
+  const { src } = demo(1);
+  const ctx = vm.createContext({ window: { GB: {} } });
+  vm.runInContext(code('health.js'), ctx, { filename: 'health.js' });
+  const s = ctx.window.GB.health.compute(src.data, [], Date.now()).signed;
+  assert.ok(s?.invalid >= 1 && s.unsigned >= 1, JSON.stringify(s));
+});

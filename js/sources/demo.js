@@ -26,6 +26,12 @@
   const DEPENDABOT = { name: 'dependabot[bot]', login: 'dependabot[bot]' };
   /** El mensaje de un commit de una sesión de Claude Code, con los trailers que deja la herramienta. */
   const signed = (msg, a) => (a.session ? `${msg}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_${a.session}` : msg);
+  /** La firma de cada commit de la demo (ítem 230), como la da la fuente de GitHub (`{ ok }` o `{ ok: false, state }`) y
+      siempre la misma por autor, sin gastar el azar de la demo: GitHub firma los de sus bots (Copilot, Dependabot, la app de
+      Claude), casi todas las personas firman los suyos, dos no firman, las sesiones de Claude Code tampoco y la llave de
+      una venció (firmado, sin verificar). */
+  const NO_SIGN = new Set(['msoto', 'taraya']);
+  const sigOf = (a) => (!a?.login || NO_SIGN.has(a.login) ? { ok: false, state: 'UNSIGNED' } : a.login === 'dmunoz' ? { ok: false, state: 'EXPIRED_KEY' } : { ok: true });
 
   /* ramas de ejemplo: [nombre, ámbito]. Son identificadores, así que van en inglés para cualquier idioma */
   const NEW_BRANCHES = [
@@ -128,6 +134,7 @@
         author: this.actor(author),
         date: time,
         url: null,
+        sig: sigOf(author),
       };
       this.data.commits.set(c.sha, c);
       b.sha = c.sha;
@@ -561,7 +568,7 @@
         for (let k = 0; k < 40; k++) sha += Math.floor(rnd() * 16).toString(16);
         const author = AUTHORS[i % 2];
         const msg = pool[i % pool.length].replace('{s}', 'prototype');
-        this.older.set(sha, { sha, parents: parent ? [parent] : [], message: msg, author: this.actor(author), date: t - (PREHISTORY - i) * (5 + rnd() * 7) * 36e5, url: null });
+        this.older.set(sha, { sha, parents: parent ? [parent] : [], message: msg, author: this.actor(author), date: t - (PREHISTORY - i) * (5 + rnd() * 7) * 36e5, url: null, sig: sigOf(author) });
         parent = sha;
       }
       return parent;

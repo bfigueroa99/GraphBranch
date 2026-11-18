@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits, sus autores distintos y los autores nuevos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana y el puntaje de OpenSSF Scorecard con sus comprobaciones más bajas. No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana y el puntaje de OpenSSF Scorecard con sus comprobaciones más bajas, y los commits de la rama por defecto de las últimas 4 semanas sin firma verificada (de las fuentes que dan la firma). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -12,6 +12,7 @@
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
   const CYCLE_DAYS = 28; // los PRs fusionados de las últimas 4 semanas entran en el tiempo de ciclo por etapas
+  const SIGN_DAYS = 28; // los commits de la rama por defecto de las últimas 4 semanas entran en la cuenta de firmas
   const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos, de forks nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
@@ -119,6 +120,39 @@
     let n = 0;
     for (let sum = 0; sum * 2 < total; n++) sum += counts[n];
     return { n, authors: counts.length, commits: total };
+  }
+
+  /** Los commits cargados de la rama por defecto (los que alcanza su punta, por todos sus padres, como `git log main`) de
+      los últimos SIGN_DAYS días sin firma verificada (ítem 230), con lo que dijo la fuente de cada uno (`sig`: `{ ok }` o
+      `{ ok: false, state }`). Solo cuentan los commits de los que la fuente dio la firma: con GitHub, todos; con otra
+      fuente, ninguno, y entonces es null (la sección no sale). `total` son los que entraron, `unsigned` los que no tienen
+      firma y `invalid` los firmados que GitHub no verificó; las filas, del más reciente al más viejo. Sin consultas. */
+  function signatures(data, now) {
+    const head = data.branches?.get(data.repo?.defaultBranch) || [...(data.branches?.values() || [])].find((b) => b.isDefault);
+    if (!head?.sha) return null;
+    const seen = new Set([head.sha]);
+    const queue = [head.sha];
+    const bad = [];
+    let total = 0;
+    let unsigned = 0;
+    for (let i = 0; i < queue.length; i++) {
+      const c = data.commits.get(queue[i]);
+      if (!c) continue;
+      for (const p of c.parents || []) {
+        if (!p || seen.has(p)) continue;
+        seen.add(p);
+        queue.push(p);
+      }
+      const time = at(c.date);
+      if (!c.sig || !time || time > now || now - time > SIGN_DAYS * DAY) continue;
+      total++;
+      if (c.sig.ok === true) continue;
+      if (c.sig.state === 'UNSIGNED') unsigned++;
+      bad.push({ sha: c.sha || queue[i], message: String(c.message || '').split('\n')[0], time, state: c.sig.state === 'UNSIGNED' ? 'UNSIGNED' : String(c.sig.state || 'INVALID') });
+    }
+    if (!total) return null;
+    bad.sort((a, b) => b.time - a.time);
+    return { branch: head.name || data.repo?.defaultBranch || '', total, unverified: bad.length, unsigned, invalid: bad.length - unsigned, rows: bad.slice(0, ROWS) };
   }
 
   /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
@@ -440,6 +474,7 @@
       code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
       scorecard: scorecardView(data.scorecard), // OpenSSF Scorecard: null sin consulta; sin análisis, un fallo, o el puntaje con las comprobaciones más bajas
       absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
+      signed: signatures(data, now), // los commits de la rama por defecto de las 4 semanas sin firma verificada (null: la fuente no da la firma)
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), forkWeeks, addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
@@ -529,5 +564,5 @@
     return !(q && typeof q.has === 'function' && q.has('forks') && /^(0|false|no|off)$/i.test(String(q.get('forks')).trim()));
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, earlyMerges, STALE_DAYS, CYCLE_DAYS };
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, earlyMerges, signatures, STALE_DAYS, CYCLE_DAYS, SIGN_DAYS };
 })(window.GB);

@@ -1,6 +1,6 @@
 # Mejora continua
 
-Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 6 horas desde el 2026-11-16, con la rotación de seis proyectos, que su primer día corrió cada 5; antes, cada 2). Las entradas viejas
+Hoja de ruta, pendientes y bitácora de las iteraciones del loop (una cada 12 horas desde el 2026-11-17, con la rotación de seis proyectos, que sus primeros días corrió cada 5 y cada 6; antes, cada 2). Las entradas viejas
 de la bitácora están en [`docs/BITACORA.md`](docs/BITACORA.md) y los ítems hechos de la hoja de ruta en
 [`docs/HOJA.md`](docs/HOJA.md) (los lleva `node tools/loop.mjs --rotar`): son historia y no hace falta leerlos.
 
@@ -284,7 +284,7 @@ cada iteración lo repite (`node tools/loop.mjs --salud` lo imprime) y se quita 
    Mantenimiento y lo que salga bien se anota en el README, en «Límites conocidos».
 6. **El loop estuvo más de 25 horas sin fusionar nada** (desde 2026-11-16). `node tools/loop.mjs --salud` lo dio como
    `Acción:` en la iteración 302: entre el 2026-11-15 04:51 y el 2026-11-16 no hubo iteraciones (unos 11 disparos), y
-   esta corrió con normalidad. Si se repite, mirar en claude.ai/code si la tarea programada «Rotación cada 6 h: Brunell_Node, Brunell_Hub,
+   esta corrió con normalidad. Si se repite, mirar en claude.ai/code si la tarea programada «Rotación cada 12 h: Brunell_Node, Brunell_Hub,
    CIT, PantherIA, GraphBranch, AI Lab» está activa (es el programador desde el 2026-11-16; la Routine del proyecto
    quedó pausada) y si la cuenta llegó al límite de uso; el loop no puede verlo ni corregirlo solo. Se quita cuando `--salud` deje de dar el hueco.
 7. **Un proyecto de Sentry para los informes de errores** (desde 2026-11-17). La app de escritorio (ítem 224, #380) y

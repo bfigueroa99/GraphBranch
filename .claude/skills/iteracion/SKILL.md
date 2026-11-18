@@ -351,7 +351,7 @@ capacidades en un PR.
 ## Programador
 
 Desde el 2026-11-16 (pedido de Benjamin) cada iteración la lanza como subagente la tarea programada «Rotación cada
-6 h: Brunell_Node, Brunell_Hub, CIT, PantherIA, GraphBranch, AI Lab», a las 3, 9, 15 y 21 h de Santiago, junto a
+12 h: Brunell_Node, Brunell_Hub, CIT, PantherIA, GraphBranch, AI Lab», a las 3 y a las 15 h de Santiago, junto a
 las de otros cinco proyectos en el mismo contenedor (con la CPU compartida, la puerta tarda más). Su
 prompt es de los seis y marca lo propio de la rotación; en lo demás manda esta skill. La Routine «GraphBranch:
 iteración del loop (sesión nueva por disparo)», id `trig_01LHabndgZv5AWjKwQvp14Ho`, cron `3 */2 * * *` (UTC), quedó

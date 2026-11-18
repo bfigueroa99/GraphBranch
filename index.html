@@ -281,7 +281,7 @@
     <section class="panel graph-panel" id="graph-panel" tabindex="-1" aria-labelledby="graph-title">
       <div class="panel-head">
         <div class="repo-title">
-          <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>
+          <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a><span id="graph-all" hidden></span></h1>
           <span class="badge demo" id="repo-badge">simulation</span>
           <p class="repo-desc" id="repo-desc" hidden></p>
         </div>
@@ -428,6 +428,7 @@
           <h2 class="ab-title" id="agents-title"><span class="live-dot" aria-hidden="true"></span><span data-i18n="agents.title">Agents and interactions</span></h2>
           <time class="ab-clock" id="agents-clock" aria-hidden="true"></time>
           <div class="ab-switches">
+            <label class="hl-switch" id="agents-all-wrap" hidden><input type="checkbox" id="agents-all"> <span data-i18n="all.title">All repositories</span></label>
             <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
             <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
           </div>

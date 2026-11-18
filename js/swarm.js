@@ -218,7 +218,8 @@
 
   /** El ingreso de tareas: cada PR abierto y cada rama sin PR (salvo la principal), a quién le tocó y en qué está, de lo
       más nuevo a lo más viejo. Devuelve { items: [{ kind: 'pr'|'draft'|'branch', number, title, branch, sha, who,
-      agent, ci, waiting, time }] (hasta `max`), routed (cuántas lleva un agente), total }. */
+      agent, ci, waiting, time, repo }] (hasta `max`), routed (cuántas lleva un agente), total }. Con varios repos juntos
+      (agents.combine) la principal es la de cada uno (`data.mains`) y `repo`, el nombre del suyo; si no, null. */
   function ingest(res, data, { max = 10 } = {}) {
     const byKey = new Map((res?.actors || []).map((a) => [a.key, a]));
     const commits = data?.commits || new Map();
@@ -231,15 +232,15 @@
       const who = prOwner(res, data, p, byKey);
       const agent = !!byKey.get(who)?.agent;
       const ci = prCi(data, p);
-      items.push({ kind: p.draft ? 'draft' : 'pr', number: p.number, title: clean(p.title) || firstLine(commits.get(sha)?.message), branch: clean(p.head, 120), sha, who, agent, ci, waiting: agent && ready(p, ci), time: Math.max(commits.get(sha)?.date || 0, p.createdAt || 0) });
+      items.push({ kind: p.draft ? 'draft' : 'pr', number: p.number, title: clean(p.title) || firstLine(commits.get(sha)?.message), branch: clean(p.head, 120), sha, who, agent, ci, waiting: agent && ready(p, ci), time: Math.max(commits.get(sha)?.date || 0, p.createdAt || 0), repo: p.repo ?? null });
     }
     const main = data?.repo?.defaultBranch;
     for (const [name, b] of data?.branches || []) {
-      if (name === main || withPr.has(name) || !b?.sha) continue;
+      if (name === main || data?.mains?.has?.(name) || withPr.has(name) || !b?.sha) continue;
       const c = commits.get(b.sha);
       if (!c) continue;
       const who = res?.owners?.get(b.sha) || null;
-      items.push({ kind: 'branch', number: null, title: firstLine(c.message), branch: clean(name, 120), sha: b.sha, who, agent: !!byKey.get(who)?.agent, ci: data?.ci?.get?.(name) ?? null, waiting: false, time: c.date || 0 });
+      items.push({ kind: 'branch', number: null, title: firstLine(c.message), branch: clean(name, 120), sha: b.sha, who, agent: !!byKey.get(who)?.agent, ci: data?.ci?.get?.(name) ?? null, waiting: false, time: c.date || 0, repo: b.repo ?? null });
     }
     items.sort((x, y) => y.time - x.time || (x.branch < y.branch ? -1 : 1));
     return { items: items.slice(0, max), routed: items.filter((x) => x.agent).length, total: items.length };
@@ -247,7 +248,8 @@
 
   /** Las líneas de un participante (o de todos los agentes, con `key` null), de la más vieja a la más nueva: sus
       commits ({ type: 'commit', time, key, sha, text, merge }) y sus interacciones ({ type: 'event', time, key, kind,
-      from, to, sha, number }). Un merge que ya cuenta como «fusionó» no se repite como commit. Las `max` más nuevas. */
+      from, to, sha, number, repo }; `repo`, el de la interacción con varios repos juntos). Un merge que ya cuenta como
+      «fusionó» no se repite como commit. Las `max` más nuevas. */
   function lines(res, data, key = null, { max = 14 } = {}) {
     const agents = agentKeys(res);
     const mine = (k) => (key ? k === key : agents.has(k));
@@ -256,7 +258,7 @@
     const merged = new Set();
     for (const e of res?.events || []) {
       if (!(mine(e.from) || mine(e.to))) continue;
-      out.push({ type: 'event', time: e.time || 0, key: e.from, kind: e.kind, from: e.from, to: e.to, sha: e.sha || e.target || null, number: e.number ?? null });
+      out.push({ type: 'event', time: e.time || 0, key: e.from, kind: e.kind, from: e.from, to: e.to, sha: e.sha || e.target || null, number: e.number ?? null, repo: e.repo ?? null });
       if (e.kind === 'merged' && e.sha) merged.add(e.sha);
     }
     for (const [sha, k] of res?.owners || []) {

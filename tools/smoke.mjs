@@ -2743,6 +2743,66 @@ if (seccion('Varios repos a la vez'))
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
   });
 
+  await step(page, 'agentes de todos los repos: desde la vista conjunta el tablero junta a los de cada repo (arriba y en TV), y un commit de otro repo lleva a su pestaña', async () => {
+    // tres sesiones de Claude: una en cada repo y otra que trabaja en los dos (es una sola, con lo de los dos)
+    const ses = (id) => `\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_${id}`;
+    gh.push('o/a', 'claude/a', 'trabajo en a' + ses('soloEnAaaaa1'));
+    gh.push('o/b', 'claude/b', 'trabajo en b' + ses('soloEnBbbbb2'));
+    gh.push('o/a', 'claude/ab', 'mitad en a' + ses('enLosDos0003'));
+    gh.push('o/b', 'claude/ab', 'mitad en b' + ses('enLosDos0003'));
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    await page.click('#agents-btn');
+    await page.waitForSelector('#graph-panel.agents-all #agents:not([hidden]) #ag-list', { timeout: T(5000) });
+    // las ramas nuevas llegan con el sondeo de cada repo: el tablero se rehace solo hasta tener las tres sesiones
+    await page.waitForFunction(() => document.querySelectorAll('#ag-list .hl-main').length === 3, null, { timeout: T(20000) });
+    const board = () =>
+      page.evaluate(() => ({
+        all: document.querySelector('.app').classList.contains('all-on'),
+        scope: document.querySelector('#graph-all').checkVisibility() ? document.querySelector('#graph-all').textContent : null,
+        repo: document.querySelector('#repo-link').checkVisibility(),
+        stats: document.querySelector('.stats').checkVisibility(),
+        box: document.querySelector('#agents-all').checked,
+        current: document.querySelectorAll('#repo-tabs [aria-current="true"]').length,
+        url: new URL(location.href).searchParams.get('agents'),
+        agents: [...document.querySelectorAll('#ag-list .hl-main')].map((n) => n.textContent),
+      }));
+    const on = await board();
+    if (on.all || on.scope !== 'Todos los repositorios (2)' || on.repo || on.stats || !on.box || on.current || on.url !== 'all') throw new Error('el tablero no es el de todos: ' + JSON.stringify(on));
+    const sessions = on.agents.map((x) => /sesión (\S+)/.exec(x)?.[1]).sort().join(' ');
+    if (sessions !== 'Aaaaa1 Bbbbb2 os0003') throw new Error(`agentes de los dos repos, la sesión compartida una vez: ${JSON.stringify(on.agents)}`);
+    // el interruptor lo deja en el repo a la vista (o/a: su sesión y la compartida) y lo vuelve a juntar
+    await page.click('#agents-all');
+    await page.waitForFunction(() => !document.querySelector('#graph-panel').classList.contains('agents-all') && document.querySelectorAll('#ag-list .hl-main').length === 2, null, { timeout: T(5000) });
+    if ((await board()).url !== '1') throw new Error('con un solo repo la URL sigue diciendo agents=all');
+    await page.click('#agents-all');
+    await page.waitForFunction(() => document.querySelectorAll('#ag-list .hl-main').length === 3, null, { timeout: T(5000) });
+    // el botón de los agentes, otra vez: de vuelta a la vista conjunta
+    await page.click('#agents-btn');
+    await page.waitForSelector('#all-panel:not([hidden])', { timeout: T(3000) });
+    // en el modo TV: A (o el robot de su barra) abre el de todos desde la vista conjunta y vuelve a ella
+    await page.click('#all-tv-btn');
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    await page.click('#tv-agents');
+    await page.waitForSelector('#graph-panel.agents-all #agents:not([hidden]) .ab-head #tv-bar', { timeout: T(5000) });
+    if ((await board()).agents.length !== 3) throw new Error('en TV el tablero no junta a los dos repos');
+    await page.keyboard.press('a');
+    await page.waitForSelector('#all-panel:not([hidden]) #tv-bar', { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    // un commit de o/b, desde el tablero de todos con o/a a la vista: lleva a la pestaña de o/b y a su commit
+    if ((await shown()) !== 'o/a') await page.click('#repo-tabs .rt:nth-child(1) .rt-main');
+    await page.click('#all-tab');
+    await page.click('#agents-btn');
+    await page.waitForSelector('#graph-panel.agents-all #ag-list', { timeout: T(5000) });
+    const row = page.locator('#ag-list button.hl-row', { hasText: 'Bbbbb2' });
+    await row.click();
+    await page.waitForFunction(() => document.querySelector('#agents').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const after = await board();
+    if (after.current !== 1 || after.url || !after.stats) throw new Error('después del commit no queda el grafo de o/b: ' + JSON.stringify(after));
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+
   await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
     for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
       const p = await openPage({ viewport: { width: 1280, height: 800 } });

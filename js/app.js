@@ -63,6 +63,9 @@
     agents: $('#agents'),
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
+    agentsAll: $('#agents-all'),
+    agentsAllWrap: $('#agents-all-wrap'),
+    graphAll: $('#graph-all'),
     agentsGraph: $('#agents-graph'),
     agentsClock: $('#agents-clock'),
     agKey: $('#ag-key'),
@@ -1119,11 +1122,13 @@
       setAll(true, { save: false });
     }
     renderAllTab();
+    paintAgentsScope();
   }
 
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
     if (allOn) setAll(false, { save: !tv.on });
+    if (agentsOn && agentsCombined()) setAgentsAll(false, { save: !tv.on, render: false }); // el tablero pasa a ser el de ese repo
     showTab(tab);
   }
 
@@ -1202,7 +1207,7 @@
     const n = tab.unread;
     node.dataset.state = st;
     // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
-    const shown = tab === active && !allOn;
+    const shown = tab === active && !allOn && !(agentsOn && agentsCombined());
     node.classList.toggle('on', shown);
     node.classList.toggle('demo', tab.demo);
     const main = node.firstElementChild;
@@ -1604,6 +1609,7 @@
   function onBackground(tab, activities, initial) {
     feed.add(activities, { live: !initial });
     drawCard(tab, { initial, activities });
+    if (agentsOn && agentsCombined()) scheduleAgents();
     if (diffTab === tab) diffView.refresh();
     if (initial || !activities.length) return renderTab(tab);
     if (!allOn) tab.unread += activities.length;
@@ -1611,7 +1617,8 @@
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
     const now = Date.now();
-    if (!tv.on || allOn || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    // con todos los repos a la vista (las tarjetas o el tablero de agentes de todos) no hay a dónde saltar
+    if (!tv.on || allOn || (agentsOn && agentsCombined()) || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
     tv.lastNews = now;
     showTab(tab);
     graph3d?.celebrate(activities);
@@ -2429,6 +2436,10 @@
   const AG_EVENT = { continued: 'agents.ev.continued', merged: 'agents.ev.merged', reviewed: 'agents.ev.reviewed', commented: 'agents.ev.commented' };
   let initialAgents = false; // ?agents=1: el panel se abre solo en cuanto el repo a la vista tiene grafo
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
+  // todos los repos seguidos juntos en el tablero (se entra así desde la vista conjunta), no solo el que está a la vista
+  let agentsAll = U.store.get('agentsAll', false) === true;
+  const agentsCombined = () => agentsAll && tabs.length > 1;
+  let agentsRepoOf = null; // con todos juntos: sha -> repo de cada commit (ir a un commit lleva a su pestaña)
   let agentsTimer = 0;
   let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
   let agentsSel = null; // el participante elegido en la red: las listas y la línea de tiempo se centran en él
@@ -2467,7 +2478,7 @@
   /** Las partes del enjambre en el tablero: los indicadores, la corteza (con la ficha de quien está elegido), el ingreso
       de tareas, el hilo de un agente, el ritmo, las barras por agente y el log. Deja en `swarmView` lo que recibe la
       corteza. `ctx`: lo que agentsMarkup ya tiene a mano. */
-  function swarmParts({ data, r, byKey, net, slot, sw, row, none }) {
+  function swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef }) {
     const S = GB.swarm;
     const now = Date.now();
     const k = S.kpis(r, data, { now });
@@ -2486,7 +2497,7 @@
       return a?.agent ? [a.agent.name, a.agent.session ? GB.agents.shortSession(a.agent.session) : ''].filter(Boolean).join(' · ') : plainName(key);
     };
     const span = t('swarm.window', { span: i18n.fmtSpan(k.win.span) });
-    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · #${U.esc(x.number)}` : '');
+    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · ${U.esc(prRef(x))}` : '');
 
     // los indicadores: lo que es, el número en grande, una línea más y, si tiene, su curva en la ventana (decorativa)
     const tile = (id, label, value, sub, series = null, cls = '') =>
@@ -2554,7 +2565,9 @@
     const g = S.ingest(r, data, { max: SWARM_TASKS });
     const ciMark = (ci) => (CI_STATES.has(ci) ? `<span class="sw-ci sw-ci-${ci}" role="img" aria-label="${U.esc(t('ci.' + ci))}" title="${U.esc(t('ci.' + ci))}"></span>` : '');
     const taskRows = g.items.map((x) => {
-      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>` : `<span class="sw-tag">#${U.esc(x.number)}</span>`;
+      // con todos los repos juntos, cada tarea dice de qué repo es
+      const repo = x.repo ? `<span class="sw-repo" dir="ltr">${U.esc(x.repo)}</span>` : '';
+      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>${repo}` : `<span class="sw-tag" dir="ltr">${U.esc(x.repo ? `${x.repo}#${x.number}` : `#${x.number}`)}</span>`;
       const draft = x.kind === 'draft' ? `<span class="sw-chip">${U.esc(t('health.prState.draft'))}</span>` : '';
       const ask = x.waiting ? `<span class="sw-chip sw-chip-ask">${U.esc(t('swarm.waits'))}</span>` : '';
       const to = x.who && byKey.has(x.who) ? `<span class="sw-to">→ ${sw(x.who)}${U.esc(short(x.who))}</span>` : '';
@@ -2607,7 +2620,7 @@
       const what =
         x.type === 'commit'
           ? `<span class="sw-log-sha">${U.esc(x.sha.slice(0, 7))}</span> ${U.esc(x.text)}`
-          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · #${U.esc(x.number)}` : ''}`;
+          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · ${U.esc(prRef(x))}` : ''}`;
       const when = x.time > now - 864e5 ? fmtClock(x.time) : U.fmtDateTime(x.time);
       const body = `<time>${U.esc(when)}</time><span class="sw-log-who ag-s${slot.get(x.key) ?? 0}">${U.esc(short(x.key))}</span><span class="sw-log-what">${what}</span>`;
       const id = x.type === 'commit' ? `log|c|${x.sha}` : `log|${agentEventId(x)}`;
@@ -2651,10 +2664,30 @@
     clockTimer = setInterval(put, 1000);
   }
 
+  /** Lo que muestra el tablero: el repo a la vista o, con todos juntos (agentsCombined), lo de cada repo ya cargado
+      sumado en uno (GB.agents.combine). Deja en agentsRepoOf de qué repo es cada commit (null con uno solo). */
+  function agentsSource() {
+    if (!agentsCombined()) {
+      agentsRepoOf = null;
+      const data = source.view ? source.view() : source.data;
+      const acts = feed.items.filter((a) => a.repo === active?.key);
+      return { data, r: GB.agents.compute(data, acts, { max: Infinity }), all: false };
+    }
+    const parts = tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), data: x.source.view ? x.source.view() : x.source.data, acts: feed.itemsOf(x.key) }));
+    const c = GB.agents.combine(parts, { max: Infinity });
+    agentsRepoOf = c.repoOf;
+    return { data: c.data, r: c, all: true };
+  }
+  /** El nombre de un repo seguido por su clave (o la clave, si ya no se sigue). */
+  const repoNameOf = (key) => {
+    const x = tabs.find((tab) => tab.key === key);
+    return x ? nameOf(x) : String(key || '');
+  };
+
   function agentsMarkup() {
-    const data = source.view ? source.view() : source.data;
-    const acts = feed.items.filter((a) => a.repo === active?.key);
-    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const { data, r, all } = agentsSource();
+    /** El número de PR de una interacción: «#12» o, con todos los repos juntos, «o/a#12» (el #12 de un repo no es el de otro). */
+    const prRef = (x) => (x.number == null ? '' : all && x.repo ? `${repoNameOf(x.repo)}#${x.number}` : `#${x.number}`);
     const byKey = new Map(r.actors.map((a) => [a.key, a]));
     const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
     if (agentsSel && !byKey.has(agentsSel)) agentsSel = null; // quien estaba elegido ya no está en lo cargado
@@ -2699,7 +2732,7 @@
         `<p class="hl-line ag-hint">${U.esc(t('agents.netHint'))}</p>`
       : none;
     const tl = GB.agents.timeline(r, { onlyAgents: agentsOnly });
-    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · #${e.number}` : ''} · ${U.fmtDateTime(e.time)}`;
+    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · ${prRef(e)}` : ''} · ${U.fmtDateTime(e.time)}`;
     const timeHtml = tl
       ? GB.agents.timelineSvg(
           tl,
@@ -2725,7 +2758,7 @@
     const eventRows = events.map((e) =>
       row(
         t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }),
-        U.esc([e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
+        U.esc([prRef(e), e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
         e.sha,
         '',
         `<span class="ag-chip ag-k-${e.kind} ag-chip-dot" aria-hidden="true"><span class="ag-chip-g"></span></span>${U.esc(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }))}`,
@@ -2734,7 +2767,7 @@
     const focus = agentsSel
       ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
       : '';
-    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none });
+    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef });
     return (
       swarm.kpis +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
@@ -2773,7 +2806,7 @@
     const edges = [...el.agentsBody.querySelectorAll('.ag-net .ag-e')];
     const edgeKey = (g) => g.dataset.from + '>' + g.dataset.to;
     // otro repo, «solo entre agentes» o alguien elegido muestran otras cosas, pero no nuevas: no se anima nada
-    const mode = `${active?.key}|${agentsOnly}|${agentsSel}`;
+    const mode = `${agentsCombined() ? '*' : active?.key}|${agentsOnly}|${agentsSel}`;
     if (agentsSeen && agentsSeen.mode !== mode) agentsSeen = null;
     if (agentsSeen) {
       for (const n of evs) if (!agentsSeen.ev.has(n.dataset.ev)) n.classList.add('is-new');
@@ -2836,14 +2869,61 @@
       lightAgent(null);
     }
     if (save) U.store.set('agentsView', on || null);
-    setUrlParam('agents', on ? '1' : null);
+    paintAgentsScope();
   }
-  el.viewAgents.addEventListener('click', () => setAgentsView(true));
+  /** El alcance del tablero a la vista: con todos los repos juntos, la cabecera lo dice (en lugar del nombre del repo),
+      las cifras del repo se esconden, ninguna pestaña queda marcada y la URL lleva ?agents=all. */
+  function paintAgentsScope() {
+    const all = agentsOn && agentsCombined();
+    const was = el.graphPanel.classList.contains('agents-all');
+    el.graphPanel.classList.toggle('agents-all', all);
+    el.app.classList.toggle('agents-all', all);
+    el.graphAll.hidden = !all;
+    if (all) setText(el.graphAll, t('all.tabLabel', { n: tabs.length }));
+    el.agentsAllWrap.hidden = tabs.length < 2;
+    el.agentsAll.checked = agentsCombined();
+    if (agentsOn || !initialAgents) setUrlParam('agents', agentsOn ? (all ? 'all' : '1') : null); // ?agents=… espera al repo
+    if (was === all) return;
+    for (const x of tabs) renderTab(x);
+    if (agentsOn) scheduleAgents(); // llegó (o se fue) el segundo repo: el tablero junta a todos, o deja de hacerlo
+  }
+  /** Junta (o separa) a todos los repos seguidos en el tablero de agentes. Se recuerda, salvo en el modo TV. */
+  function setAgentsAll(on, { save = true, render = true } = {}) {
+    on = !!on;
+    if (on !== agentsAll) {
+      agentsAll = on;
+      if (save) U.store.set('agentsAll', on || null);
+      agentsSel = null; // quien estaba elegido era de lo que se veía antes
+      agentsHtml = '';
+      agentsSeen = null;
+    }
+    paintAgentsScope();
+    if (render && agentsOn && source) renderAgents();
+  }
+  el.viewAgents.addEventListener('click', () => {
+    if (!agentsOn) setAgentsAll(false, { render: false }); // desde el grafo de un repo, los agentes de ese repo
+    setAgentsView(true);
+  });
+  /** El botón de los agentes (arriba y en la barra del modo TV): desde la vista conjunta abre el tablero con todos los
+      repos juntos y, desde ese tablero, vuelve a la vista conjunta; desde el grafo de un repo, el de ese repo. */
+  function toggleAgents({ save = true } = {}) {
+    if (allOn) {
+      setAgentsAll(true, { save, render: false });
+      setAll(false, { save });
+      return setAgentsView(true, { save });
+    }
+    if (agentsOn && agentsCombined()) {
+      setAgentsView(false, { save });
+      return setAll(true, { save });
+    }
+    if (!agentsOn) setAgentsAll(false, { save, render: false });
+    setAgentsView(!agentsOn, { save });
+  }
   el.agentsBtn.addEventListener('click', () => {
-    if (allOn) setAll(false);
-    setAgentsView(!agentsOn);
+    toggleAgents();
     if (agentsOn) el.graphPanel.scrollIntoView?.({ block: 'nearest' });
   });
+  el.agentsAll.addEventListener('change', () => setAgentsAll(el.agentsAll.checked, { save: !tv.on }));
   /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
       en él. El foco se queda en su nodo (o en el botón de soltarlo). */
   function selectAgent(key, from = null) {
@@ -3007,6 +3087,10 @@
     if (tab) return selectAgent(tab.dataset.pick, '.sw-tab[data-pick]');
     const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
+    // con todos los repos juntos, el commit puede ser de otro: primero su pestaña
+    const repo = agentsRepoOf?.get(b.dataset.sha);
+    const other = repo && repo !== active?.key ? tabs.find((x) => x.key === repo) : null;
+    if (other) openTab(other);
     shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit
   });
 
@@ -4235,13 +4319,14 @@
 
   /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
       al salir del modo TV queda la vista que había antes de entrar. */
-  function tvShowAgents(on) {
+  function tvShowAgents() {
     if (!tv.on) return;
     const before = document.activeElement;
+    // desde la vista conjunta se abre (con todos los repos juntos), aunque el tablero hubiera quedado abierto detrás
+    const on = allOn || !agentsOn;
     if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
     tv.attract = false;
-    if (on && allOn) setAll(false, { save: false }); // una pantalla por vez
-    setAgentsView(on, { save: false });
+    toggleAgents({ save: false }); // una pantalla por vez: el tablero de todos vuelve a la vista conjunta
     // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
     if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
   }
@@ -4380,7 +4465,7 @@
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
   el.allTvBtn.addEventListener('click', () => setTV(!tv.on, true));
-  el.tvAgents.addEventListener('click', () => tvShowAgents(!agentsOn));
+  el.tvAgents.addEventListener('click', () => tvShowAgents());
   el.tvAll.addEventListener('click', () => tvShowAll(!allOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
@@ -4423,7 +4508,7 @@
       toggleFullscreen();
     } else if (k === 'a') {
       ev.preventDefault();
-      tvShowAgents(!agentsOn);
+      tvShowAgents();
     } else if (k === 'r' && tabs.length > 1) {
       ev.preventDefault();
       tvShowAll(!allOn);
@@ -4937,6 +5022,7 @@
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
     initialAgents = !EMBED && GB.agents.openParam(q0);
+    if (initialAgents && GB.agents.allParam(q0)) agentsAll = true; // ?agents=all: con todos los repos juntos (sin guardarlo)
     const ig = EMBED ? null : GB.agents.graphParam(q0); // ?interactions=1 manda sobre lo guardado (y =0 lo apaga)
     if (ig != null) setAgentGraph(ig, { save: false });
     else if (agentGraph) setUrlParam('interactions', '1');

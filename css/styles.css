@@ -7213,6 +7213,21 @@ html.tv .agk-btn {
 .app.all-on .graph-panel {
   display: none;
 }
+/* el tablero de agentes con todos los repos juntos (app.js, paintAgentsScope): sin las cifras de un repo y con el
+   título de todos en lugar del nombre del que estaba a la vista */
+.app.agents-all:not(.all-on) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.app.agents-all .stats,
+.graph-panel.agents-all #repo-link,
+.graph-panel.agents-all #repo-badge,
+.graph-panel.agents-all #repo-desc,
+.graph-panel.agents-all .game-strip {
+  display: none;
+}
+#graph-all[hidden] {
+  display: none;
+}
 .all-panel[hidden] {
   display: none;
 }
@@ -7509,7 +7524,8 @@ a.ap-row {
   }
 }
 @media (max-width: 860px) {
-  .app.all-on {
+  .app.all-on,
+  .app.agents-all:not(.all-on) {
     grid-template-rows: none;
   }
   .rc-grid {
@@ -8188,6 +8204,11 @@ html.tv .rc-card.rc-news {
   font-size: 11px;
 }
 /* el ingreso de tareas */
+.sw-repo {
+  margin-inline-end: 6px;
+  color: var(--ink-3);
+  font: 600 11px/1.6 var(--font-mono);
+}
 .sw-tag {
   margin-inline-end: 6px;
   padding: 0 5px;

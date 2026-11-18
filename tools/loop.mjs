@@ -154,7 +154,10 @@ export const PARA_BENJAMIN_MAX = 8;
     0, 5, 10, 15 y 20 h de Santiago (cinco por día: 4,8 h de promedio, con un tramo de 4 h a medianoche), con la Routine
     pausada. Su primer disparo para GraphBranch fue el de las 13:00 UTC (las 10 de Santiago). Ese mismo día pasó a
     «Rotación cada 6 h», a las 3, 9, 15 y 21 h de Santiago (6, 12, 18 y 0 h UTC): el de las 18:00 UTC (las 15) está en
-    las dos, el de las 23:00 (las 20) ya no llegó y el de las 0:00 del 2026-11-17 (las 21) fue el primero solo de la nueva. --salud mide cada tramo
+    las dos, el de las 23:00 (las 20) ya no llegó y el de las 0:00 del 2026-11-17 (las 21) fue el primero solo de la nueva. Desde
+    el 2026-11-17, «Rotación cada 12 h», a las 3 y a las 15 h de Santiago (6 y 18 h UTC): el de las 18:00 UTC de ese día
+    (las 15) está en las dos, el de las 0:00 del 2026-11-18 (las 21) ya no llegó y el de las 6:00 (las 3) fue el primero
+    solo de la nueva. --salud mide cada tramo
     con su intervalo: con el de ahora para toda la historia, los disparos esperados no cuadraban y cada ventana más
     larga de antes salía como un hueco (o, con un intervalo más corto que el real, cada una de ahora). */
 export const CADENCIAS = [
@@ -162,6 +165,7 @@ export const CADENCIAS = [
   { desde: '2026-10-28T18:00:00Z', horas: 2 },
   { desde: '2026-11-16T13:00:00Z', horas: 4.8 },
   { desde: '2026-11-16T18:00:00Z', horas: 6 },
+  { desde: '2026-11-17T18:00:00Z', horas: 12 },
 ];
 /** El intervalo de ahora (el último tramo): RECLAMO_H tiene que ser menor. */
 export const CRON_H = CADENCIAS[CADENCIAS.length - 1].horas;

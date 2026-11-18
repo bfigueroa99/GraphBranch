@@ -6346,6 +6346,30 @@ if (seccion('Modo TV directo (?tv=1)'))
   await page.context().close();
 }
 
+if (seccion('Modo TV de un repo sin actividad (GitHub simulado)'))
+{
+  // un repo sin actividad reciente: el panel de actividad, que en la pantalla compartida ocupa un tercio, se quedaba
+  // con el texto de index.html en inglés hasta la primera novedad, en los 39 idiomas que no son el inglés (iteración 315)
+  const gh = fakeGitHub();
+  gh.repo('o/quieto');
+  const page = await openPage({ viewport: { width: 1920, height: 1080 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await step(page, 'el panel de actividad vacío lo dice en el idioma de la página, también en árabe', async () => {
+    for (const lang of ['es', 'ar']) {
+      await page.goto(`${base}/index.html?lang=${lang}&repo=o/quieto&tv=1`);
+      await loaded(page);
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelector('#status')?.dataset.state === 'live', null, { timeout: T(15000) });
+      const got = await page.evaluate(() => ({ text: document.querySelector('#feed-empty').textContent, visible: !!document.querySelector('#feed-empty').getClientRects().length, want: GB.i18n.t('feed.empty'), items: document.querySelectorAll('#feed .act').length }));
+      if (got.items) throw new Error(`${lang}: el repo simulado trajo ${got.items} actividades y el panel no está vacío`);
+      if (!got.visible) throw new Error(`${lang}: el panel de actividad vacío no dice nada`);
+      if (got.text !== got.want) throw new Error(`${lang}: el panel de actividad vacío dice «${got.text}» y no «${got.want}»`);
+    }
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+  await page.context().close();
+}
+
 if (seccion('Salud del repo directa (?health=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });

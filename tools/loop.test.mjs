@@ -1473,7 +1473,7 @@ describe('diagnostico() de --salud', () => {
 
   test('un reclamo abandonado lo releva el disparo siguiente, no el de después (RECLAMO_H < CRON_H)', () => {
     // loop/128: una sesión la dejó sin fusionar a los 25 min; con 6 h, el disparo de 4 h después la vio «Ocupada»
-    assert.equal(CRON_H, 6, 'desde el 2026-11-16 dispara la rotación cada 6 h: cuatro veces por día (3, 9, 15 y 21 h de Santiago)');
+    assert.equal(CRON_H, 12, 'desde el 2026-11-17 dispara la rotación cada 12 h: dos veces por día (3 y 15 h de Santiago)');
     assert.ok(RECLAMO_H < CRON_H, `RECLAMO_H (${RECLAMO_H}) tiene que ser menor que CRON_H (${CRON_H})`);
     const ahora = Date.parse('2026-11-01T00:00:00Z'); // en el tramo de 2 h
     const r = diagnostico({ ...base, ahora, ramas: [{ nombre: 'loop/28', fecha: ahora - (CRON_H - 0.1) * H }] });
@@ -1484,7 +1484,7 @@ describe('diagnostico() de --salud', () => {
   });
 
   test('la cadencia por tramos: cada uno con su intervalo, sin huecos falsos de antes del cambio', () => {
-    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2, 4.8, 6]);
+    assert.deepEqual(CADENCIAS.map((c) => c.horas), [4, 2, 4.8, 6, 12]);
     assert.equal(CADENCIAS[0].desde, '2026-10-10T04:32:04Z');
     // la rotación cada 5 h (2026-11-16): sus ventanas de 5 h no son huecos, como sí lo eran con el intervalo de 2 h (con
     // los tramos hasta el suyo: el de 6 h empezó el mismo día)
@@ -1507,6 +1507,19 @@ describe('diagnostico() de --salud', () => {
     const seis = [0.7, 6.7, 17.7, 24.7, 30.6].map((h) => ({ fecha: r6 + h * H, titulo: 'x (#1)' }));
     const rot6 = diagnostico({ ...base, desde: CADENCIAS[3].desde, ahora: r6 + 31 * H, merges: seis });
     assert.deepEqual(rot6.lineas.filter((l) => l.startsWith('Hueco:')), [], rot6.lineas.join('\n'));
+    // la rotación cada 12 h (desde el disparo de las 18:00 UTC del 2026-11-17, que está en las dos; pedido de la
+    // rotación, 2026-11-18): dos disparos por día, y fusiones cada 12 o 13 h no son un hueco, como sí lo eran con
+    // el intervalo de 6 h
+    assert.equal(CADENCIAS[4].desde, '2026-11-17T18:00:00Z');
+    const hasta6 = CADENCIAS.slice(0, 4);
+    const r12 = Date.parse(CADENCIAS[4].desde);
+    assert.equal(Math.round(disparosEntre(r12, r12 + 24 * H)), 2);
+    assert.equal(Math.round(disparosEntre(r12, r12 + 24 * H, hasta6)), 4);
+    const doce = [3.3, 15.5, 27.4, 40.2].map((h) => ({ fecha: r12 + h * H, titulo: 'x (#1)' }));
+    const rot12 = diagnostico({ ...base, desde: CADENCIAS[4].desde, ahora: r12 + 41 * H, merges: doce });
+    assert.deepEqual(rot12.lineas.filter((l) => l.startsWith('Hueco:')), [], rot12.lineas.join('\n'));
+    const conCuatro = diagnostico({ ...base, desde: CADENCIAS[4].desde, ahora: r12 + 41 * H, merges: doce, cadencias: hasta6 });
+    assert.ok(conCuatro.lineas.filter((l) => l.startsWith('Hueco:')).length >= 2, 'con el intervalo de 6 h, las ventanas de más de 12 h salían como huecos: ' + conCuatro.lineas.join('\n'));
     const conTres = diagnostico({ ...base, desde: CADENCIAS[3].desde, ahora: r6 + 31 * H, merges: seis, cadencias: hasta5 });
     assert.deepEqual(conTres.lineas.filter((l) => l.startsWith('Hueco:')), ['Hueco: 2026-11-17 00:42 → 2026-11-17 11:42 UTC (11,0 h, un disparo sin iteración)'], 'con el intervalo de 4,8 h, la ventana de 11 h salía como hueco');
     const tramos2 = [{ desde: desde, horas: 4 }, { desde: new Date(t0 + 24 * H).toISOString(), horas: 2 }];

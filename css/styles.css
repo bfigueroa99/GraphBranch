@@ -1505,7 +1505,8 @@ kbd {
 }
 .head .h-ci,
 .h3-ci,
-.tip-ci {
+.tip-ci,
+.sig-mark {
   fill: var(--ci);
   color: var(--ci);
 }
@@ -5504,6 +5505,22 @@ a.hl-row:focus-visible {
 #hl-deploys .hl-aside {
   flex: 0 1 auto;
   min-width: 0;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+/* un commit sin firma verificada dice su motivo, a veces largo («Nicht verifizierte Signatur (EXPIRED_KEY)»): en una
+   pantalla angosta pasa a su propia línea, al final, en vez de partir las palabras o desbordar el panel */
+#hl-signed .hl-row {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+#hl-signed .hl-main {
+  flex: 1 1 14em;
+}
+#hl-signed .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
   text-align: end;
   overflow-wrap: anywhere;
 }

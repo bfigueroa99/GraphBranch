@@ -849,3 +849,41 @@ test('OpenSSF Scorecard: un proyecto de un subgrupo de GitLab, que la API de Sco
   data.scorecard = { state: 'subgroup' };
   assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'subgroup' });
 });
+
+test('firma de los commits (ítem 230): los de la rama por defecto de las últimas 4 semanas sin firma verificada, por todos sus padres', () => {
+  const OK = { ok: true };
+  const NONE = { ok: false, state: 'UNSIGNED' };
+  const BAD = { ok: false, state: 'EXPIRED_KEY' };
+  const c = (sha, d, parents, sig) => [sha, { sha, date: ago(d), parents, message: `${sha}\ncuerpo`, ...(sig ? { sig } : {}) }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([
+      c('m4', 1, ['m3', 'f2'], OK), // merge de feat: sus commits también son de main
+      c('f2', 2, ['f1'], NONE),
+      c('f1', 3, ['m2'], BAD),
+      c('m3', 2.5, ['m2'], NONE),
+      c('m2', 10, ['m1'], undefined), // la fuente no dio su firma: no cuenta ni como verificada ni como sin firma
+      c('m1', 35, [], NONE), // de hace más de 4 semanas
+      c('x1', 1, ['m4'], NONE), // solo de otra rama
+      c('z1', -1, ['m4'], NONE), // del futuro (un reloj adelantado): no entra
+    ]),
+    branches: new Map([['main', { name: 'main', sha: 'm4', isDefault: true }], ['otra', { name: 'otra', sha: 'x1' }]]),
+    pulls: new Map(),
+  };
+  const s = JSON.parse(JSON.stringify(compute(data, [], NOW).signed)); // de otro contexto (vm)
+  assert.deepEqual(
+    { branch: s.branch, total: s.total, unverified: s.unverified, unsigned: s.unsigned, invalid: s.invalid, rows: s.rows.map((r) => [r.sha, r.message, r.state]) },
+    { branch: 'main', total: 4, unverified: 3, unsigned: 2, invalid: 1, rows: [['f2', 'f2', 'UNSIGNED'], ['m3', 'm3', 'UNSIGNED'], ['f1', 'f1', 'EXPIRED_KEY']] },
+  );
+  // sin la rama por defecto por nombre, la marcada como tal; todas verificadas: 0 de n, sin filas
+  const signed = { ...data, repo: {}, commits: new Map([c('m4', 1, ['m3'], OK), c('m3', 2, [], OK)]) };
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(signed, [], NOW).signed)), { branch: 'main', total: 2, unverified: 0, unsigned: 0, invalid: 0, rows: [] });
+  // ningún commit con firma conocida (otra fuente), o sin rama por defecto: null, la sección no sale
+  assert.equal(compute({ ...data, commits: new Map([c('m4', 1, [], undefined)]) }, [], NOW).signed, null);
+  assert.equal(compute({ ...data, branches: new Map() }, [], NOW).signed, null);
+  // muchas: hasta 8 filas, con la cuenta entera
+  const many = new Map();
+  for (let i = 0; i < 12; i++) many.set('k' + i, { sha: 'k' + i, date: ago(i + 0.5), parents: i < 11 ? ['k' + (i + 1)] : [], message: 'k', sig: NONE });
+  const m = JSON.parse(JSON.stringify(compute({ ...data, commits: many, branches: new Map([['main', { name: 'main', sha: 'k0', isDefault: true }]]) }, [], NOW).signed));
+  assert.deepEqual([m.total, m.unverified, m.rows.length, m.rows[0].sha], [12, 12, 8, 'k0']);
+});

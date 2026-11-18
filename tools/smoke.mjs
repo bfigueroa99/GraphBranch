@@ -1735,6 +1735,31 @@ if (seccion('Escritorio (1280×800)'))
     await page.keyboard.press('Escape');
   });
 
+  await step(page, 'firma de los commits: la ficha de un commit dice su firma, y la salud cuenta los de main sin firma verificada y lleva a cada uno', async () => {
+    // la demo firma cada commit como lo diría GitHub (ítem 230): verificada, sin firma o firmado sin verificar con su motivo
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    const sig = await openBranchTip(page, '.tip-sig');
+    const said = (await sig.textContent()).trim();
+    if (!/^(✓ Firma verificada|Sin firma|✗ Firma sin verificar \([A-Z_]+\))$/.test(said)) throw new Error(`la ficha de un commit dice su firma así: «${said}»`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-signed-count', { timeout: T(3000) });
+    const signed = await page.evaluate(() => ({
+      head: document.querySelector('#hl-signed h3')?.textContent || '',
+      count: (document.querySelector('#hl-signed-count')?.textContent || '').replace(/[\u2068\u2069]/g, ''),
+      rows: [...document.querySelectorAll('#hl-signed .hl-list[data-list="signed"] .hl-row')].map((r) => [r.querySelector('.hl-main').textContent, r.querySelector('.hl-aside').textContent, r.matches('button[data-go]')]),
+    }));
+    const m = /^Commits de main de las últimas 4 semanas sin firma verificada: (\d+) de (\d+)$/.exec(signed.count);
+    if (signed.head !== 'Firma de los commits' || !m || Number(m[1]) < 2 || Number(m[1]) >= Number(m[2])) throw new Error('la salud no cuenta los commits de main sin firma verificada: ' + JSON.stringify(signed).slice(0, 400));
+    // las más recientes, hasta 8; cuáles son depende de lo que la demo hizo hasta aquí (cada autor firma siempre igual)
+    if (signed.rows.length !== Math.min(8, Number(m[1])) || signed.rows.some(([main, , go]) => !/^[0-9a-f]{7} \S/.test(main) || !go)) throw new Error('las filas sin firma verificada no llevan su SHA corto, su titular y a su commit: ' + JSON.stringify(signed.rows).slice(0, 400));
+    const asides = signed.rows.map(([, a]) => a);
+    if (asides.some((a) => !/^(Sin firma|Firma sin verificar \([A-Z_]+\))$/.test(a))) throw new Error('las filas no dicen si el commit no tiene firma o la tiene sin verificar: ' + asides.join(' | '));
+    await page.click('#hl-signed .hl-list[data-list="signed"] [data-go]');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
     await page.keyboard.press('Escape'); // ninguna ficha abierta de antes
     await page.click('#view-2d');

@@ -1769,3 +1769,86 @@ test('Scorecard: scorecardOf lee la respuesta y descarta lo que no es de Scoreca
   const many = { score: 5, date: '2026-11-14T01:38:24Z', checks: Array.from({ length: 60 }, (_, i) => ({ name: `Check-${i}`, score: i % 11, reason: 'r' })) };
   assert.equal(GitHubSource.scorecardOf(many).checks.length, 40, 'a lo sumo 40 comprobaciones (Scorecard da 18)');
 });
+
+/* La firma de cada commit (ítem 230): GraphQL la pide en la misma consulta de la historia y el REST la trae en la misma
+   lista de commits; la salud cuenta los de la rama por defecto de las últimas 4 semanas sin firma verificada. */
+
+test('la firma de cada commit (GraphQL): verificada, sin firma o firmada sin verificar con su motivo, y la salud cuenta los de la rama por defecto', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: null });
+  const now = Date.now();
+  const iso = (d) => new Date(now - d * 864e5).toISOString();
+  const chain = [
+    { oid: 'a1', committedDate: iso(1), messageHeadline: 'firmado', parents: { nodes: [{ oid: 'a2' }] }, signature: { isValid: true, state: 'VALID' } },
+    { oid: 'a2', committedDate: iso(2), messageHeadline: 'sin firma', parents: { nodes: [{ oid: 'a3' }] }, signature: null },
+    { oid: 'a3', committedDate: iso(3), messageHeadline: 'llave vencida', parents: { nodes: [{ oid: 'a4' }] }, signature: { isValid: false, state: 'EXPIRED_KEY' } },
+    { oid: 'a4', committedDate: iso(4), messageHeadline: 'estado raro', parents: { nodes: [{ oid: 'a5' }] }, signature: { isValid: false, state: '<b>x</b>' } },
+    { oid: 'a5', committedDate: iso(40), messageHeadline: 'viejo sin firma', parents: { nodes: [] }, signature: null },
+  ].map((c) => ({ url: 'u', author: null, ...c }));
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (!url.endsWith('/graphql')) return fetch(url, opts);
+    const { query } = JSON.parse(opts.body);
+    sent.push(query);
+    if (!query.includes('history(')) return fetch(url, opts);
+    const repository = {};
+    for (const m of query.matchAll(/(h\d+): object\(oid: "([^"]+)"/g)) repository[m[1]] = { history: { nodes: chain.slice(chain.findIndex((c) => c.oid === m[2])) } };
+    const body = JSON.stringify({ data: { rateLimit: { cost: 1, remaining: 4000, limit: 5000, resetAt: '2030-01-01T00:00:00Z' }, repository } });
+    return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+  };
+  const { src, GB } = connect(gh, 'tok');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.ok(sent.some((q) => q.includes('history(') && q.includes('signature { isValid state }')), 'la historia pide la firma, sin otra consulta');
+  const sig = (sha) => plain(src.data.commits.get(sha).sig);
+  assert.deepEqual(sig('a1'), { ok: true });
+  assert.deepEqual(sig('a2'), { ok: false, state: 'UNSIGNED' });
+  assert.deepEqual(sig('a3'), { ok: false, state: 'EXPIRED_KEY' });
+  assert.deepEqual(sig('a4'), { ok: false, state: 'BXB' }, 'el motivo llega solo con letras y _: nada que se pueda leer como HTML');
+  const h = plain(GB.health.compute(src.data, [], now).signed);
+  assert.deepEqual(
+    { branch: h.branch, total: h.total, unverified: h.unverified, unsigned: h.unsigned, invalid: h.invalid, rows: h.rows.map((r) => [r.sha, r.message, r.state]) },
+    { branch: 'main', total: 4, unverified: 3, unsigned: 1, invalid: 2, rows: [['a2', 'sin firma', 'UNSIGNED'], ['a3', 'llave vencida', 'EXPIRED_KEY'], ['a4', 'estado raro', 'BXB']] },
+    'el de hace 40 días no entra; el más reciente primero',
+  );
+});
+
+test('la firma de cada commit (REST, también sin token): la lista de commits ya trae verification, sin consultas nuevas', async () => {
+  const gh = fakeGitHub();
+  gh.commit('r1');
+  gh.commit('r2', 'r1');
+  gh.commit('r3', 'r2');
+  gh.push('main', 'r4', 'r3');
+  gh.commits.get('r2').commit.verification = { verified: true, reason: 'valid', signature: '-----BEGIN PGP SIGNATURE-----', payload: 'x' };
+  gh.commits.get('r3').commit.verification = { verified: false, reason: 'unsigned', signature: null, payload: null };
+  gh.commits.get('r4').commit.verification = { verified: false, reason: 'unknown_key', signature: 'x', payload: 'x' };
+  const { src, GB } = connect(gh);
+  await src.cycle();
+  assert.notEqual(src.mode, 'graphql');
+  const sig = (sha) => plain(src.data.commits.get(sha).sig ?? null);
+  assert.equal(sig('r1'), null, 'sin verification la fuente no dice nada de la firma');
+  assert.deepEqual(sig('r2'), { ok: true });
+  assert.deepEqual(sig('r3'), { ok: false, state: 'UNSIGNED' });
+  assert.deepEqual(sig('r4'), { ok: false, state: 'UNKNOWN_KEY' });
+  assert.ok(gh.calls.every((c) => !/verification|signature/.test(c)), 'ninguna consulta nueva');
+  const h = plain(GB.health.compute(src.data, [], Date.UTC(2026, 0, 2)).signed);
+  assert.deepEqual([h.total, h.unverified, h.unsigned, h.invalid], [3, 2, 1, 1], 'r1, sin firma conocida, no cuenta');
+  // sin ninguna firma conocida (otra fuente, un repo local), la salud no dice nada
+  for (const c of src.data.commits.values()) delete c.sig;
+  assert.equal(GB.health.compute(src.data, [], Date.UTC(2026, 0, 2)).signed, null);
+});
+
+test('la firma: sigOf y restSig leen solo la forma de GitHub', () => {
+  const GB = load(fakeGitHub());
+  const { sigOf, restSig } = GB.GitHubSource;
+  assert.equal(sigOf({ oid: 'x' }), undefined, 'una consulta sin el campo no dice nada');
+  assert.deepEqual(plain(sigOf({ signature: null })), { ok: false, state: 'UNSIGNED' });
+  assert.deepEqual(plain(sigOf({ signature: { isValid: 'true', state: 'VALID' } })), { ok: false, state: 'VALID' }, 'solo un true de verdad es verificada');
+  assert.deepEqual(plain(sigOf({ signature: { isValid: false } })), { ok: false, state: 'INVALID' });
+  assert.equal(restSig(undefined), undefined);
+  assert.equal(restSig({ reason: 'valid' }), undefined, 'sin verified no se sabe');
+  assert.deepEqual(plain(restSig({ verified: false, reason: 'gpgverify_unavailable' })), { ok: false, state: 'GPGVERIFY_UNAVAILABLE' });
+  assert.equal(restSig({ verified: false, reason: 'x'.repeat(80) }).state.length, 32, 'un motivo largo se corta');
+});

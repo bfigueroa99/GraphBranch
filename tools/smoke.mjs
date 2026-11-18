@@ -192,6 +192,28 @@ async function quieta(page, fn) {
   }
 }
 
+/** Como `quieta`, pero con algún PR abierto en la demo (la cifra de PRs de la barra de cifras): pasados unos minutos la
+    demo viva fusiona los que tenía y pasa ratos sin ninguno hasta que abre otro, y un paso que mira un PR (su ficha, su
+    chip en la vista de texto) fallaba entonces con «ninguna ficha de rama con PR…» o `{"named":0,…}` (pendiente 1). Medido
+    en la iteración 317 con la demo viva 8 min: 17 de 95 muestras sin ninguno, la primera a los 255 s y tramos de hasta
+    50 s. Espera a que haya uno, la pausa y lo vuelve a mirar ya en pausa (pudo fusionarse justo antes). */
+async function quietaConPr(page, fn) {
+  const open = () => page.evaluate(() => Number(document.querySelector('#st-prs')?.textContent) > 0);
+  const deadline = Date.now() + T(120000);
+  while (Date.now() < deadline) {
+    const ok = await page.waitForFunction(() => Number(document.querySelector('#st-prs')?.textContent) > 0, null, { timeout: Math.max(1000, deadline - Date.now()), polling: 250 }).then(() => true, () => false);
+    if (!ok) break;
+    let ran = false;
+    await quieta(page, async () => {
+      if (!(await open())) return;
+      ran = true;
+      await fn();
+    });
+    if (ran) return;
+  }
+  throw new Error(`la demo no tuvo ningún PR abierto en ${Math.round(T(120000) / 1000)} s`);
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -1094,7 +1116,7 @@ if (seccion('Escritorio (1280×800)'))
   });
 
   // la región viva dice al abrir los tags, releases y forks; si la demo publica antes de leerla ya dice «Novedades»
-  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quieta(page, async () => {
+  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quietaConPr(page, async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
@@ -1705,7 +1727,7 @@ if (seccion('Escritorio (1280×800)'))
     });
   });
 
-  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
+  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', () => quietaConPr(page, async () => {
     await page.keyboard.press('Escape');
     await page.click('#view-2d');
     const heads = await page.$$('#graph svg .head[role=button]');
@@ -1733,7 +1755,7 @@ if (seccion('Escritorio (1280×800)'))
     const hidden = await page.$eval('.tip-prbody', (b) => b.hidden);
     if (!hidden) throw new Error('pulsarlo otra vez no esconde la vista del PR');
     await page.keyboard.press('Escape');
-  });
+  }));
 
   await step(page, 'firma de los commits: la ficha de un commit dice su firma, y la salud cuenta los de main sin firma verificada y lleva a cada uno', async () => {
     // la demo firma cada commit como lo diría GitHub (ítem 230): verificada, sin firma o firmado sin verificar con su motivo

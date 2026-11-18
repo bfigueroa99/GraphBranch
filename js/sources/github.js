@@ -42,8 +42,9 @@
       return null;
     }
   };
+  // con la firma de cada commit (ítem 230): si GitHub la verificó y, si no, por qué (`signature` es null sin firma)
   const GQL_COMMIT =
-    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } }';
+    'oid url committedDate messageHeadline messageBody author { name email user { login avatarUrl } } parents(first: 4) { nodes { oid } } signature { isValid state }';
   const GQL_TARGET = 'target { oid ... on Commit { committedDate } }';
   const GQL_TARGET_CI = 'target { oid ... on Commit { committedDate statusCheckRollup { state } } }'; // con el estado de los checks
   /** Los logins de una lista de personas de GitHub (REST o GraphQL), sin lo que no es un login (un equipo, un null) ni los
@@ -55,6 +56,22 @@
     if (s === 'SUCCESS') return 'success';
     if (s === 'FAILURE' || s === 'ERROR') return 'failure';
     return s ? 'pending' : null;
+  };
+  /** La firma de un commit (ítem 230) en una sola forma: `{ ok: true }` si GitHub la verificó; si no, `{ ok: false, state }`
+      con su motivo: `UNSIGNED` sin firma, o el estado de una firma que no se pudo verificar (`EXPIRED_KEY`, `UNKNOWN_KEY`,
+      `INVALID`…), en mayúsculas y solo con letras y `_` (llega a la ficha como texto). `sigOf` lee la de GraphQL
+      (`signature { isValid state }`, null sin firma) y `restSig`, la del REST (`commit.verification { verified, reason }`,
+      la misma lista de commits de siempre); las dos dan `undefined` si la respuesta no dice nada de la firma. */
+  const sigState = (s) => String(s || '').toUpperCase().replace(/[^A-Z_]/g, '').slice(0, 32) || 'INVALID';
+  const sigOf = (c) => {
+    if (!c || typeof c !== 'object' || !('signature' in c)) return undefined;
+    const s = c.signature;
+    if (!s || typeof s !== 'object') return { ok: false, state: 'UNSIGNED' };
+    return s.isValid === true ? { ok: true } : { ok: false, state: sigState(s.state) };
+  };
+  const restSig = (v) => {
+    if (!v || typeof v !== 'object' || typeof v.verified !== 'boolean') return undefined;
+    return v.verified ? { ok: true } : { ok: false, state: sigState(v.reason) };
   };
   /** El agente de un commit al traerlo (js/agents.js): `{ agent }` para sumarlo al commit, o nada si no se cargó. */
   const agentOf = (author, message) => (GB.agents ? { agent: GB.agents.detect(author, message) } : {});
@@ -78,11 +95,49 @@
       .filter((w) => Array.isArray(w) && Number.isFinite(w[0]) && w[0] > 0)
       .map(([t, add, del]) => ({ time: t * 1000, added: Number.isFinite(add) ? Math.abs(add) : 0, deleted: Number.isFinite(del) ? Math.abs(del) : 0 }))
       .slice(-12);
+  /** La API de OpenSSF Scorecard (ítem 218): el puntaje ya calculado de un repo público de github.com (o, desde la fuente
+      de GitLab, de gitlab.com: ítem 225), sin token y con CORS abierto. Es el único servidor que no es de GitHub al que
+      habla esta fuente (y está en el CSP por eso). Cada proyecto es `{plataforma}/{dueño}/{repo}`. */
+  const SCORECARD = 'https://api.scorecard.dev/projects/';
+  const SCORECARD_CHECKS = 40; // Scorecard da 18: un tope por si una respuesta trae una lista enorme
+  const SCORECARD_REASON = 200; // caracteres del motivo de cada comprobación: los de Scorecard son una frase
+  /** La respuesta de api.scorecard.dev como `{ state: 'ok', score, date, checks: [{ name, score, reason }] }`, o null si no
+      es un análisis: el puntaje del repo de 0 a 10, la fecha en ms (null si no es una fecha) y cada comprobación con su
+      puntaje de -1 (no concluyente) a 10. Una comprobación con un nombre que no es de Scorecard o un puntaje fuera de
+      escala no entra, y el motivo queda en una línea, sin caracteres de control y corto: viene de afuera y se muestra
+      como texto. */
+  const scorecardOf = (body) => {
+    const score = body && !Array.isArray(body) ? body.score : null;
+    if (typeof score !== 'number' || !(score >= 0 && score <= 10)) return null;
+    const reasonOf = (r) => {
+      const s = String(r ?? '').replace(/[\u0000-\u001f\u007f-\u009f\s]+/g, ' ').trim();
+      return s.length > SCORECARD_REASON ? s.slice(0, SCORECARD_REASON - 1).trimEnd() + '…' : s;
+    };
+    const checks = (Array.isArray(body.checks) ? body.checks : [])
+      .filter((c) => c && typeof c.name === 'string' && /^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(c.name) && Number.isInteger(c.score) && c.score >= -1 && c.score <= 10)
+      .slice(0, SCORECARD_CHECKS)
+      .map((c) => ({ name: c.name, score: c.score, reason: reasonOf(c.reason) }));
+    return { state: 'ok', score, date: Date.parse(body.date) || null, checks };
+  };
+  /** Las revisiones de un PR como las da `/pulls/:n/reviews` (ítem 223), con su hora y su tipo como los del feed de
+      eventos: aprobada (`review-ok`), con cambios pedidos (`review-changes`) o de comentario, descartada incluida (`review`,
+      como la trae el feed). Una pendiente (sin enviar: solo la ve su autor) o sin una fecha que se entienda no cuenta. */
+  const reviewsOf = (list) => {
+    const out = [];
+    for (const r of list) {
+      const state = String(r?.state || '').toUpperCase();
+      const time = Date.parse(r?.submitted_at);
+      if (state === 'PENDING' || !(time > 0)) continue;
+      out.push({ kind: state === 'APPROVED' ? 'review-ok' : state === 'CHANGES_REQUESTED' ? 'review-changes' : 'review', time });
+    }
+    return out;
+  };
   const PAGE = 100; // ramas por consulta al listarlas (el máximo de GitHub)
   const FIRST = 10; // commits que pide primero cada rama nueva; casi siempre bastan para tocar lo ya cargado
   const BATCH_MS = 4000; // tiempo por ciclo para listar ramas y traer historia; el resto, en el ciclo siguiente
   const FIRST_MS = 1500; // el primer ciclo es corto: que el grafo aparezca rápido
   const REQUEST_MS = 30000; // tope por consulta: una conexión colgada no deja el ciclo trabado para siempre
+  const OWNERS_RETRY_MS = 5 * 60e3; // un CODEOWNERS que no se pudo pedir se vuelve a pedir pasado esto
   const OFFLINE_MS = 30000; // sin red se espera al aviso del navegador; esto es por si no llega
   // un repo vacío no se llena solo en segundos: se mira cada minuto hasta su primer push (sin token, cada 5: cada
   // intento gasta unas 3 consultas de las 60 por hora, y la cuota se comparte con los demás repos seguidos)
@@ -702,6 +757,45 @@
       return true;
     }
 
+    /** El puntaje de OpenSSF Scorecard del repo (ítem 218, `data.scorecard`): una consulta a api.scorecard.dev, solo cuando
+        el panel de salud lo pide y una sola vez por pestaña (Scorecard analiza cada semana). Solo de un repo de github.com
+        que GitHub dice público (o un proyecto público de gitlab.com: `scorecardProject` de la fuente de GitLab): Scorecard
+        no analiza otros, y el nombre de un repo privado no sale a un tercero. La
+        consulta va sin el token de GitHub, sin cookies y sin referer (la URL de la página lleva `?repo=`), y no gasta cuota
+        de GitHub. Un 404 es «sin análisis» y queda como el puntaje; un fallo (red, 5xx, una respuesta que no es un
+        análisis) queda como fallo y la próxima apertura vuelve a preguntar. Nunca dos consultas a la vez, y nada de esto
+        corta el ciclo del grafo. Devuelve si preguntó. */
+    syncScorecard() {
+      const project = this.scorecardProject();
+      if (!project) return Promise.resolve(false);
+      if (this.scorecardAsk) return this.scorecardAsk.then(() => false);
+      if (this.data.scorecard && this.data.scorecard.state !== 'error') return Promise.resolve(false);
+      const ask = this.askScorecard(project).finally(() => (this.scorecardAsk = null));
+      this.scorecardAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    /** El proyecto que se le pregunta a Scorecard (`github.com/dueño/repo`, ya escapado), o null si este repo no se
+        consulta: solo uno de github.com que GitHub dice público, y ya cargado. La fuente de GitLab da el suyo. */
+    scorecardProject() {
+      if (this.ep.api !== API || this.data.repo.private !== false) return null;
+      const { owner, name } = this.data.repo; // como lo escribe GitHub: Scorecard distingue mayúsculas
+      return 'github.com/' + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+    }
+
+    async askScorecard(project) {
+      const url = SCORECARD + project;
+      let next;
+      try {
+        const { res, body } = await this.request(url, { headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' });
+        next = res.status === 404 ? { state: 'none' } : (res.ok && scorecardOf(body)) || null;
+      } catch (err) {
+        if (err?.kind === 'aborted') return false; // la fuente se detuvo: nadie va a mirar la respuesta
+      }
+      this.data.scorecard = next || { state: 'error', at: Date.now() };
+      return true;
+    }
+
     /** Fecha del primer commit de cada PR fusionado reciente (`numbers`): una consulta por PR (`/pulls/:n/commits`, solo el
         primero), solo cuando el panel de salud las pide y una vez por PR. Un PR que falla se salta; la cuota o la red se avisan. */
     async syncFirstCommits(numbers) {
@@ -712,6 +806,36 @@
           const { data } = await this.api(`${this.base}/pulls/${n}/commits?per_page=1`);
           const c = Array.isArray(data) ? data[0]?.commit : null;
           known.set(n, Date.parse(c?.author?.date || c?.committer?.date) || null);
+        } catch (err) {
+          if (!SOFT.has(err.kind)) throw err;
+          known.set(n, null);
+        }
+      }
+      return todo.length > 0;
+    }
+
+    /** Las revisiones de los PRs fusionados que el feed no trajo enteros (ítem 223, `data.prReviews`): los de `numbers`,
+        que el panel de salud saca de `GB.health.earlyMerges` (abiertos antes de la actividad cargada). Una consulta por PR
+        (`/pulls/:n/reviews`, la primera página, de 100), solo cuando el panel las pide y una sola vez por PR, hasta 20 por
+        apertura con token y 8 sin él (como el primer commit del tiempo de entrega). Cada PR queda con sus revisiones
+        enviadas, con su hora y su tipo como los del feed, o null si la consulta falló (sigue fuera de las etapas); la
+        cuota o la red se avisan. Solo GitHub (y GitHub Enterprise Server): las fuentes que heredan de esta tienen otra
+        API. Nunca dos tandas a la vez. Devuelve si preguntó. */
+    syncPrReviews(numbers) {
+      if (this.host && this.host !== 'github') return Promise.resolve(false);
+      if (this.prReviewsAsk) return this.prReviewsAsk.then(() => false);
+      const ask = this.askPrReviews(numbers).finally(() => (this.prReviewsAsk = null));
+      this.prReviewsAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askPrReviews(numbers) {
+      const known = (this.data.prReviews ||= new Map());
+      const todo = [...new Set(numbers || [])].filter((n) => Number.isInteger(n) && n > 0 && !known.has(n)).slice(0, this.token ? 20 : 8); // sin token, la cuota es de 60 por hora
+      for (const n of todo) {
+        try {
+          const { data } = await this.api(`${this.base}/pulls/${n}/reviews?per_page=100`);
+          known.set(n, Array.isArray(data) ? reviewsOf(data) : null);
         } catch (err) {
           if (!SOFT.has(err.kind)) throw err;
           known.set(n, null);
@@ -845,6 +969,13 @@
         de contar cada PR como fusionado sin revisión. */
     givesReviews() {
       return !this.host || this.host === 'github';
+    }
+
+    /** `{ sig }` para sumarle a un commit su firma (ítem 230), o nada: solo GitHub (y GitHub Enterprise) la da así. Las
+        fuentes que heredan de esta pasan su commit por `addCommit`, y la de Codeberg y Forgejo trae su propio
+        `verification` (con otros motivos, en texto libre): ninguna dice la firma hasta que la lea a su manera. */
+    signed(sig) {
+      return sig && (!this.host || this.host === 'github') ? { sig } : {};
     }
 
     /** null si se puede intentar un commit; si no, la clave del texto que dice por qué (sin token, nada que escribir). */
@@ -1554,6 +1685,56 @@
         .sort((a, b) => a.from - b.from);
     }
 
+    /** El CODEOWNERS de la rama por defecto: { path, text } del primero que existe en `.github/`, la raíz o `docs/` (el
+        orden en que lo busca GitHub), o null si no hay. Se pide una vez por repo y solo cuando el panel de cambios lo
+        necesita; un fallo no se recuerda (el próximo panel lo vuelve a pedir). */
+    codeOwners() {
+      // las fuentes que heredan de esta (GitLab, Codeberg, Bitbucket, Azure, las carpetas locales) no tienen esta API
+      if (this.constructor !== GitHubSource) return Promise.resolve(null);
+      // un fallo se recuerda 5 minutos: ni un 403 que no se pasa solo ni la cuota agotada se piden en cada commit
+      if (this.ownersAsk && this.ownersFail && Date.now() - this.ownersFail > OWNERS_RETRY_MS) this.ownersAsk = null;
+      if (!this.ownersAsk) {
+        const ask = this.askCodeOwners();
+        this.ownersAsk = ask;
+        this.ownersFail = 0;
+        ask.catch(() => {
+          if (this.ownersAsk === ask) this.ownersFail = Date.now();
+        });
+      }
+      return this.ownersAsk;
+    }
+
+    async askCodeOwners() {
+      const where = ['.github/CODEOWNERS', 'CODEOWNERS', 'docs/CODEOWNERS'];
+      if (this.token) {
+        // con token, una consulta de GraphQL por las tres ubicaciones
+        const ref = this.data.repo.defaultBranch || 'HEAD';
+        const data = await this.gql(
+          `query($owner: String!, $name: String!, $a: String!, $b: String!, $c: String!) {
+            repository(owner: $owner, name: $name) {
+              a: object(expression: $a) { ... on Blob { text isBinary } }
+              b: object(expression: $b) { ... on Blob { text isBinary } }
+              c: object(expression: $c) { ... on Blob { text isBinary } }
+            }
+          }`,
+          { a: `${ref}:${where[0]}`, b: `${ref}:${where[1]}`, c: `${ref}:${where[2]}` },
+        );
+        const repo = data?.repository || {};
+        const i = ['a', 'b', 'c'].findIndex((k) => typeof repo[k]?.text === 'string' && !repo[k].isBinary);
+        return i < 0 ? null : { path: where[i], text: repo[['a', 'b', 'c'][i]].text };
+      }
+      // sin token, por REST y en orden, hasta el primero que exista
+      for (const path of where) {
+        const { data, status } = await this.api(`${this.base}/contents/${U.encPath(path)}`, { allow: [404] });
+        if (status === 404 || data?.type !== 'file') continue;
+        // el primero que existe manda, aunque sea vacío o no se pueda leer (de más de 1 MB, `/contents` no da su contenido)
+        if (data.encoding !== 'base64' || (data.size > 0 && !data.content)) return { path, text: '' };
+        const { text, binary } = U.b64decode(data.content || '');
+        return { path, text: binary ? '' : text };
+      }
+      return null;
+    }
+
     /* ---------- commits ---------- */
 
     /**
@@ -1663,6 +1844,7 @@
         date: Date.parse(c.commit?.committer?.date || c.commit?.author?.date) || Date.now(),
         url: c.html_url || `${this.data.repo.url}/commit/${c.sha}`,
         ...agentOf({ name: c.commit?.author?.name, login: c.author?.login, email: c.commit?.author?.email }, c.commit?.message),
+        ...this.signed(restSig(c.commit?.verification)),
       });
       this.kids = null;
       return true;
@@ -1683,6 +1865,7 @@
         url: c.url || `${this.data.repo.url}/commit/${c.oid}`,
         // el cuerpo no se guarda (solo el titular): de él sale el agente, si lo firma uno (Co-Authored-By, sesión)
         ...agentOf({ name: c.author?.name, login: c.author?.user?.login, email: c.author?.email }, c.messageBody ? `${c.messageHeadline || ''}\n\n${c.messageBody}` : c.messageHeadline),
+        ...this.signed(sigOf(c)),
       });
       this.kids = null;
       return true;
@@ -1892,7 +2075,7 @@
               ref: `${pr.head} → ${pr.base}`,
               branch: s.merged ? pr.base : null,
               actor: s.by || pr.user,
-              ...(s.merged ? { mergedBy: s.by || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana)
+              ...(s.merged ? { mergedBy: s.by || null, author: pr.user || null } : {}), // quién fusionó, sin el respaldo de quien lo abrió (resumen de la semana); y quién lo abrió (notas de la versión)
               url: pr.url,
               number: pr.number,
               openedAt: pr.createdAt, // para la salud del repo: cuánto tardó en fusionarse
@@ -2115,6 +2298,7 @@
             return mk('pr-merge', {
               ...fields,
               branch: pr.base?.ref || null, // la rama del PR suele borrarse al fusionar; el merge vive en la base
+              author: pr.user?.login ? { login: pr.user.login, name: pr.user.login, avatar: pr.user.avatar_url || null } : null, // quién lo abrió (notas de la versión): el actor es quien lo fusionó
               openedAt: Date.parse(pr.created_at) || null, // para la salud del repo: cuánto tardó en fusionarse
               title: pr.base?.ref ? M('act.prMergedInto', { num: prNum, base: pr.base.ref }) : M('act.prMerged', num),
             });
@@ -2286,6 +2470,9 @@
   };
 
   GitHubSource.endpoints = endpoints;
+  GitHubSource.scorecardOf = scorecardOf;
+  GitHubSource.sigOf = sigOf;
+  GitHubSource.restSig = restSig;
   GitHubSource.ApiError = ApiError;
   GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)
   GitHubSource.editKey = editKey;

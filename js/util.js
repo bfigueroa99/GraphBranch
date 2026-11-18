@@ -210,11 +210,16 @@ window.GB = window.GB || {};
   U.ALIAS_MAX = 40;
   U.cleanAlias = (v) => (typeof v === 'string' ? [...v.replace(/\s+/g, ' ').trim()].slice(0, U.ALIAS_MAX).join('').trim() : '');
 
-  /** La clave del texto del indicador de estado. Un 404 del repo, la cuota agotada o un repo vacío dicen lo que son, no
+  /** La clave del texto del indicador de estado. Un 404 del repo, la cuota agotada, un repo vacío o un 5xx dicen lo que son, no
       «Sin conexión» (en celular el indicador es lo único que se ve). null si el estado no existe. */
   const STATUS_KEYS = { loading: 'status.loading', live: 'status.live', limited: 'status.limited', paused: 'status.paused', error: 'status.error' };
-  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate', auth: 'status.errorAuth', empty: 'status.errorEmpty' };
-  U.statusKey = (s) => (s?.state === 'error' && STATUS_ERROR_KEYS[s.error?.kind]) || STATUS_KEYS[s?.state] || null;
+  const STATUS_ERROR_KEYS = { notfound: 'status.errorNotFound', rate: 'status.errorRate', auth: 'status.errorAuth', empty: 'status.errorEmpty', http: 'status.errorService', graphql: 'status.errorService' };
+  // un 407 (el proxy pide clave) o un 511 (el portal cautivo de la wifi) los da la red de la persona, no el servicio
+  const OWN_NETWORK = [407, 511];
+  U.statusKey = (s) =>
+    (s?.state === 'error' && !(s.error?.kind === 'http' && OWN_NETWORK.includes(s.error?.status)) && STATUS_ERROR_KEYS[s.error?.kind]) ||
+    STATUS_KEYS[s?.state] ||
+    null;
 
   /** localStorage envuelto: puede no existir o lanzar (modo privado, sandbox). Un valor guardado que no es
       del tipo del `fallback` (lista, texto, número, booleano) está corrupto: se devuelve el `fallback`. */

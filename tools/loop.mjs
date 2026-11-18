@@ -50,7 +50,7 @@ export const FLAGS = ['--siguiente', '--check', '--reclamar', '--publicado', '--
     disparo de las 20:04 salió con 3 y la relevó el de las 00:05: 11,9 h sin iteración). Las iteraciones
     109 a 134 tardaron de 8 a 81 min del reclamo al merge (las 136 a 148, de 9 a 36), y cada push renueva el
     reclamo. Con el cron cada 2 h (2026-10-28), 1,5 h: vence antes del disparo siguiente y no antes de lo
-    que tardó entera la iteración más larga. */
+    que tardó entera la iteración más larga. Con la rotación de 5 h y después de 6 h (2026-11-16), la siguiente llega mucho después. */
 export const RECLAMO_H = 1.5;
 /** La rama de integración: cada loop/N sale de ella, su PR se fusiona en ella y de ella se leen la hoja de
     ruta y la bitácora. Pedido de Benjamin, 2026-10-27: el loop trabaja en dev y master queda de release. */
@@ -148,13 +148,24 @@ export const ANCHOS_MIN = 5;
 export const HUECOS_DIAS = 7;
 /** La cola «Para Benjamin» es corta a propósito: con más ítems, aviso. */
 export const PARA_BENJAMIN_MAX = 8;
-/** Cada cuántas horas dispara la Routine, por tramos: cron `3 *\/4 * * *` desde la fusión de #44 (la directiva)
-    y `3 *\/2 * * *` desde el 2026-10-28 (pedido de Benjamin; el disparo de las 18:03 UTC es el primero que el
-    cron de 4 h no tenía). --salud mide cada tramo con su intervalo: con el de ahora para toda la historia, los
-    disparos esperados se duplicaban y cada ventana de 4 h de antes salía como un hueco. */
+/** Cada cuántas horas dispara el programador, por tramos: la Routine con cron `3 *\/4 * * *` desde la fusión de #44
+    (la directiva) y `3 *\/2 * * *` desde el 2026-10-28 (pedido de Benjamin; el disparo de las 18:03 UTC es el primero
+    que el cron de 4 h no tenía); desde el 2026-11-16, la tarea programada «Rotación cada 5 h» de seis proyectos, a las
+    0, 5, 10, 15 y 20 h de Santiago (cinco por día: 4,8 h de promedio, con un tramo de 4 h a medianoche), con la Routine
+    pausada. Su primer disparo para GraphBranch fue el de las 13:00 UTC (las 10 de Santiago). Ese mismo día pasó a
+    «Rotación cada 6 h», a las 3, 9, 15 y 21 h de Santiago (6, 12, 18 y 0 h UTC): el de las 18:00 UTC (las 15) está en
+    las dos, el de las 23:00 (las 20) ya no llegó y el de las 0:00 del 2026-11-17 (las 21) fue el primero solo de la nueva. Desde
+    el 2026-11-17, «Rotación cada 12 h», a las 3 y a las 15 h de Santiago (6 y 18 h UTC): el de las 18:00 UTC de ese día
+    (las 15) está en las dos, el de las 0:00 del 2026-11-18 (las 21) ya no llegó y el de las 6:00 (las 3) fue el primero
+    solo de la nueva. --salud mide cada tramo
+    con su intervalo: con el de ahora para toda la historia, los disparos esperados no cuadraban y cada ventana más
+    larga de antes salía como un hueco (o, con un intervalo más corto que el real, cada una de ahora). */
 export const CADENCIAS = [
   { desde: '2026-10-10T04:32:04Z', horas: 4 },
   { desde: '2026-10-28T18:00:00Z', horas: 2 },
+  { desde: '2026-11-16T13:00:00Z', horas: 4.8 },
+  { desde: '2026-11-16T18:00:00Z', horas: 6 },
+  { desde: '2026-11-17T18:00:00Z', horas: 12 },
 ];
 /** El intervalo de ahora (el último tramo): RECLAMO_H tiene que ser menor. */
 export const CRON_H = CADENCIAS[CADENCIAS.length - 1].horas;
@@ -1588,7 +1599,7 @@ export function tramos(nums) {
   return out.join(', ');
 }
 
-/** Cuántos disparos de la Routine caben entre a y b (ms), cada tramo de `cadencias` con su intervalo: el primero
+/** Cuántos disparos del programador caben entre a y b (ms), cada tramo de `cadencias` con su intervalo: el primero
     vale también antes de su fecha y cada uno llega hasta el siguiente. Fraccionario: quien lo usa redondea. */
 export function disparosEntre(a, b, cadencias = CADENCIAS) {
   let total = 0;
@@ -1639,7 +1650,7 @@ export function diagnostico({ ahora = Date.now(), doc, texto = '', merges = [], 
     else lineas.push(`Hueco: ${fechaUTC(puntos[i - 1])} → ${i === puntos.length - 1 ? 'ahora' : fechaUTC(puntos[i])} UTC (${horasDe(puntos[i] - puntos[i - 1])} h, ${k === 1 ? 'un disparo' : `unos ${k} disparos`} sin iteración)`);
   }
   if (viejos.length) lineas.push(`Huecos de hace más de ${HUECOS_DIAS} días: ${viejos.length} (${horasDe(viejos.reduce((x, y) => x + y, 0))} h en total), ya pasados`);
-  if (ultima && ahora - ultima > 24 * 3600e3) accion(`el loop no fusiona nada desde hace ${horasDe(ahora - ultima)} h: anotarlo en Para Benjamin (¿la Routine está apagada o sin cuota?)`);
+  if (ultima && ahora - ultima > 24 * 3600e3) accion(`el loop no fusiona nada desde hace ${horasDe(ahora - ultima)} h: anotarlo en Para Benjamin (¿el programador está pausado o sin cuota?)`);
 
   // reclamos: las ramas loop/K
   const loops = ramas.filter((r) => /^loop\/\d+$/.test(r.nombre));

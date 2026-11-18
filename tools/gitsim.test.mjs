@@ -88,6 +88,55 @@ test('branch y checkout: crear, cambiar, desprender y borrar', () => {
   assert.equal(r.run('checkout nope').ok, false);
 });
 
+test('branch --merged y --no-merged: las ramas contenidas en HEAD o en un commit, y las que no, sin tocar nada', () => {
+  const r = fresh();
+  run(r, 'branch viejo', 'branch feature', 'switch feature', 'commit -m f1', 'switch main');
+  const snap = r.snapshot();
+  const merged = r.run('branch --merged');
+  assert.ok(merged.ok);
+  assert.equal(merged.changed, false);
+  assert.deepEqual(plain(merged.lines), ['* main', '  viejo']);
+  assert.deepEqual(plain(r.run('branch --no-merged').lines), ['  feature']);
+  // con un commit: el que se nombra, como rama, sha, HEAD~n o con =
+  assert.deepEqual(plain(r.run('branch --merged feature').lines), ['  feature', '* main', '  viejo']);
+  assert.deepEqual(plain(r.run(`branch --merged=${r.branches.get('feature').slice(0, 7)}`).lines), ['  feature', '* main', '  viejo']);
+  assert.deepEqual(plain(r.run('branch --no-merged feature').lines), []);
+  assert.deepEqual(plain(r.run('branch --merged HEAD~1').lines), []);
+  // las dos juntas (git 2.29): contenidas en feature y no en main
+  assert.deepEqual(plain(r.run('branch --merged feature --no-merged main').lines), ['  feature']);
+  // con -r y -a, también las de seguimiento del remoto; y con un patrón, solo las que coinciden
+  assert.deepEqual(plain(r.run('branch -r --merged').lines), ['  origin/main']);
+  assert.deepEqual(plain(r.run('branch -a --no-merged').lines), ['  feature']);
+  assert.deepEqual(plain(r.run('branch --merged feature "v*"').lines), ['  viejo']);
+  assert.equal(r.snapshot(), snap, 'listar no toca nada');
+  // después del merge, feature ya está en main
+  r.run('merge feature');
+  assert.deepEqual(plain(r.run('branch --merged').lines), ['  feature', '* main', '  viejo']);
+  assert.deepEqual(plain(r.run('branch --no-merged').lines), []);
+  assert.deepEqual(plain(r.run('branch -a --no-merged').lines), []);
+  assert.deepEqual(plain(r.run('branch -r --no-merged').lines), []);
+  // desprendido: las contenidas en ese commit, sin la marca de la actual
+  r.run('checkout HEAD~1');
+  assert.deepEqual(plain(r.run('branch --merged').lines), ['  viejo']);
+  // los errores, como git y sin tocar nada
+  const before = r.snapshot();
+  const bad = r.run('branch --merged nada');
+  assert.deepEqual([bad.ok, plain(bad.lines), bad.changed], [false, ['error: malformed object name nada'], false]);
+  assert.deepEqual(plain(r.run('branch --no-merged=').lines), ['error: malformed object name ']);
+  for (const line of ['branch -d viejo --merged', 'branch --no-merged -m otro', 'branch -c viejo copia --merged']) {
+    const e = r.run(line);
+    assert.equal(e.ok, false, line);
+    assert.match(e.lines[0], /^usage: branch/, line);
+  }
+  assert.equal(r.snapshot(), before);
+  assert.ok(r.branches.has('viejo'));
+  // un repo sin commits no tiene HEAD que mirar
+  const empty = new Repo({ now: NOW });
+  assert.deepEqual(plain(empty.run('branch --merged').lines), ['error: malformed object name HEAD']);
+  // help lo lista
+  assert.ok(r.run('help').lines.some((l) => l.startsWith('branch --merged')));
+});
+
 test('branch -m renombra una rama (la actual si no se dice cuál) y HEAD, la por defecto y el reflog la siguen', () => {
   const r = fresh();
   r.run('branch feature');

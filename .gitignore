@@ -14,3 +14,6 @@ replica/screens/
 
 # el estado local de OMC (.claude/skills/omc) si alguien corre su plugin a mano: nunca se versiona
 .omc/
+
+# el DSN de Sentry del paquete (electron/main.js): lo pone quien arma la app, nunca el repo
+electron/sentry-dsn.txt

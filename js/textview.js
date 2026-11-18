@@ -75,13 +75,17 @@
       inDef.add(sha);
       for (const p of data.commits.get(sha).parents || []) stack.push(p);
     }
-    // PRs abiertos ya cargados por rama, y cuántos de ellos en borrador (los de forks no cuentan: su rama no es de este repo)
+    // PRs abiertos ya cargados por rama, y cuántos de ellos en borrador y cuántos aprobados (los de forks no cuentan: su
+    // rama no es de este repo). Aprobado es lo que dice la fuente (`review`, el reviewDecision de GitHub), sin consultas
+    // nuevas, y un borrador no cuenta como aprobado aunque lo esté: como en la salud y en el Launchpad, es borrador
     const open = new Map();
     const drafts = new Map();
+    const approved = new Map();
     for (const p of data.pulls?.values?.() || []) {
       if (!p || !p.sameRepo || !p.head) continue;
       open.set(p.head, (open.get(p.head) || 0) + 1);
       if (p.draft) drafts.set(p.head, (drafts.get(p.head) || 0) + 1);
+      else if (p.review === 'approved') approved.set(p.head, (approved.get(p.head) || 0) + 1);
     }
     // `paths` (Set de shas, el filtro por ruta): solo cuentan los commits que tocaron esa ruta; sin ninguno, la rama no entra
     const keep = (sha) => !paths || paths.has(sha);
@@ -122,7 +126,7 @@
       const tipAuthor = String(tip?.name || tip?.login || '');
       const prs = open.get(b.name) || 0;
       const noPr = !!pullsKnown && !isDefault && !merged && !prs;
-      return { name: b.name, isDefault, tipAuthor, prs, drafts: drafts.get(b.name) || 0, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
+      return { name: b.name, isDefault, tipAuthor, prs, drafts: drafts.get(b.name) || 0, approved: approved.get(b.name) || 0, noPr, quiet, merged, ciFailing: data.ci?.get?.(b.name) === 'failure', fresh: !isDefault && !!fresh?.has(b.name), commits };
     }).filter((b) => !paths || b.commits.length);
     return { total, branches: rows, ciPulls: failingPulls(data), forks: withForks ? forks(data) : { total: 0, rows: [] } };
   }
@@ -305,7 +309,7 @@
         const li = mk('li', 'tv-branch');
         li.setAttribute('role', 'treeitem');
         li.setAttribute('aria-expanded', open.has(b.name) ? 'true' : 'false');
-        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.drafts ? ', ' + text('textview.drafts', { n: b.drafts }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
+        li.setAttribute('aria-label', `${b.name}${b.isDefault ? ', ' + text('textview.default') : ''}${b.prs ? ', ' + text('textview.prs', { n: b.prs }) : ''}${b.drafts ? ', ' + text('textview.drafts', { n: b.drafts }) : ''}${b.approved ? ', ' + text('textview.approved', { n: b.approved }) : ''}${b.noPr ? ', ' + text('textview.noPr') : ''}${b.fresh ? ', ' + text('textview.fresh') : ''}${b.quiet ? ', ' + text('textview.quiet') : ''}${b.merged ? ', ' + text('textview.merged') : ''}${b.ciFailing ? ', ' + text('textview.ciFailing') : ''}${b.tipAuthor ? ', ' + text('textview.tipBy', { author: b.tipAuthor }) : ''}, ${text('textview.shown', { n: b.commits.length })}`);
         li.tabIndex = i === 0 ? 0 : -1;
         li.dataset.branch = b.name;
         // el nombre y sus marcas se acomodan en una o más líneas; los botones de ocultar y de dejarla sola, siempre juntos
@@ -317,6 +321,7 @@
         if (b.isDefault) info.appendChild(mkSilent('tv-tag', text('textview.default')));
         if (b.prs) info.appendChild(mkSilent('tv-tag', text('textview.prs', { n: b.prs })));
         if (b.drafts) info.appendChild(mkSilent('tv-tag', text('textview.drafts', { n: b.drafts })));
+        if (b.approved) info.appendChild(mkSilent('tv-tag', text('textview.approved', { n: b.approved })));
         if (b.fresh) info.appendChild(mkSilent('tv-tag', text('textview.fresh')));
         if (b.quiet) info.appendChild(mkSilent('tv-tag', text('textview.quiet')));
         if (b.merged) info.appendChild(mkSilent('tv-tag', text('textview.merged')));

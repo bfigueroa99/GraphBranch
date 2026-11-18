@@ -1,7 +1,7 @@
 /* GraphBranch — salud del repo: lo que ya está cargado, leído como señales de equipo.
    Ramas sin actividad hace más de 30 días y sin PR, pull requests abiertos por edad y por estado (borrador, checks en rojo, aprobado, esperando revisión) y los que llevan más de 7 días sin ninguna revisión, cuánto tardaron
    en fusionarse los últimos, el ritmo de merges y releases y, los PRs fusionados y abiertos, los issues cerrados y las ramas nuevas y los commits, sus autores distintos y los autores nuevos por semana y, en el idioma de DORA, la frecuencia de
-   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana. No hace ninguna consulta: parte del
+   despliegues (cada release cuenta como uno, también por semana) y el tiempo de entrega (de abierto a fusionado), el estado del último despliegue de cada entorno y las estrellas nuevas de la semana frente a las de la anterior y, con lo que trajo la fuente al abrir el panel, las líneas añadidas y borradas por semana y el puntaje de OpenSSF Scorecard con sus comprobaciones más bajas, y los commits de la rama por defecto de las últimas 4 semanas sin firma verificada (de las fuentes que dan la firma). No hace ninguna consulta: parte del
    estado del grafo y de la actividad que ya llegó, y cuenta lo que pasa en el repo, no a personas. */
 (function (GB) {
   'use strict';
@@ -12,6 +12,7 @@
   const RECENT_MERGES = 20; // cuántos PRs fusionados entran en el tiempo de abierto a fusionado
   const RECENT_RELEASES = 10; // cuántos releases entran en el tiempo entre despliegues
   const CYCLE_DAYS = 28; // los PRs fusionados de las últimas 4 semanas entran en el tiempo de ciclo por etapas
+  const SIGN_DAYS = 28; // los commits de la rama por defecto de las últimas 4 semanas entran en la cuenta de firmas
   const WEEKS = 8; // semanas que entran en la frecuencia de despliegue y en las tendencias de merges, de PRs abiertos, de issues cerrados, de ramas nuevas, de commits, de autores, de autores nuevos, de forks nuevos y de líneas añadidas y borradas
   const ROWS = 8; // filas que muestra cada lista
 
@@ -21,6 +22,23 @@
     const m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
+
+  const SCORECARD_LOWEST = 3; // comprobaciones de OpenSSF Scorecard que muestra la salud: las más bajas
+
+  /** El puntaje de OpenSSF Scorecard que trajo la fuente al abrir el panel (`data.scorecard`, ítem 218) listo para
+      mostrar: null sin consulta (otra fuente, un repo privado o de GitHub Enterprise: la sección no sale); `{ state }`
+      sin análisis (`none`), de un proyecto de un subgrupo de GitLab, que la API de Scorecard no da (`subgroup`, ítem
+      225), o con un fallo (`error`, también un estado que no se conoce); y con análisis, el puntaje, la
+      fecha y las SCORECARD_LOWEST comprobaciones más bajas, de la más baja a la más alta y a igual puntaje por nombre.
+      Las de -1 (Scorecard no pudo concluir) no son bajas: no entran, ni en la cuenta de comprobaciones. */
+  function scorecardView(sc) {
+    if (!sc) return null;
+    if (sc.state === 'none' || sc.state === 'subgroup') return { state: sc.state };
+    if (sc.state !== 'ok') return { state: 'error' };
+    const rated = (sc.checks || []).filter((c) => c && Number.isInteger(c.score) && c.score >= 0 && c.score <= 10);
+    const lowest = [...rated].sort((a, b) => a.score - b.score || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).slice(0, SCORECARD_LOWEST);
+    return { state: 'ok', score: sc.score, date: sc.date || null, lowest: lowest.map((c) => ({ name: c.name, score: c.score, reason: c.reason || '' })), checks: rated.length };
+  }
 
   /** Cuenta los eventos (releases, PRs fusionados, PRs abiertos, issues cerrados, ramas creadas, forks nuevos…) de cada una de las últimas WEEKS semanas (bloques de 7 días hacia atrás desde `now`). */
   function weekly(list, now) {
@@ -104,6 +122,39 @@
     return { n, authors: counts.length, commits: total };
   }
 
+  /** Los commits cargados de la rama por defecto (los que alcanza su punta, por todos sus padres, como `git log main`) de
+      los últimos SIGN_DAYS días sin firma verificada (ítem 230), con lo que dijo la fuente de cada uno (`sig`: `{ ok }` o
+      `{ ok: false, state }`). Solo cuentan los commits de los que la fuente dio la firma: con GitHub, todos; con otra
+      fuente, ninguno, y entonces es null (la sección no sale). `total` son los que entraron, `unsigned` los que no tienen
+      firma y `invalid` los firmados que GitHub no verificó; las filas, del más reciente al más viejo. Sin consultas. */
+  function signatures(data, now) {
+    const head = data.branches?.get(data.repo?.defaultBranch) || [...(data.branches?.values() || [])].find((b) => b.isDefault);
+    if (!head?.sha) return null;
+    const seen = new Set([head.sha]);
+    const queue = [head.sha];
+    const bad = [];
+    let total = 0;
+    let unsigned = 0;
+    for (let i = 0; i < queue.length; i++) {
+      const c = data.commits.get(queue[i]);
+      if (!c) continue;
+      for (const p of c.parents || []) {
+        if (!p || seen.has(p)) continue;
+        seen.add(p);
+        queue.push(p);
+      }
+      const time = at(c.date);
+      if (!c.sig || !time || time > now || now - time > SIGN_DAYS * DAY) continue;
+      total++;
+      if (c.sig.ok === true) continue;
+      if (c.sig.state === 'UNSIGNED') unsigned++;
+      bad.push({ sha: c.sha || queue[i], message: String(c.message || '').split('\n')[0], time, state: c.sig.state === 'UNSIGNED' ? 'UNSIGNED' : String(c.sig.state || 'INVALID') });
+    }
+    if (!total) return null;
+    bad.sort((a, b) => b.time - a.time);
+    return { branch: head.name || data.repo?.defaultBranch || '', total, unverified: bad.length, unsigned, invalid: bad.length - unsigned, rows: bad.slice(0, ROWS) };
+  }
+
   /** El estado del último despliegue de un entorno con lo ya cargado: `current` si su commit es la punta de su rama
       (la de `ref` si está cargada, si no la rama por defecto), `behind` con cuántos commits lleva la rama que el
       despliegue no tiene (como `git rev-list desplegado..rama`), y `unknown` si la rama no está cargada o su historia
@@ -142,41 +193,74 @@
     return null;
   }
 
-  /** El tiempo de ciclo de los PRs fusionados en las últimas CYCLE_DAYS, partido en tres etapas como lo hace Swarmia: de
-      abierto a la primera revisión, de ahí a la aprobación (la última antes de fusionar) y de la aprobación a la fusión,
-      cada una con su mediana y cuántos PRs la midieron. Todo sale de la actividad ya cargada: el merge (con su número y su
-      `openedAt`) y las revisiones de ese número entre la apertura y la fusión (pedir una no cuenta; en GitLab solo llegan
-      las aprobaciones). Sin revisión, ninguna etapa se mide y el PR va a `noReview`; con revisión y sin aprobación, solo
-      la primera, y va a `noApproval`. Un PR abierto antes de la actividad más vieja cargada no entra en las etapas (sus
-      revisiones de entonces pueden faltar) y va a `early`. Con `reviews` en false (la fuente no da revisiones) no se
-      mide nada: solo cuántos se fusionaron. `null` si la fuente da revisiones y no hay PRs fusionados que mirar. */
-  function cycleTime(acts, now, reviews = true) {
-    const merges = new Map(); // cada número una vez: su primer merge visto y su apertura más temprana
+  /** Los PRs fusionados en las últimas CYCLE_DAYS, cada número una vez: su primer merge visto y su apertura más temprana. */
+  function cycleMerges(acts, now) {
+    const merges = new Map();
     for (const a of acts) {
       if (a.kind !== 'pr-merge' || a.number == null || !(a.openedAt > 0) || !(a.time > a.openedAt) || a.time > now || now - a.time > CYCLE_DAYS * DAY) continue;
       const m = merges.get(a.number);
       if (!m) merges.set(a.number, { time: a.time, openedAt: a.openedAt });
       else merges.set(a.number, { time: Math.min(m.time, a.time), openedAt: Math.min(m.openedAt, a.openedAt) });
     }
+    return merges;
+  }
+
+  /** Hasta dónde llega la actividad cargada (su hora más vieja): antes de eso, no se sabe si un PR tuvo revisiones. */
+  function loadedSince(acts) {
+    let since = Infinity;
+    for (const a of acts) if (a.time > 0 && a.time < since) since = a.time;
+    return since;
+  }
+
+  /** Los números de los PRs fusionados en las últimas CYCLE_DAYS que se abrieron antes de la actividad cargada (ítem 223):
+      los que el tiempo de ciclo deja fuera de las etapas porque el feed no trae sus revisiones de entonces. El de fusión
+      más reciente primero: la fuente consulta las revisiones de los primeros (`syncPrReviews`), con su tope. */
+  function earlyMerges(acts, now) {
+    const since = loadedSince(acts);
+    return [...cycleMerges(acts, now)]
+      .filter(([, m]) => m.openedAt < since)
+      .sort((a, b) => b[1].time - a[1].time)
+      .map(([number]) => number);
+  }
+
+  /** El tiempo de ciclo de los PRs fusionados en las últimas CYCLE_DAYS, partido en tres etapas como lo hace Swarmia: de
+      abierto a la primera revisión, de ahí a la aprobación (la última antes de fusionar) y de la aprobación a la fusión,
+      cada una con su mediana y cuántos PRs la midieron. Sale de la actividad ya cargada: el merge (con su número y su
+      `openedAt`) y las revisiones de ese número entre la apertura y la fusión (pedir una no cuenta; en GitLab solo llegan
+      las aprobaciones). Sin revisión, ninguna etapa se mide y el PR va a `noReview`; con revisión y sin aprobación, solo
+      la primera, y va a `noApproval`. Un PR abierto antes de la actividad más vieja cargada no entra en las etapas (sus
+      revisiones de entonces pueden faltar) y va a `early`, salvo que `asked` (`data.prReviews`: número → sus revisiones
+      consultadas, `{ kind, time }`, o null si la consulta falló) traiga las suyas: entonces entra con ellas y las del
+      feed, y se cuenta en `fetched`. Con `reviews` en false (la fuente no da revisiones) no se mide nada: solo cuántos se
+      fusionaron. `null` si la fuente da revisiones y no hay PRs fusionados que mirar. */
+  function cycleTime(acts, now, reviews = true, asked = null) {
+    const merges = cycleMerges(acts, now);
     if (!reviews) return { reviews: false, merged: merges.size };
     if (!merges.size) return null;
-    let since = Infinity; // hasta dónde llega la actividad cargada: antes de eso, no se sabe si hubo revisiones
-    for (const a of acts) if (a.time > 0 && a.time < since) since = a.time;
+    const since = loadedSince(acts);
+    const isReview = (a) => a.kind === 'review' || a.kind === 'review-ok' || a.kind === 'review-changes';
     const byPr = new Map();
     for (const a of acts) {
-      if (a.number == null || a.request || !a.time || (a.kind !== 'review' && a.kind !== 'review-ok' && a.kind !== 'review-changes')) continue;
+      if (a.number == null || a.request || !a.time || !isReview(a)) continue;
       (byPr.get(a.number) || byPr.set(a.number, []).get(a.number)).push(a);
     }
     const stage = { open: [], review: [], merge: [] };
     let noReview = 0;
     let noApproval = 0;
     let early = 0;
+    let fetched = 0;
     for (const [number, m] of merges) {
+      let revs = byPr.get(number) || [];
       if (m.openedAt < since) {
-        early++;
-        continue;
+        const got = asked?.get?.(number);
+        if (!Array.isArray(got)) {
+          early++;
+          continue;
+        }
+        fetched++;
+        revs = revs.concat(got.filter((a) => a && a.time > 0 && isReview(a)));
       }
-      const revs = (byPr.get(number) || []).filter((a) => a.time >= m.openedAt && a.time <= m.time);
+      revs = revs.filter((a) => a.time >= m.openedAt && a.time <= m.time);
       if (!revs.length) {
         noReview++;
         continue;
@@ -193,7 +277,7 @@
       stage.merge.push(m.time - ok);
     }
     const of = (xs) => ({ median: xs.length ? median(xs) : null, n: xs.length });
-    return { reviews: true, merged: merges.size, open: of(stage.open), review: of(stage.review), merge: of(stage.merge), noReview, noApproval, early };
+    return { reviews: true, merged: merges.size, open: of(stage.open), review: of(stage.review), merge: of(stage.merge), noReview, noApproval, early, fetched };
   }
 
   /** `data`: el estado del repo (ramas, commits, PRs abiertos); `acts`: su actividad ya cargada; `opts.reviews` en false,
@@ -381,14 +465,16 @@
       prStates,
       unreviewed: { total: unreviewed.length, rows: unreviewed.slice(0, ROWS) },
       merged: spans.length ? { n: spans.length, median: median(spans), max: Math.max(...spans) } : null,
-      cycle: cycleTime(acts, now, opts.reviews !== false), // el tiempo de ciclo de los PRs fusionados de las 4 semanas, por etapas
+      cycle: cycleTime(acts, now, opts.reviews !== false, data.prReviews), // el tiempo de ciclo de los PRs fusionados de las 4 semanas, por etapas (con las revisiones consultadas de los que el feed no trajo)
       dora,
       leadSource: { fromCommit, total: lead.length },
       ci,
       forkTrend: { week: forkWeeks[WEEKS - 1], prev: fullPrev ? forkWeeks[WEEKS - 2] : null }, // forks nuevos en los últimos 7 días y en los 7 anteriores (null: sin medir)
       stars: { week: starWeeks[WEEKS - 1], prev: fullPrev ? starWeeks[WEEKS - 2] : null }, // estrellas nuevas en los últimos 7 días y en los 7 anteriores (null: sin medir)
       code: data.codeFreq ? { pending: data.codeFreq.state === 'pending' } : null, // las líneas por semana: null sin consulta; pending si GitHub todavía las calcula (202)
+      scorecard: scorecardView(data.scorecard), // OpenSSF Scorecard: null sin consulta; sin análisis, un fallo, o el puntaje con las comprobaciones más bajas
       absence: absenceFactor(data.commits.values()), // cuántas personas suman la mitad de los commits cargados (null: ninguno con autor)
+      signed: signatures(data, now), // los commits de la rama por defecto de las 4 semanas sin firma verificada (null: la fuente no da la firma)
       pace: { merges7: within(merges, 7), merges30: within(merges, 30), releases30: within(releases, 30), mergeWeeks: weekly(merges, now), openedWeeks: weekly([...opened.values()], now), closedWeeks: weekly([...closed.values()], now), branchWeeks: weekly([...created.values()], now), commitWeeks: weekly([...data.commits.values()].map((c) => ({ time: at(c.date) })).filter((c) => c.time), now), authorWeeks: authorsWeekly(data.commits.values(), now), newAuthorWeeks: newAuthorsWeekly(data.commits.values(), now), tagWeeks: weekly(tagTimes, now), issueWeeks: weekly([...issueOpened.values()], now), prCloseWeeks: weekly([...prClosed.values()], now), forkWeeks, addedWeeks: code.added, deletedWeeks: code.deleted }, // mergeWeeks, openedWeeks, closedWeeks y branchWeeks: de la semana más vieja a la actual
     };
   }
@@ -478,5 +564,5 @@
     return !(q && typeof q.has === 'function' && q.has('forks') && /^(0|false|no|off)$/i.test(String(q.get('forks')).trim()));
   }
 
-  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, STALE_DAYS, CYCLE_DAYS };
+  GB.health = { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, earlyMerges, signatures, STALE_DAYS, CYCLE_DAYS, SIGN_DAYS };
 })(window.GB);

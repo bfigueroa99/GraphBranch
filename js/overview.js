@@ -347,6 +347,10 @@
       card.ui.last.disabled = !opts.canDiff?.(card.key);
     }
 
+    /* con la vista conjunta en 3D (allspace.js) las tarjetas no se ven: se calcula su layout (lo que dibuja el 3D) y sus
+       cifras, pero no sus grafos; al volver a las tarjetas, quien las muestra las vuelve a dibujar */
+    let graphsOn = true;
+
     /** Dibuja el grafo de un repo (sus datos ya filtrados como se quieran ver) y sus cifras. `ctx` es el de GB.Graph. */
     function draw(key, data, ctx) {
       const card = cards.get(key);
@@ -354,7 +358,7 @@
       const L = card.layout.compute(data);
       card.L = L;
       card.data = data;
-      card.graph.update(L, ctx);
+      if (graphsOn) card.graph.update(L, ctx);
       card.stats = summary(data, L);
       paintStats(card);
       opts.onStats?.(stats());
@@ -511,7 +515,7 @@
       celebrate(key, acts) {
         const card = cards.get(key);
         if (!card) return;
-        card.graph.celebrate(acts);
+        if (graphsOn) card.graph.celebrate(acts);
         // la tarjeta se enciende un momento: en una pantalla compartida se ve desde lejos dónde pasó algo
         card.el.classList.remove('rc-news');
         void card.el.offsetWidth; // vuelve a arrancar la animación si llega otra novedad mientras dura
@@ -532,6 +536,12 @@
       select(key, sha) {
         for (const c of cards.values()) c.graph.select(c.key === key ? sha : null);
       },
+      /** Con false, las tarjetas no dibujan sus grafos (la vista conjunta está en 3D); con true, vuelven a hacerlo. */
+      setGraphs(on) {
+        graphsOn = !!on;
+      },
+      /** Las cifras de la tarjeta de un repo ({ branches, commits, prs, last, lastAt }), o null si no se dibujó. */
+      statsOf: (key) => cards.get(key)?.stats || null,
       graphOf: (key) => cards.get(key)?.graph || null,
       layoutOf: (key) => cards.get(key)?.L || null,
       /** Cambió el idioma: textos de las tarjetas y de sus grafos. */

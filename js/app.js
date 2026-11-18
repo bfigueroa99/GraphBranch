@@ -40,6 +40,7 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     snapBtn: $('#snap-btn'),
+    mermaidBtn: $('#mermaid-btn'),
     snapNote: $('#snap-note'),
     flyBtn: $('#fly-btn'),
     galaxyBtn: $('#galaxy-btn'),
@@ -48,6 +49,12 @@
     tvClock: $('#tv-clock'),
     tvAgents: $('#tv-agents'),
     tvAll: $('#tv-all'),
+    tvAll3d: $('#tv-all3d'),
+    all3d: $('#all-3d'),
+    all2d: $('#all-2d'),
+    allSpace: $('#all-space'),
+    allSpaceHint: $('#all-space-hint'),
+    allHint: $('#all-hint'),
     allTvBtn: $('#all-tv-btn'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
@@ -62,6 +69,9 @@
     agents: $('#agents'),
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
+    agentsAll: $('#agents-all'),
+    agentsAllWrap: $('#agents-all-wrap'),
+    graphAll: $('#graph-all'),
     agentsGraph: $('#agents-graph'),
     agentsClock: $('#agents-clock'),
     agKey: $('#ag-key'),
@@ -171,6 +181,8 @@
     accountAdd: $('#account-add'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
+    errorsField: $('#errors-field'),
+    errorsReport: $('#errors-report'),
     depth: $('#depth'),
     marks: $('#marks'),
     settingsCancel: $('#settings-cancel'),
@@ -378,7 +390,7 @@
     count: $('#feed-count'),
     onSelect: (a) => {
       // en la vista conjunta, a la tarjeta de su repo y a su commit o su rama, sin salir de ella
-      if (allOn && a.repo != null) return overview.focus(a.repo, { sha: a.sha, branch: a.branch });
+      if (allOn && a.repo != null) return spaceOn() ? allSpace.show(a.repo) : overview.focus(a.repo, { sha: a.sha, branch: a.branch }); // en 3D, a su torre
       // la actividad de otro repo seguido lleva a su pestaña (la de uno que ya no se sigue, a ninguna parte)
       if (a.repo != null) {
         const tab = tabs.find((x) => x.key === a.repo);
@@ -517,6 +529,8 @@
     canBlame: () => typeof diffSrc()?.fileLog === 'function',
     fileLog: (path, sha) => diffSrc().fileLog(path, sha),
     fileBlame: (path, sha) => (typeof diffSrc()?.fileBlame === 'function' ? diffSrc().fileBlame(path, sha) : null),
+    // los dueños de cada archivo: el CODEOWNERS de la rama por defecto, si la fuente lo sabe leer (GitHub y la demo)
+    codeOwners: () => (typeof diffSrc()?.codeOwners === 'function' ? diffSrc().codeOwners() : null),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
@@ -1114,12 +1128,16 @@
       setAll(true, { save: false });
     }
     renderAllTab();
+    paintAgentsScope();
   }
 
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
     if (allOn) setAll(false, { save: !tv.on });
+    const was = agentsOn && agentsCombined();
+    if (was) setAgentsAll(false, { save: !tv.on, render: false }); // el tablero pasa a ser el de ese repo
     showTab(tab);
+    if (was) renderAgents();
   }
 
   function makeTabEl(tab) {
@@ -1197,7 +1215,7 @@
     const n = tab.unread;
     node.dataset.state = st;
     // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
-    const shown = tab === active && !allOn;
+    const shown = tab === active && !allOn && !(agentsOn && agentsCombined());
     node.classList.toggle('on', shown);
     node.classList.toggle('demo', tab.demo);
     const main = node.firstElementChild;
@@ -1265,13 +1283,7 @@
     num: (n) => U.fmtNum(n),
     ago: (ms) => U.timeAgo(ms),
     dateTime: (ms) => U.fmtDateTime(ms),
-    onOpen: (key) => {
-      const tab = tabs.find((x) => x.key === key);
-      if (!tab) return;
-      openTab(tab);
-      // la tarjeta ya no se ve: el foco queda en la pestaña del repo, que es donde se está ahora
-      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
-    },
+    onOpen: (key) => openFromAll(key), // la tarjeta ya no se ve: el foco queda en la pestaña del repo
     onDiff: (key, sha) => openDiff(sha, tabs.find((x) => x.key === key)),
     canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
     diffing: () => diffView.isOpen,
@@ -1330,8 +1342,70 @@
   /** Las tarjetas al día con las pestañas; las de repos nuevos se dibujan con lo que ya cargaron. */
   function syncAll() {
     overview.sync(allItems());
+    if (spaceOn()) allSpace.sync(allItems());
     for (const x of tabs) if (!overview.layoutOf(x.key)) drawCard(x, { initial: true });
   }
+
+  /* ---------- la vista conjunta en 3D (js/allspace.js): todos los repos como torres de una misma escena ----------
+     Las tarjetas siguen calculando el layout de cada repo (es lo que dibuja la escena), pero no sus grafos 2D. Se
+     recuerda (y viaja en la URL: ?all=3d); sin WebGL no hay. */
+  let allView = U.store.get('allView', '2d') === '3d' ? '3d' : '2d';
+  let allSpace = null; // se crea la primera vez que se pide: un contexto WebGL cuesta
+  const spaceOn = () => allOn && allView === '3d' && !!graph3d && !!allSpace;
+
+  /** Cambia entre las tarjetas y el 3D. En el modo TV no se guarda. */
+  function setAllView(v, { save = true } = {}) {
+    v = v === '3d' && graph3d ? '3d' : '2d';
+    const was = allView;
+    allView = v;
+    if (allOn && v === '3d') diffView.close(); // eran los cambios de un commit de una tarjeta, que deja de verse
+    if (save && !tv.on) U.store.set('allView', v === '3d' ? '3d' : null);
+    paintAllView();
+    // de vuelta a las tarjetas: sus grafos no se dibujaban mientras se veía el 3D
+    if (allOn && was === '3d' && v === '2d') for (const x of tabs) drawCard(x, { initial: true });
+    if (allOn && tv.on) fitTvGrid();
+  }
+
+  /** La vista conjunta como se eligió: las tarjetas o la escena (que se crea, se llena y se anima solo mientras se ve). */
+  function paintAllView() {
+    const on3d = allOn && allView === '3d' && !!graph3d;
+    setPressed(el.all3d, allView === '3d' && !!graph3d);
+    setPressed(el.all2d, !(allView === '3d' && graph3d));
+    setPressed(el.tvAll3d, on3d);
+    el.all3d.disabled = !graph3d;
+    el.tvAll3d.hidden = !allOn || !graph3d;
+    $('#all-grid').hidden = on3d;
+    el.allSpace.hidden = !on3d;
+    el.allSpaceHint.hidden = !on3d;
+    el.allHint.hidden = on3d;
+    el.allPanel.classList.toggle('as-on', on3d);
+    overview.setGraphs(!on3d);
+    if (on3d) {
+      if (!allSpace) {
+        allSpace = GB.allspace.create(el.allSpace, { onOpen: openFromAll, text: (k, p) => t(k, p), num: (n) => U.fmtNum(n) });
+        allSpace.setHold(paused);
+        U.onThemeChange(() => allSpace.retheme());
+      }
+      allSpace.sync(allItems());
+      for (const x of tabs) {
+        const L = overview.layoutOf(x.key);
+        if (L) allSpace.update(x.key, L, overview.statsOf(x.key));
+      }
+    }
+    allSpace?.setActive(on3d);
+    if (allOn) setUrlParam('all', on3d ? '3d' : '1');
+  }
+
+  /** El nombre de un repo (en su tarjeta o en su torre) lo abre en su pestaña; el foco queda en ella. */
+  function openFromAll(key) {
+    const tab = tabs.find((x) => x.key === key);
+    if (!tab) return;
+    openTab(tab);
+    tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+  }
+  el.all3d.addEventListener('click', () => setAllView('3d'));
+  el.all2d.addEventListener('click', () => setAllView('2d'));
+  el.tvAll3d.addEventListener('click', () => setAllView(allView === '3d' ? '2d' : '3d', { save: false }));
 
   /** Dibuja la tarjeta de un repo con lo suyo, y los efectos de lo que acaba de llegar. Solo con la vista conjunta. */
   function drawCard(tab, { initial = false, calm = false, activities = [] } = {}) {
@@ -1339,8 +1413,12 @@
     const data = tab.source.view ? tab.source.view() : tab.source.data;
     // un issue que se abre o se cierra no cambia el grafo: el Launchpad se pone al día igual
     if (activities.some((a) => a.kind === 'issue-open' || a.kind === 'issue-close')) renderAllPrs();
-    if (!overview.draw(tab.key, data, liveCtx(data, initial, calm, tab))) return;
-    if (!initial && activities.length) overview.celebrate(tab.key, activities);
+    const L = overview.draw(tab.key, data, liveCtx(data, initial, calm, tab));
+    if (!L) return;
+    if (spaceOn()) allSpace.update(tab.key, L, overview.statsOf(tab.key));
+    if (initial || !activities.length) return;
+    overview.celebrate(tab.key, activities);
+    if (spaceOn()) allSpace.celebrate(tab.key);
   }
 
   /** «Todos»: la pestaña de la vista conjunta, con las novedades sin ver de todos los repos. */
@@ -1378,6 +1456,7 @@
     allOn = on;
     el.app.classList.toggle('all-on', on);
     el.allPanel.hidden = !on;
+    paintAllView(); // antes de dibujar las tarjetas: en 3D no dibujan sus grafos
     if (on) {
       if (replay.active) replay.stop(true);
       graph.unpin?.();
@@ -1388,9 +1467,11 @@
       renderAllSum();
     }
     graph3d?.setActive(view === '3d' && !on && !agentsOn);
+    cortex?.setActive(cortexLive());
+    if (!on && agentsOn) renderAgents(); // el tablero que quedó detrás vuelve al día
     renderTabs();
     if (save) U.store.set('all', on || null);
-    setUrlParam('all', on ? '1' : null);
+    setUrlParam('all', on ? (allView === '3d' && graph3d ? '3d' : '1') : null);
     setPressed(el.tvAll, on);
     if (tv.on) {
       placeTvBar();
@@ -1599,6 +1680,7 @@
   function onBackground(tab, activities, initial) {
     feed.add(activities, { live: !initial });
     drawCard(tab, { initial, activities });
+    if (agentsOn && agentsCombined()) scheduleAgents();
     if (diffTab === tab) diffView.refresh();
     if (initial || !activities.length) return renderTab(tab);
     if (!allOn) tab.unread += activities.length;
@@ -1606,7 +1688,8 @@
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
     const now = Date.now();
-    if (!tv.on || allOn || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    // con todos los repos a la vista (las tarjetas o el tablero de agentes de todos) no hay a dónde saltar
+    if (!tv.on || allOn || (agentsOn && agentsCombined()) || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
     tv.lastNews = now;
     showTab(tab);
     graph3d?.celebrate(activities);
@@ -1680,6 +1763,28 @@
     } finally {
       snapping = false;
       el.snapBtn.removeAttribute('aria-busy');
+    }
+  }
+
+  /** El grafo como diagrama Mermaid (js/mermaid.js): lo que se dibuja (con los filtros por autor y por rama), en un
+      bloque de Markdown que se copia; sin permiso del portapapeles, se guarda como .md. No hace consultas. */
+  async function copyMermaid() {
+    if (!active || !source) return;
+    const data = source.view ? source.view() : source.data;
+    const graph = GB.mermaid.gitGraph(viewOf(data).data);
+    const text = GB.mermaid.markdown(graph);
+    try {
+      await navigator.clipboard.writeText(text);
+      snapNote(t('mermaid.copied', { commits: graph.commits, branches: graph.branches }));
+    } catch (err) {
+      // la app de escritorio solo deja bajar imágenes y videos (electron/main.js): ahí no hay .md que guardar
+      if (desktop) {
+        console.error(err);
+        return snapNote(t('mermaid.failed'));
+      }
+      const file = GB.snapshot.fileName(active.demo ? 'demo' : nameOf(active), { ext: 'md', kind: 'mermaid' });
+      GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), file);
+      snapNote(t('mermaid.saved', { file }));
     }
   }
 
@@ -1931,12 +2036,21 @@
   // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
   const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks'], ['fork', 'forkWeeks'], ['added', 'addedWeeks'], ['deleted', 'deletedWeeks']];
   const BIG_SERIES = new Set(['addedWeeks', 'deletedWeeks']); // cifras que pueden pasar de mil: con el separador del idioma
+  /* Una serie por semana en su línea: se ven las cifras con «·» (corto, de un vistazo), y un lector de pantalla lee
+     cada una con su semana y el separador del idioma («3 (hace 7 semanas), 0 (hace 6 semanas), …, 5 (esta semana)»)
+     en vez de «punto medio» entre cifras sueltas (pendiente 21, WCAG 1.3.1). `key` es el texto con {list}. */
+  function seriesLine(id, key, params, values) {
+    const vals = values.map(String);
+    const said = i18n.fmtList(vals.map((v, i) => `${v} (${i18n.fmtWeeksAgo(vals.length - 1 - i)})`));
+    const [before, after = ''] = t(key, { ...params, list: '\u0001' }).split('\u0001');
+    return `<p class="hl-line" id="${id}">${U.esc(before)}<span class="hl-vals" aria-hidden="true">${U.esc(vals.join(' · '))}</span><span class="sr-only">${U.esc(said)}</span>${U.esc(after)}</p>`;
+  }
   function weeklyLines(pace, withForks = true) {
     const shown = WEEKLY_SERIES.filter(([, k]) => (withForks || k !== 'forkWeeks') && pace[k].some(Boolean)); // ?forks=0 también calla los forks nuevos por semana
     if (!shown.length) return '';
     const n = pace[shown[0][1]].length;
     return `<div class="hl-weekly" id="hl-weekly" role="group" aria-labelledby="hl-weekly-head"><p class="hl-line hl-weekly-head" id="hl-weekly-head">${U.esc(t('health.weeksHead', { n }))}</p>${shown
-      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: (BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]).join(' · ') }))}</p>`)
+      .map(([id, k]) => seriesLine(`hl-${id}weeks`, 'health.' + k, {}, BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]))
       .join('')}</div>`;
   }
 
@@ -1967,8 +2081,9 @@
   }
 
   /** El tiempo de ciclo por etapas (ítem 217): la mediana de cada etapa de los PRs fusionados de las últimas 4 semanas,
-      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación y los abiertos antes de la actividad
-      cargada. Una fuente que no da revisiones lo dice; sin PRs fusionados, nada que mostrar. */
+      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación, los abiertos antes de la actividad
+      cargada que entraron con sus revisiones consultadas (ítem 223) y los que siguen fuera. Una fuente que no da
+      revisiones lo dice; sin PRs fusionados, nada que mostrar. */
   function cycleHtml(c, span) {
     const line = (id, text) => `<p class="hl-line" id="${id}">${U.esc(text)}</p>`;
     const body = !c
@@ -1977,8 +2092,50 @@
         ? `<p class="hl-none" id="hl-cycle-noreviews">${U.esc(t('health.cycleNoReviews'))}</p>`
         : [['open', 'health.cycleOpen'], ['review', 'health.cycleReview'], ['merge', 'health.cycleMerge']].map(([k, key]) => line('hl-cycle-' + k, t(key, { median: c[k].median != null ? span(c[k].median) : '—', count: U.fmtNum(c[k].n) }))).join('') +
           (c.noReview || c.noApproval ? line('hl-cycle-skipped', t('health.cycleSkipped', { none: U.fmtNum(c.noReview), unapproved: U.fmtNum(c.noApproval) })) : '') +
+          (c.fetched ? line('hl-cycle-fetched', t('health.cycleFetched', { count: U.fmtNum(c.fetched) })) : '') +
           (c.early ? line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
     return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
+  }
+
+  /** El puntaje de OpenSSF Scorecard (ítem 218): de 0 a 10, la fecha del análisis y las tres comprobaciones más bajas con
+      su motivo, como texto (el nombre y el motivo vienen de api.scorecard.dev: van escapados, nunca como HTML). Sin
+      análisis o con un fallo, lo dice (sin análisis, cómo se consigue uno, que en gitlab.com no es la acción de GitHub:
+      ítem 225), y de un proyecto de un subgrupo de GitLab, que Scorecard no da, también; sin consulta (otra fuente, un
+      repo privado o de GitHub Enterprise, un GitLab propio), no sale. */
+  function scorecardHtml(sc, host) {
+    if (!sc) return '';
+    const body =
+      sc.state === 'none'
+        ? `<p class="hl-none" id="hl-scorecard-none">${U.esc(t(host === 'gitlab' ? 'health.scorecardNoneGitlab' : 'health.scorecardNone'))}</p>`
+        : sc.state === 'subgroup'
+          ? `<p class="hl-none" id="hl-scorecard-subgroup">${U.esc(t('health.scorecardSubgroup'))}</p>`
+          : sc.state !== 'ok'
+            ? `<p class="hl-none" id="hl-scorecard-error">${U.esc(t('health.scorecardError'))}</p>`
+            : `<p class="hl-line" id="hl-scorecard-score">${U.esc(t('health.scorecardScore', { score: U.fmtNum(sc.score), date: sc.date ? GB.i18n.fmtDate(sc.date) : '—' }))}</p>` +
+              (sc.lowest.length
+                ? `<div class="hl-sub"><h4 id="hl-scorecard-low">${U.esc(t('health.scorecardLowest'))}</h4><ul class="hl-list hl-checks" aria-labelledby="hl-scorecard-low">${sc.lowest
+                    // el nombre y el motivo van aislados (FSI…PDI): son texto en inglés de la API y, en árabe o hebreo, sin
+                    // aislarlos la puntuación del motivo saltaba al otro lado de la frase
+                    .map((c) => `<li class="hl-line">${U.esc(t('health.scorecardCheck', { name: '\u2068' + c.name + '\u2069', score: U.fmtNum(c.score), reason: '\u2068' + (c.reason || '—') + '\u2069' }))}</li>`)
+                    .join('')}</ul></div>`
+                : '');
+    return `<section class="hl-sec" id="hl-scorecard"><h3>${U.esc(t('health.scorecard'))}</h3>${body}</section>`;
+  }
+
+  /** La firma de un commit en palabras (ítem 230), para las filas de la salud: sin firma, o firmado sin verificar con el
+      motivo que da GitHub. */
+  const sigText = (r) => (r.state === 'UNSIGNED' ? t('tip.sigNone') : t('tip.sigBad', { reason: r.state }));
+
+  /** Los commits de la rama por defecto de las últimas 4 semanas sin firma verificada (ítem 230): cuántos de los que entraron
+      y los más recientes, cada uno con su motivo, que llevan a su commit en el grafo. Sin la firma (otra fuente, un repo
+      local), la sección no sale. */
+  function signedHtml(s) {
+    if (!s) return '';
+    const rows = s.rows
+      .map((r, i) => `<li><button type="button" class="hl-row" data-go="${i}" data-key="${U.esc(r.sha)}" title="${U.esc(t('feed.locate'))}"><span class="hl-main">${U.esc(`${r.sha.slice(0, 7)} ${r.message}`)}</span><span class="hl-aside">${U.esc(sigText(r))}</span></button></li>`)
+      .join('');
+    // la rama va aislada (FSI…PDI): en árabe o hebreo un nombre en caracteres latinos no desordena la frase
+    return `<section class="hl-sec" id="hl-signed"><h3>${U.esc(t('health.signed'))}</h3><p class="hl-line" id="hl-signed-count">${U.esc(t('health.signedCount', { branch: '\u2068' + s.branch + '\u2069', weeks: GB.health.SIGN_DAYS / 7, n: U.fmtNum(s.unverified), total: U.fmtNum(s.total) }))}</p>${rows ? `<ul class="hl-list" data-list="signed">${rows}</ul>` : ''}</section>`;
   }
 
   function renderHealth() {
@@ -2017,7 +2174,7 @@
       cycleHtml(h.cycle, span) +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
-          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
+          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p>${seriesLine('hl-weeks', 'health.doraWeeks', { n: h.dora.weeks.length }, h.dora.weeks)}<p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.status === 'ok' ? t('health.deployOk') : r.status === 'failed' ? t('health.deployFailed') : r.status === 'running' ? t('health.deployRunning') : '', r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +
@@ -2027,9 +2184,12 @@
             `<p class="hl-line">${U.esc(t('health.ciFeed', { n: h.ci.fails30 }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      signedHtml(h.signed) +
+      scorecardHtml(h.scorecard, data.repo?.host) +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-notes"><h3>${U.esc(t('notes.title'))}</h3><p class="hl-none">${U.esc(t('notes.help'))}</p><pre class="hl-digest" id="notes-md" tabindex="0" aria-label="${U.esc(t('notes.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="notes-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="notes-save">${U.esc(t('digest.save'))}</button></div><div id="notes-out" role="status" aria-live="polite"></div></section>` +
       orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     $('#hl-forks-toggle').addEventListener('change', (e) => {
@@ -2049,6 +2209,7 @@
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     setupCompare(data);
     setupDigest(data, acts);
+    setupNotes(data, acts);
     setupOrgDigest();
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
@@ -2056,7 +2217,8 @@
           const id = ul.dataset.list;
           const r = (id.startsWith('prs-') ? h.prStates[id.slice(4)] : h[id]).rows[Number(b.dataset.go)];
           closeHealth();
-          shownGraph().focusBranch(r.name || r.head);
+          if (id === 'signed') shownGraph().focusSha?.(r.sha); // un commit sin firma verificada: a ese commit
+          else shownGraph().focusBranch(r.name || r.head);
         }),
       ),
     );
@@ -2216,7 +2378,7 @@
 
   /** Copiar y guardar un resumen como Markdown o como imagen: `id` es el prefijo de sus elementos y
       `image()` arma el canvas de la imagen. */
-  function wireDigest(id, text, name, image) {
+  function wireDigest(id, text, name, image, kind = 'semana') {
     const out = $(`#${id}-out`);
     $(`#${id}-md`).textContent = text;
     $(`#${id}-copy`).addEventListener('click', async () => {
@@ -2231,7 +2393,7 @@
         sel.addRange(range); // sin permiso del portapapeles: queda seleccionado para copiar a mano
       }
     });
-    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind: 'semana' })));
+    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind })));
     $(`#${id}-png`)?.addEventListener('click', () => {
       image().toBlob((b) => {
         if (!b) return;
@@ -2254,6 +2416,21 @@
     const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
     wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName, () =>
       GB.digest.toCanvas(document, d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none'), DIGEST_COLORS, rtl));
+  }
+
+  /** El borrador de notas de la versión (js/digest.js): los PRs fusionados en la rama por defecto desde su último
+      tag y quienes contribuyeron, con lo ya cargado; se copia o se baja como .md, sin publicar nada. Sin la rama por
+      defecto cargada, la sección no sale. */
+  function setupNotes(data, acts) {
+    const n = GB.digest.releaseNotes(data, acts, GB.i18n.text);
+    if (!n) {
+      $('#hl-notes').hidden = true;
+      return;
+    }
+    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
+    const label = (k) => t('notes.' + k);
+    const labels = { head: label('head'), since: label('since'), noTag: label('noTag'), tagsOut: label('tagsOut'), prs: label('prs'), people: label('people') };
+    wireDigest('notes', GB.digest.toMarkdownNotes(n, repoName, labels, GB.i18n.fmtDate, t('health.none')), repoName, null, 'notas');
   }
 
   /** El de toda la organización: los repos abiertos de la misma organización seguida, sin consultas nuevas. */
@@ -2285,9 +2462,15 @@
     syncHealthForks();
     if (asked.syncCodeFrequency) asked.syncCodeFrequency().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // líneas añadidas y borradas: solo con el panel abierto
     if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    if (asked.syncScorecard) asked.syncScorecard().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // OpenSSF Scorecard: solo con el panel abierto y de un repo público de github.com o gitlab.com
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    }
+    if (asked.syncPrReviews) {
+      // tiempo de ciclo (ítem 223): las revisiones de los fusionados abiertos antes de la actividad cargada, que el feed no trajo
+      const early = GB.health.earlyMerges(feed.items.filter((a) => a.repo === active?.key), Date.now());
+      if (early.length) asked.syncPrReviews(early).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     }
     if (typeof el.health.showModal === 'function') el.health.showModal();
     else el.health.setAttribute('open', '');
@@ -2324,13 +2507,24 @@
   const AG_EVENT = { continued: 'agents.ev.continued', merged: 'agents.ev.merged', reviewed: 'agents.ev.reviewed', commented: 'agents.ev.commented' };
   let initialAgents = false; // ?agents=1: el panel se abre solo en cuanto el repo a la vista tiene grafo
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
+  // todos los repos seguidos juntos en el tablero (se entra así desde la vista conjunta), no solo el que está a la vista
+  let agentsAll = U.store.get('agentsAll', false) === true;
+  try {
+    // ?agents=all los junta y ?agents=1 no (sin guardarlo). Se lee aquí, antes de que la vista recordada reescriba la URL
+    const q = new URLSearchParams(location.search);
+    if (!EMBED && GB.agents.openParam(q)) agentsAll = GB.agents.allParam(q);
+  } catch {
+    /* sin query string */
+  }
+  const agentsCombined = () => agentsAll && tabs.length > 1;
+  let agentsRepoOf = null; // con todos juntos: sha -> repo de cada commit (ir a un commit lleva a su pestaña)
   let agentsTimer = 0;
   let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
   let agentsSel = null; // el participante elegido en la red: las listas y la línea de tiempo se centran en él
   let agentsSeen = null; // lo que ya se mostró ({ ev: Set, edges: Map }): lo que llega después se anima
   let agentsLit = null; // a quién se ilumina en la red (puntero o foco): sobrevive a que el tablero se rehaga
   /** El id de una interacción, el mismo en cada vuelta: para saber cuál es nueva. */
-  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? ''].join('|');
+  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? '', e.repo ?? ''].join('|');
   const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
   /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
       Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
@@ -2362,7 +2556,7 @@
   /** Las partes del enjambre en el tablero: los indicadores, la corteza (con la ficha de quien está elegido), el ingreso
       de tareas, el hilo de un agente, el ritmo, las barras por agente y el log. Deja en `swarmView` lo que recibe la
       corteza. `ctx`: lo que agentsMarkup ya tiene a mano. */
-  function swarmParts({ data, r, byKey, net, slot, sw, row, none }) {
+  function swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef }) {
     const S = GB.swarm;
     const now = Date.now();
     const k = S.kpis(r, data, { now });
@@ -2381,7 +2575,7 @@
       return a?.agent ? [a.agent.name, a.agent.session ? GB.agents.shortSession(a.agent.session) : ''].filter(Boolean).join(' · ') : plainName(key);
     };
     const span = t('swarm.window', { span: i18n.fmtSpan(k.win.span) });
-    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · #${U.esc(x.number)}` : '');
+    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · ${U.esc(prRef(x))}` : '');
 
     // los indicadores: lo que es, el número en grande, una línea más y, si tiene, su curva en la ventana (decorativa)
     const tile = (id, label, value, sub, series = null, cls = '') =>
@@ -2449,7 +2643,9 @@
     const g = S.ingest(r, data, { max: SWARM_TASKS });
     const ciMark = (ci) => (CI_STATES.has(ci) ? `<span class="sw-ci sw-ci-${ci}" role="img" aria-label="${U.esc(t('ci.' + ci))}" title="${U.esc(t('ci.' + ci))}"></span>` : '');
     const taskRows = g.items.map((x) => {
-      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>` : `<span class="sw-tag">#${U.esc(x.number)}</span>`;
+      // con todos los repos juntos, cada tarea dice de qué repo es
+      const repo = x.repo ? `<span class="sw-repo" dir="ltr">${U.esc(x.repo)}</span>` : '';
+      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>${repo}` : `<span class="sw-tag" dir="ltr">${U.esc(x.repo ? `${x.repo}#${x.number}` : `#${x.number}`)}</span>`;
       const draft = x.kind === 'draft' ? `<span class="sw-chip">${U.esc(t('health.prState.draft'))}</span>` : '';
       const ask = x.waiting ? `<span class="sw-chip sw-chip-ask">${U.esc(t('swarm.waits'))}</span>` : '';
       const to = x.who && byKey.has(x.who) ? `<span class="sw-to">→ ${sw(x.who)}${U.esc(short(x.who))}</span>` : '';
@@ -2502,7 +2698,7 @@
       const what =
         x.type === 'commit'
           ? `<span class="sw-log-sha">${U.esc(x.sha.slice(0, 7))}</span> ${U.esc(x.text)}`
-          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · #${U.esc(x.number)}` : ''}`;
+          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · ${U.esc(prRef(x))}` : ''}`;
       const when = x.time > now - 864e5 ? fmtClock(x.time) : U.fmtDateTime(x.time);
       const body = `<time>${U.esc(when)}</time><span class="sw-log-who ag-s${slot.get(x.key) ?? 0}">${U.esc(short(x.key))}</span><span class="sw-log-what">${what}</span>`;
       const id = x.type === 'commit' ? `log|c|${x.sha}` : `log|${agentEventId(x)}`;
@@ -2529,7 +2725,7 @@
     cortex.setActive(cortexLive());
   }
   /** La corteza se anima mientras se ve, salvo con el modo TV en pausa (ahí la pausa detiene todo lo que se mueve). */
-  const cortexLive = () => agentsOn && !(paused && tv.on);
+  const cortexLive = () => agentsOn && !allOn && !(paused && tv.on);
 
   /** El reloj del tablero, al segundo, mientras se mira. */
   let clockTimer = 0;
@@ -2546,10 +2742,30 @@
     clockTimer = setInterval(put, 1000);
   }
 
+  /** Lo que muestra el tablero: el repo a la vista o, con todos juntos (agentsCombined), lo de cada repo ya cargado
+      sumado en uno (GB.agents.combine). Deja en agentsRepoOf de qué repo es cada commit (null con uno solo). */
+  function agentsSource() {
+    if (!agentsCombined()) {
+      agentsRepoOf = null;
+      const data = source.view ? source.view() : source.data;
+      const acts = feed.items.filter((a) => a.repo === active?.key);
+      return { data, r: GB.agents.compute(data, acts, { max: Infinity }), all: false };
+    }
+    const parts = tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), data: x.source.view ? x.source.view() : x.source.data, acts: feed.itemsOf(x.key) }));
+    const c = GB.agents.combine(parts, { max: Infinity });
+    agentsRepoOf = c.repoOf;
+    return { data: c.data, r: c, all: true };
+  }
+  /** El nombre de un repo seguido por su clave (o la clave, si ya no se sigue). */
+  const repoNameOf = (key) => {
+    const x = tabs.find((tab) => tab.key === key);
+    return x ? nameOf(x) : String(key || '');
+  };
+
   function agentsMarkup() {
-    const data = source.view ? source.view() : source.data;
-    const acts = feed.items.filter((a) => a.repo === active?.key);
-    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const { data, r, all } = agentsSource();
+    /** El número de PR de una interacción: «#12» o, con todos los repos juntos, «o/a#12» (el #12 de un repo no es el de otro). */
+    const prRef = (x) => (x.number == null ? '' : all && x.repo ? `${repoNameOf(x.repo)}#${x.number}` : `#${x.number}`);
     const byKey = new Map(r.actors.map((a) => [a.key, a]));
     const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
     if (agentsSel && !byKey.has(agentsSel)) agentsSel = null; // quien estaba elegido ya no está en lo cargado
@@ -2594,7 +2810,7 @@
         `<p class="hl-line ag-hint">${U.esc(t('agents.netHint'))}</p>`
       : none;
     const tl = GB.agents.timeline(r, { onlyAgents: agentsOnly });
-    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · #${e.number}` : ''} · ${U.fmtDateTime(e.time)}`;
+    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · ${prRef(e)}` : ''} · ${U.fmtDateTime(e.time)}`;
     const timeHtml = tl
       ? GB.agents.timelineSvg(
           tl,
@@ -2620,7 +2836,7 @@
     const eventRows = events.map((e) =>
       row(
         t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }),
-        U.esc([e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
+        U.esc([prRef(e), e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
         e.sha,
         '',
         `<span class="ag-chip ag-k-${e.kind} ag-chip-dot" aria-hidden="true"><span class="ag-chip-g"></span></span>${U.esc(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }))}`,
@@ -2629,7 +2845,7 @@
     const focus = agentsSel
       ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
       : '';
-    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none });
+    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef });
     return (
       swarm.kpis +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
@@ -2655,6 +2871,7 @@
     clearTimeout(agentsTimer);
     agentsTimer = 0;
     if (!source) return;
+    if (allOn) return void (agentsHtml = ''); // detrás de la vista conjunta no se ve: se rehace al volver (setAll)
     const html = agentsMarkup();
     if (html === agentsHtml) return pushCortex(); // la corteza igual recibe lo nuevo (un pulso más, por ejemplo)
     const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
@@ -2668,7 +2885,7 @@
     const edges = [...el.agentsBody.querySelectorAll('.ag-net .ag-e')];
     const edgeKey = (g) => g.dataset.from + '>' + g.dataset.to;
     // otro repo, «solo entre agentes» o alguien elegido muestran otras cosas, pero no nuevas: no se anima nada
-    const mode = `${active?.key}|${agentsOnly}|${agentsSel}`;
+    const mode = `${agentsCombined() ? '*' : active?.key}|${agentsOnly}|${agentsSel}`;
     if (agentsSeen && agentsSeen.mode !== mode) agentsSeen = null;
     if (agentsSeen) {
       for (const n of evs) if (!agentsSeen.ev.has(n.dataset.ev)) n.classList.add('is-new');
@@ -2731,14 +2948,61 @@
       lightAgent(null);
     }
     if (save) U.store.set('agentsView', on || null);
-    setUrlParam('agents', on ? '1' : null);
+    paintAgentsScope();
   }
-  el.viewAgents.addEventListener('click', () => setAgentsView(true));
+  /** El alcance del tablero a la vista: con todos los repos juntos, la cabecera lo dice (en lugar del nombre del repo),
+      las cifras del repo se esconden, ninguna pestaña queda marcada y la URL lleva ?agents=all. */
+  function paintAgentsScope() {
+    const all = agentsOn && agentsCombined();
+    const was = el.graphPanel.classList.contains('agents-all');
+    el.graphPanel.classList.toggle('agents-all', all);
+    el.app.classList.toggle('agents-all', all);
+    el.graphAll.hidden = !all;
+    if (all) setText(el.graphAll, t('all.tabLabel', { n: tabs.length }));
+    el.agentsAllWrap.hidden = tabs.length < 2;
+    el.agentsAll.checked = agentsCombined();
+    if (agentsOn || !initialAgents) setUrlParam('agents', agentsOn ? (all ? 'all' : '1') : null); // ?agents=… espera al repo
+    if (was === all) return;
+    for (const x of tabs) renderTab(x);
+    if (agentsOn) scheduleAgents(); // llegó (o se fue) el segundo repo: el tablero junta a todos, o deja de hacerlo
+  }
+  /** Junta (o separa) a todos los repos seguidos en el tablero de agentes. Se recuerda, salvo en el modo TV. */
+  function setAgentsAll(on, { save = true, render = true } = {}) {
+    on = !!on;
+    if (on !== agentsAll) {
+      agentsAll = on;
+      if (save) U.store.set('agentsAll', on || null);
+      agentsSel = null; // quien estaba elegido era de lo que se veía antes
+      agentsHtml = '';
+      agentsSeen = null;
+    }
+    paintAgentsScope();
+    if (render && agentsOn && source) renderAgents();
+  }
+  el.viewAgents.addEventListener('click', () => {
+    if (!agentsOn) setAgentsAll(false, { render: false }); // desde el grafo de un repo, los agentes de ese repo
+    setAgentsView(true);
+  });
+  /** El botón de los agentes (arriba y en la barra del modo TV): desde la vista conjunta abre el tablero con todos los
+      repos juntos y, desde ese tablero, vuelve a la vista conjunta; desde el grafo de un repo, el de ese repo. */
+  function toggleAgents({ save = true } = {}) {
+    if (allOn) {
+      setAgentsAll(true, { save, render: false });
+      setAll(false, { save });
+      return setAgentsView(true, { save });
+    }
+    if (agentsOn && agentsCombined()) {
+      setAgentsView(false, { save });
+      return setAll(true, { save });
+    }
+    if (!agentsOn) setAgentsAll(false, { save, render: false });
+    setAgentsView(!agentsOn, { save });
+  }
   el.agentsBtn.addEventListener('click', () => {
-    if (allOn) setAll(false);
-    setAgentsView(!agentsOn);
+    toggleAgents();
     if (agentsOn) el.graphPanel.scrollIntoView?.({ block: 'nearest' });
   });
+  el.agentsAll.addEventListener('change', () => setAgentsAll(el.agentsAll.checked, { save: !tv.on }));
   /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
       en él. El foco se queda en su nodo (o en el botón de soltarlo). */
   function selectAgent(key, from = null) {
@@ -2902,6 +3166,10 @@
     if (tab) return selectAgent(tab.dataset.pick, '.sw-tab[data-pick]');
     const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
+    // con todos los repos juntos, el commit puede ser de otro: primero su pestaña
+    const repo = agentsRepoOf?.get(b.dataset.sha);
+    const other = repo && repo !== active?.key ? tabs.find((x) => x.key === repo) : null;
+    if (other) openTab(other);
     shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit
   });
 
@@ -3447,6 +3715,7 @@
     ago: (ms) => U.timeAgo(ms),
     select: $('#constellation-order'),
     status: $('#constellation-status'),
+    plazo: { field: $('#constellation-due-field'), input: $('#constellation-due'), count: $('#constellation-late') },
     onGo(key) {
       const tab = tabs.find((x) => x.key === key);
       const ghost = !tab && constellationGhosts.get(key);
@@ -3478,6 +3747,8 @@
     constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
     // ?recent=30: solo los repos con algún commit en los últimos 30 días
     constellation.setRecent(GB.constellation.recentParam(new URLSearchParams(location.search)));
+    // ?plazo=2026-01-15: con una tarea de GitHub Classroom seguida, marca las entregas con push después de ese día
+    constellation.setDue(GB.constellation.dueParam(new URLSearchParams(location.search)) || '');
   } catch {
     /* sin query string */
   }
@@ -3491,6 +3762,10 @@
     // los repos sin pestaña de las organizaciones seguidas, de su lista ya pedida: ninguna consulta nueva
     const ghosts = GB.constellation.ghostItems(ownerLists, tabs.filter((x) => x.source).map((x) => x.key), keyOf);
     constellationGhosts = new Map(ghosts.map((g) => [g.key, g]));
+    // las entregas de las tareas seguidas (org:curso/tarea-1-*), con el último push de esa misma lista: el plazo las mide
+    const tasks = Object.fromEntries(Object.entries(ownerLists).filter(([k]) => U.parseOwner('@' + k)?.prefix));
+    const subs = GB.constellation.submissions(tasks, keyOf);
+    const asSub = (it) => (subs.has(it.key) ? { ...it, sub: true, pushed: subs.get(it.key) } : it);
     constellation.render(
       tabs
         .filter((x) => x.source)
@@ -3509,7 +3784,8 @@
           unread: x.unread,
           active: x === active,
         }))
-        .concat(ghosts),
+        .concat(ghosts)
+        .map(asSub),
     );
     if (typeof el.constellation.showModal === 'function') el.constellation.showModal();
     else el.constellation.setAttribute('open', '');
@@ -3975,6 +4251,7 @@
     renderPause();
     for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
+    allSpace?.setHold(v);
     cortex?.setActive(cortexLive());
     if (tv.attract && replay.active) {
       if (v) replay.pause();
@@ -4042,6 +4319,7 @@
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
   el.snapBtn.addEventListener('click', saveImage);
+  el.mermaidBtn.addEventListener('click', copyMermaid);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   setPressed(el.galaxyBtn, !!graph3d?.galaxy);
   el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));
@@ -4121,13 +4399,14 @@
 
   /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
       al salir del modo TV queda la vista que había antes de entrar. */
-  function tvShowAgents(on) {
+  function tvShowAgents() {
     if (!tv.on) return;
     const before = document.activeElement;
+    // desde la vista conjunta se abre (con todos los repos juntos), aunque el tablero hubiera quedado abierto detrás
+    const on = allOn || !agentsOn;
     if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
     tv.attract = false;
-    if (on && allOn) setAll(false, { save: false }); // una pantalla por vez
-    setAgentsView(on, { save: false });
+    toggleAgents({ save: false }); // una pantalla por vez: el tablero de todos vuelve a la vista conjunta
     // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
     if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
   }
@@ -4173,6 +4452,8 @@
       diffView.close(); // la pantalla compartida no es la de los cambios de un commit
       tv.prevView = view;
       tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
+      tv.prevAgentsAll = agentsAll; // y con qué alcance (el de un repo o todos juntos), y la vista conjunta en 2D o 3D
+      tv.prevAllView = allView;
       tv.lastNews = tv.lastAttract = Date.now();
       if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
       if (tv.prevAgents && !initialAgents && !allOn) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
@@ -4195,6 +4476,8 @@
       director?.setOn(!!U.store.get('director', false));
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
+      setAgentsAll(tv.prevAgentsAll, { save: false, render: false });
+      if (allView !== tv.prevAllView) setAllView(tv.prevAllView, { save: false });
       if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
       setAll(tv.prevAll, { save: false }); // y a la vista conjunta, si se entró desde ella (o se sale de la que se abrió en TV)
       tv.lock?.release().catch(() => {});
@@ -4266,7 +4549,7 @@
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
   el.allTvBtn.addEventListener('click', () => setTV(!tv.on, true));
-  el.tvAgents.addEventListener('click', () => tvShowAgents(!agentsOn));
+  el.tvAgents.addEventListener('click', () => tvShowAgents());
   el.tvAll.addEventListener('click', () => tvShowAll(!allOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
@@ -4309,10 +4592,13 @@
       toggleFullscreen();
     } else if (k === 'a') {
       ev.preventDefault();
-      tvShowAgents(!agentsOn);
+      tvShowAgents();
     } else if (k === 'r' && tabs.length > 1) {
       ev.preventDefault();
       tvShowAll(!allOn);
+    } else if (k === '3' && allOn && graph3d) {
+      ev.preventDefault();
+      setAllView(allView === '3d' ? '2d' : '3d', { save: false }); // la vista conjunta: tarjetas o todos en 3D
     }
   });
 
@@ -4354,6 +4640,7 @@
     }
     el.depth.value = settings.depth;
     el.marks.checked = settings.marks;
+    errorReports.show();
     for (const f of hookFields) {
       f.input.value = hookUrls[f.service];
       f.state.textContent = '';
@@ -4469,6 +4756,140 @@
         return field;
       });
 
+  /* El reporte de errores opcional con Sentry en la web: el mismo puente que el de escritorio (state, set, report),
+     pero aquí. Solo existe si quien publica la página dejó su DSN en index.html con tools/sentry-web.mjs (un
+     <meta name="sentry-dsn">) y el host de ingestión de ese DSN está en connect-src del CSP: sin los dos, no se
+     ofrece (un DSN sin su host no podría salir). Lo prendido queda en este navegador (solo `true` cuenta), y
+     js/sentry.js (la misma limpieza y el mismo sobre que el escritorio) se carga solo al mandar el primer informe:
+     quien no lo prende no baja nada ni escucha nada. En escritorio manda el proceso principal y esto no corre. */
+  function webErrors() {
+    const meta = document.querySelector('meta[name="sentry-dsn"]');
+    const dsn = meta?.content?.trim() || '';
+    if (desktop || !dsn) return null;
+    let origin = '';
+    try {
+      const u = new URL(dsn);
+      // lo mismo que pide parseDsn de js/sentry.js (que se carga después): un DSN que no lo cumple no se ofrece
+      if (u.protocol === 'https:' && /^[\w-]{8,64}$/.test(u.username) && !u.search && !u.hash && /^\/(?:.*\/)?\d{1,20}$/.test(u.pathname)) origin = u.origin;
+    } catch {
+      /* no es una URL: no se ofrece */
+    }
+    const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content || '';
+    const connect = (/(?:^|;)\s*connect-src\s+([^;]*)/.exec(csp)?.[1] || '').trim().split(/\s+/);
+    if (!origin || !connect.includes(origin)) return null;
+    const KEY = 'errorReports';
+    const on = () => U.store.get(KEY, false) === true;
+    let client = null;
+    // js/sentry.js, una vez y solo cuando hay algo que mandar; si no carga (sin red), no se insiste en esta visita
+    const load = () =>
+      (client ||= new Promise((resolve, reject) => {
+        if (GB.sentry) return resolve(GB.sentry);
+        const s = document.createElement('script');
+        s.src = 'js/sentry.js';
+        s.onload = () => (GB.sentry ? resolve(GB.sentry) : reject(new Error('js/sentry.js no se cargó')));
+        s.onerror = () => reject(new Error('js/sentry.js no se cargó'));
+        document.head.append(s);
+      }).then((S) =>
+        S.createClient({
+          dsn,
+          isEnabled: on,
+          fetch: (url, init) => fetch(url, init),
+          auth: 'query',
+          surface: 'web',
+          fileOf: S.baseFileOf(new URL('./', location.href).href),
+          release: meta.dataset.release || '',
+          environment: meta.dataset.environment || '',
+          os: S.osName(navigator),
+        }),
+      ));
+    const state = () => ({ available: true, enabled: on() });
+    return {
+      state: async () => state(),
+      async set(value) {
+        U.store.set(KEY, value === true ? true : null);
+        return state();
+      },
+      report: (rec, names) => load().then((c) => c.report(rec, names)),
+    };
+  }
+
+  /* El reporte de errores opcional con Sentry: en la app de escritorio lo manda el proceso principal
+     (electron/sentry.js) y en la web, webErrors. Ajustes lo ofrece solo si hay un DSN, apagado mientras quien usa la
+     app no lo prenda; prendido, la página escucha sus errores sin atrapar y los pasa al puente junto con los nombres
+     que conoce (repos, alias, ramas, autores) para que se quiten antes de mandarlos. En escritorio, el DSN y el envío
+     nunca están en la página. */
+  const errorReports = (() => {
+    const bridge = desktop?.errors || webErrors();
+    let state = { available: false, enabled: false };
+    let listening = false;
+    /** Los nombres de lo cargado que no pueden salir en un informe, hasta 5000. */
+    function knownNames() {
+      const out = new Set();
+      const add = (v) => typeof v === 'string' && v.trim().length >= 3 && out.size < 5000 && out.add(v.trim());
+      try {
+        for (const tab of tabs) {
+          const data = tab.source?.data;
+          add(tab.key);
+          add(tab.alias);
+          if (!data) continue;
+          add(data.repo?.owner);
+          add(data.repo?.name);
+          if (data.repo?.owner && data.repo?.name) add(`${data.repo.owner}/${data.repo.name}`);
+          for (const name of data.branches?.keys?.() || []) add(name);
+          for (const c of data.commits?.values?.() || []) {
+            add(c.author?.login);
+            add(c.author?.name);
+            if (out.size >= 5000) break;
+          }
+          for (const p of data.pulls?.values?.() || []) add(p.user?.login);
+        }
+      } catch {
+        /* a medio cargar: se manda con lo que se juntó, y el proceso principal quita igual lo que reconoce */
+      }
+      return [...out];
+    }
+    /* Como el proceso principal, hasta 10 por sesión y cada error una vez: un error en cada cuadro de una animación
+       no junta los nombres 60 veces por segundo. Un fallo aquí no puede volver a disparar 'error'. */
+    const seen = new Set();
+    const send = (kind, err) => {
+      try {
+        const e = err && typeof err === 'object' ? err : { message: String(err ?? '') };
+        const rec = { kind, type: String(e.name || ''), message: String(e.message || ''), stack: String(e.stack || '') };
+        const key = `${kind}|${rec.type}|${rec.message}|${rec.stack.split('\n')[1] || ''}`;
+        if (seen.has(key) || seen.size >= 10) return;
+        seen.add(key);
+        bridge.report(rec, knownNames()).catch(() => {});
+      } catch {
+        /* un error raro (un getter que lanza): no se informa */
+      }
+    };
+    const onError = (ev) => send('error', ev.error || { message: ev.message });
+    const onRejection = (ev) => send('rejection', ev.reason);
+    function listen(on) {
+      if (on === listening) return;
+      listening = on;
+      const fn = on ? 'addEventListener' : 'removeEventListener';
+      window[fn]('error', onError);
+      window[fn]('unhandledrejection', onRejection);
+    }
+    function apply(s) {
+      state = { available: !!s?.available, enabled: !!s?.available && !!s?.enabled };
+      el.errorsField.hidden = !state.available;
+      el.errorsReport.checked = state.enabled;
+      listen(state.enabled);
+    }
+    if (bridge) bridge.state().then(apply, () => apply(null));
+    return {
+      /** Al abrir Ajustes: la casilla como está guardado. */
+      show: () => (el.errorsReport.checked = state.enabled),
+      /** Al guardar Ajustes: si cambió, se guarda en el proceso principal y se empieza o deja de escuchar. */
+      save() {
+        if (!bridge || !state.available || el.errorsReport.checked === state.enabled) return;
+        bridge.set(el.errorsReport.checked).then(apply, (err) => console.error('No se pudo guardar el informe de errores:', err));
+      },
+    };
+  })();
+
   /** Los campos de los tokens, cada uno con su botón de mostrar u ocultar. */
   const tokenFields = [
     [el.tokenInput, el.tokenToggle],
@@ -4547,6 +4968,7 @@
       desktop.setToken(hookUrls[f.service], f.service).catch((err) => console.error('No se pudo guardar el webhook:', err));
     }
     if (hookFields.length) U.store.set('hooks', hookPrefs);
+    errorReports.save();
     closeSettings();
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
@@ -4658,6 +5080,7 @@
     feed.relocalize();
     renderTabs();
     overview.relocalize();
+    allSpace?.relocalize();
     editor.relocalize();
     if (allOn) renderAllSum();
     diffView.relocalize();
@@ -4724,6 +5147,8 @@
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
     initialAll = EMBED ? false : GB.overview.allParam(q);
+    const av = EMBED ? null : GB.allspace.viewParam(q); // ?all=3d: la vista conjunta en 3D (sin guardarlo)
+    if (av) allView = av;
   } catch {
     /* sin query string */
   }

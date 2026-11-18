@@ -307,3 +307,69 @@ test('20 pestañas y 100 repos más de su organización: las 120 galaxias caben 
   const far = (list) => list.reduce((sum, s) => sum + Math.hypot(s.x - 50, s.y - 50), 0) / list.length;
   assert.ok(far(spots.slice(20)) > far(spots.slice(0, 20)), 'las sin commits cargados van hacia afuera');
 });
+
+/* Las entregas después del plazo (ítem 222): con una tarea de GitHub Classroom seguida, `?plazo=AAAA-MM-DD` (o el campo
+   de la constelación) marca las entregas cuyo último push, el de la lista que ya se pidió, es posterior a ese día. */
+test('?plazo=AAAA-MM-DD: solo una fecha que existe; el plazo vence al terminar ese día, en la hora local', () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(C.dueParam(q('plazo=2026-01-15')), '2026-01-15');
+  assert.equal(C.dueParam(q('plazo=%202026-01-15%20')), '2026-01-15');
+  assert.equal(C.dueParam(q('plazo=2024-02-29')), '2024-02-29', 'un 29 de febrero bisiesto existe');
+  for (const bad of ['plazo=', 'plazo=2026-02-30', 'plazo=2025-02-29', 'plazo=2026-13-01', 'plazo=2026-1-5', 'plazo=15-01-2026', 'plazo=mañana', 'plazo=2026-01-15T10:00', 'repo=o/a'])
+    assert.equal(C.dueParam(q(bad)), null, bad);
+  // el plazo vence al terminar ese día: lo de ese día llega a tiempo, lo del día siguiente no
+  assert.equal(C.dueAt('2026-01-15'), new Date(2026, 0, 16).getTime());
+  assert.equal(C.dueAt('2026-12-31'), new Date(2027, 0, 1).getTime(), 'el último día del año vence al empezar el siguiente');
+  for (const bad of ['', null, undefined, '2026-02-30', 'ayer']) assert.equal(C.dueAt(bad), null, String(bad));
+  // al escribir el año en el campo, Chromium pasa por 0002, 0020 y 0202: no son un plazo (todas saldrían tarde)
+  for (const y of ['0002', '0020', '0202', '1969']) assert.equal(C.dueAt(`${y}-01-15`), null, y);
+  assert.equal(C.dueAt('1970-01-01'), new Date(1970, 0, 2).getTime());
+});
+
+test('las entregas de una tarea: cada repo de su lista con su último push, hasta 100 por lista y sin repetir', () => {
+  const keyOf = ({ owner, name }) => `${owner}/${name}`.toLowerCase();
+  const t1 = Array.from({ length: 120 }, (_, i) => ({ owner: 'curso', name: `tarea-1-e${i}`, pushedAt: new Date(Date.UTC(2026, 0, 1) + i * 3600e3).toISOString() }));
+  t1[2].pushedAt = null; // sin fecha: no la inventa
+  const subs = C.submissions({ 'curso/tarea-1-*': t1, otra: [{ owner: 'curso', name: 'tarea-1-e0', pushedAt: t1[0].pushedAt }, null, { owner: 'x' }] }, keyOf);
+  assert.equal(subs.size, 100, 'pasado el tope de la lista no entra, y un repo en dos listas es uno');
+  assert.equal(subs.get('curso/tarea-1-e1'), Date.UTC(2026, 0, 1) + 3600e3);
+  assert.equal(subs.get('curso/tarea-1-e2'), null);
+  assert.ok(!subs.has('curso/tarea-1-e100'));
+  assert.equal(C.submissions(null, keyOf).size, 0);
+  assert.equal(C.submissions({ x: 'no es una lista' }, keyOf).size, 0);
+});
+
+test('una entrega está fuera de plazo si su último push es posterior al plazo; sin push, sin plazo o sin ser entrega, no', () => {
+  const at = C.dueAt('2026-01-15');
+  const sub = (pushed) => ({ sub: true, pushed });
+  assert.equal(C.isLate(sub(new Date(2026, 0, 16, 0, 0, 1).getTime()), at), true, 'el día siguiente, ya tarde');
+  assert.equal(C.isLate(sub(new Date(2026, 0, 15, 23, 59).getTime()), at), false, 'el mismo día del plazo llega a tiempo');
+  assert.equal(C.isLate(sub(new Date(2026, 0, 10).getTime()), at), false);
+  for (const pushed of [null, undefined, NaN]) assert.equal(C.isLate(sub(pushed), at), false, 'sin push conocido no se acusa a nadie');
+  assert.equal(C.isLate({ pushed: new Date(2026, 1, 1).getTime() }, at), false, 'un repo que no es de la tarea no es una entrega');
+  assert.equal(C.isLate(sub(new Date(2026, 1, 1).getTime()), null), false, 'sin plazo, nadie está fuera de él');
+  const items = [sub(new Date(2026, 0, 10).getTime()), sub(new Date(2026, 0, 20).getTime()), sub(null), { name: 'o/otro', pushed: new Date(2026, 5, 1).getTime() }, sub(new Date(2026, 2, 1).getTime())];
+  assert.deepEqual({ ...C.lateCount(items, at) }, { late: 2, total: 4 });
+  assert.deepEqual({ ...C.lateCount(items, null) }, { late: 0, total: 4 });
+  assert.deepEqual({ ...C.lateCount([], at) }, { late: 0, total: 0 });
+});
+
+test('una entrega fuera de plazo lo dice en su nombre accesible y en su globo, con pestaña o sin ella; a tiempo, no', () => {
+  const NOW = 1_800_000_000_000;
+  const DAY = 864e5;
+  const at = NOW - 5 * DAY;
+  const text = (k, p) => (k === 'constellation.stats' ? `c${p.commits}/r${p.branches}` : k === 'constellation.late' ? 'con push después del plazo' : k === 'constellation.pushed' ? `último push ${p.ago}` : k === 'constellation.ghost' ? 'sin pestaña' : k);
+  const ago = (ms) => `hace ${(NOW - ms) / DAY} d`;
+  const tab = { name: 'curso/tarea-1-ana', commits: 4, branches: 1, last: NOW - DAY, sub: true, pushed: NOW - DAY, unread: 1 };
+  const late = C.describe(tab, { text, ago, now: NOW, due: at });
+  assert.equal(late.label, 'curso/tarea-1-ana, c4/r1, hace 1 d, con push después del plazo, tabs.unread');
+  assert.equal(late.title, 'curso/tarea-1-ana · c4/r1 · hace 1 d · con push después del plazo');
+  const ghost = { name: 'curso/tarea-1-beto', ghost: true, state: 'ghost', commits: 0, branches: 0, last: NOW - 2 * DAY, sub: true, pushed: NOW - 2 * DAY };
+  assert.equal(C.describe(ghost, { text, ago, now: NOW, due: at }).label, 'curso/tarea-1-beto, último push hace 2 d, con push después del plazo, sin pestaña');
+  assert.equal(C.describe(ghost, { text, ago, now: NOW, due: at }).title, 'curso/tarea-1-beto · último push hace 2 d · con push después del plazo · sin pestaña');
+  // a tiempo, sin plazo o sin ser entrega: lo de siempre
+  const onTime = { ...tab, pushed: NOW - 9 * DAY };
+  assert.ok(!/plazo/.test(C.describe(onTime, { text, ago, now: NOW, due: at }).label));
+  assert.ok(!/plazo/.test(C.describe(tab, { text, ago, now: NOW }).label));
+  assert.ok(!/plazo/.test(C.describe({ ...tab, sub: false }, { text, ago, now: NOW, due: at }).label));
+});

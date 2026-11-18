@@ -124,6 +124,13 @@ test('statusKey: un 404 o la cuota agotada no se rotulan «Sin conexión»', () 
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'rate' } }), 'status.errorRate');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'auth' } }), 'status.errorAuth');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'empty' } }), 'status.errorEmpty'); // un repo sin commits no es «Sin conexión»
+  // un 500, 502 o 409 llegó por la red: falla el servicio, no la wifi (pendiente 13 de la iteración 303)
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'http' } }), 'status.errorService');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'graphql' } }), 'status.errorService');
+  // salvo el 407 del proxy y el 511 del portal cautivo: ahí sí falla la red de la persona
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'http', status: 407 } }), 'status.error');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'http', status: 511 } }), 'status.error');
+  assert.equal(U.statusKey({ state: 'error', error: { kind: 'http', status: 502 } }), 'status.errorService');
   assert.equal(U.statusKey({ state: 'error', error: { kind: 'network' } }), 'status.error');
   assert.equal(U.statusKey({ state: 'error' }), 'status.error');
   assert.equal(U.statusKey({ state: 'inventado' }), null);

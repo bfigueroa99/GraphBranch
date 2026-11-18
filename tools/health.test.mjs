@@ -13,7 +13,7 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ window: { GB: {} } });
 vm.runInContext(readFileSync(join(root, 'js', 'health.js'), 'utf8'), ctx, { filename: 'health.js' });
-const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles } = ctx.window.GB.health;
+const { compute, clashes, clashCandidates, compare, conflictsParam, healthParam, forksParam, splitFiles, earlyMerges } = ctx.window.GB.health;
 
 const DAY = 864e5;
 const NOW = Date.UTC(2026, 9, 13, 12);
@@ -745,17 +745,145 @@ test('tiempo de ciclo por etapas: la mediana de cada etapa de los PRs fusionados
     noReview: 1,
     noApproval: 1,
     early: 1,
+    fetched: 0,
   });
   assert.equal(compute(repo(), [], NOW).cycle, null, 'sin PRs fusionados en las 4 semanas no hay nada que partir');
   const none = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4), { kind: 'push', id: 'p', time: ago(10) }], NOW).cycle));
-  assert.deepEqual(none, { reviews: true, merged: 1, open: { median: null, n: 0 }, review: { median: null, n: 0 }, merge: { median: null, n: 0 }, noReview: 1, noApproval: 0, early: 0 }, 'sin revisiones, las etapas no tienen mediana');
+  assert.deepEqual(none, { reviews: true, merged: 1, open: { median: null, n: 0 }, review: { median: null, n: 0 }, merge: { median: null, n: 0 }, noReview: 1, noApproval: 0, early: 0, fetched: 0 }, 'sin revisiones, las etapas no tienen mediana');
   const alone = JSON.parse(JSON.stringify(compute(repo(), [mg('4', 4, 3.5, 4)], NOW).cycle));
   assert.equal(alone.early, 1, 'con solo su merge cargado, la actividad no llega a su apertura: no se sabe si tuvo revisión');
   assert.equal(alone.noReview, 0);
+});
+
+test('tiempo de ciclo: los PRs que el feed no trajo entero (earlyMerges) son los fusionados de las 4 semanas abiertos antes de la actividad cargada, el de fusión más reciente primero y cada uno una vez', () => {
+  const mg = (id, number, mergedDays, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(mergedDays), openedAt: openedDays == null ? null : ago(openedDays) });
+  const acts = [
+    { kind: 'push', id: 'p', time: ago(35) }, // la actividad más vieja cargada: hace 35 días
+    mg('1', 1, 2, 36), // abierto antes: sus revisiones de entonces pueden faltar
+    mg('2', 2, 1, 50), mg('2b', 2, 1.5, 50), // otro, fusionado después: va primero, y su merge repetido cuenta una vez
+    mg('3', 3, 3, 5), // abierto después de la actividad más vieja: la actividad ya trae su historia
+    mg('4', 4, 30, 40), // fusionado hace más de 4 semanas: no entra en el tiempo de ciclo
+    mg('5', 5, 1, null), // sin apertura
+    mg('6', 6, -1, 40), // del futuro
+    { kind: 'pr-merge', id: 'x', time: ago(1), openedAt: ago(40) }, // sin número
+  ];
+  assert.deepEqual([...earlyMerges(acts, NOW)], [2, 1]);
+  assert.deepEqual([...earlyMerges([], NOW)], []);
+  assert.deepEqual([...earlyMerges([mg('3', 3, 3, 5), { kind: 'push', id: 'q', time: ago(10) }], NOW)], [], 'con la historia del PR ya cargada no hay nada que consultar');
+});
+
+test('tiempo de ciclo: un PR abierto antes de la actividad cargada entra en las etapas con sus revisiones consultadas (data.prReviews), y se cuenta aparte', () => {
+  const mg = (id, number, mergedDays, openedDays) => ({ kind: 'pr-merge', id, number, time: ago(mergedDays), openedAt: ago(openedDays) });
+  const rv = (kind, number, days) => ({ kind, id: `${kind}:${number}:${days}`, number, time: ago(days) });
+  const acts = [
+    { kind: 'push', id: 'p', time: ago(6) }, // la actividad más vieja cargada: hace 6 días
+    // el 1: sus revisiones consultadas (cambios pedidos y una aprobación) más una aprobación que sí trajo el feed: manda la última
+    mg('1', 1, 2, 10), rv('review-ok', 1, 2.5),
+    mg('2', 2, 1, 12), // el 2: solo un comentario consultado: revisado y fusionado sin aprobación
+    mg('3', 3, 1.5, 9), // el 3: consultado y sin ninguna revisión: fusionado sin revisión
+    mg('4', 4, 3, 20), // el 4: la consulta falló: sigue fuera de las etapas
+    mg('5', 5, 2.5, 30), // el 5: todavía sin consultar
+    mg('6', 6, 1, 5), rv('review-ok', 6, 2), // el 6: con su historia en la actividad, como siempre
+  ];
+  const data = repo();
+  data.prReviews = new Map([
+    // del 1, una revisión de antes de abrirlo y una aprobación de después de fusionarlo, que no cuentan
+    [1, [{ kind: 'review', time: ago(11) }, { kind: 'review-changes', time: ago(9) }, { kind: 'review-ok', time: ago(4) }, { kind: 'review-ok', time: ago(1) }]],
+    [2, [{ kind: 'review', time: ago(11) }]],
+    [3, []],
+    [4, null],
+    [6, [{ kind: 'review-ok', time: ago(4.5) }]], // el 6 no estaba fuera: lo consultado no cambia lo que dice la actividad
+  ]);
+  const c = JSON.parse(JSON.stringify(compute(data, acts, NOW).cycle));
+  assert.deepEqual(c, {
+    reviews: true,
+    merged: 6,
+    open: { median: DAY, n: 3 }, // 1 (el 1), 1 (el 2) y 3 días (el 6)
+    review: { median: 3.25 * DAY, n: 2 }, // 6,5 (el 1, de los cambios pedidos a la aprobación del feed) y 0 días (el 6)
+    merge: { median: 0.75 * DAY, n: 2 }, // 0,5 (el 1) y 1 día (el 6)
+    noReview: 1, // el 3
+    noApproval: 1, // el 2
+    early: 2, // el 4 y el 5
+    fetched: 3, // el 1, el 2 y el 3
+  });
+  assert.deepEqual([...earlyMerges(acts, NOW)], [2, 3, 1, 5, 4],'earlyMerges no mira lo consultado: decide qué pedir la fuente, que no repite');
+  const off = JSON.parse(JSON.stringify(compute(data, acts, NOW, 'recent', { reviews: false }).cycle));
+  assert.deepEqual(off, { reviews: false, merged: 6 }, 'una fuente que no da revisiones no usa lo consultado');
 });
 
 test('tiempo de ciclo: una fuente que no da revisiones lo dice, y no cuenta sus PRs como fusionados sin revisión', () => {
   const acts = [{ kind: 'pr-merge', id: 'a', number: 1, time: ago(2), openedAt: ago(3) }, { kind: 'pr-merge', id: 'b', number: 2, time: ago(40), openedAt: ago(41) }];
   assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), acts, NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 1 });
   assert.deepEqual(JSON.parse(JSON.stringify(compute(repo(), [], NOW, 'recent', { reviews: false }).cycle)), { reviews: false, merged: 0 }, 'aunque no haya nada fusionado, la fuente dice que no da revisiones');
+});
+
+test('OpenSSF Scorecard: el puntaje, la fecha del análisis y las tres comprobaciones más bajas, sin las no concluyentes', () => {
+  const data = repo();
+  assert.equal(compute(data, [], NOW).scorecard, null, 'sin consulta (otra fuente, un repo privado), la sección no sale');
+  const ck = (name, score, reason = `motivo de ${name}`) => ({ name, score, reason });
+  data.scorecard = {
+    state: 'ok',
+    score: 6.4,
+    date: ago(3),
+    checks: [ck('Maintained', 10), ck('Signed-Releases', -1, 'no releases found'), ck('Fuzzing', 0), ck('Pinned-Dependencies', 6), ck('CII-Best-Practices', 0), ck('Code-Review', 2), ck('License', 10)],
+  };
+  const h = compute(data, [], NOW);
+  assert.equal(h.scorecard.state, 'ok');
+  assert.equal(h.scorecard.score, 6.4);
+  assert.equal(h.scorecard.date, ago(3));
+  assert.deepEqual(Array.from(h.scorecard.lowest, (c) => `${c.name} ${c.score}`), ['CII-Best-Practices 0', 'Fuzzing 0', 'Code-Review 2'], 'de la más baja a la más alta, a igual puntaje por nombre; la de -1 (no concluyente) no cuenta como baja');
+  assert.equal(h.scorecard.lowest[0].reason, 'motivo de CII-Best-Practices');
+  assert.equal(h.scorecard.checks, 6, 'las comprobaciones con puntaje, sin la no concluyente');
+  data.scorecard = { state: 'ok', score: 9, date: null, checks: [ck('License', 10), ck('Signed-Releases', -1)] };
+  assert.deepEqual(Array.from(compute(data, [], NOW).scorecard.lowest, (c) => c.name), ['License'], 'con menos de tres, las que haya');
+  for (const state of ['none', 'error']) {
+    data.scorecard = { state, at: NOW };
+    assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state }, `${state}: la sección lo dice`);
+  }
+  data.scorecard = { state: 'raro' };
+  assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'error' }, 'un estado que no se conoce se dice como un fallo');
+});
+
+test('OpenSSF Scorecard: un proyecto de un subgrupo de GitLab, que la API de Scorecard no da, se dice como tal y no como un fallo', () => {
+  const data = repo();
+  data.scorecard = { state: 'subgroup' };
+  assert.deepEqual({ ...compute(data, [], NOW).scorecard }, { state: 'subgroup' });
+});
+
+test('firma de los commits (ítem 230): los de la rama por defecto de las últimas 4 semanas sin firma verificada, por todos sus padres', () => {
+  const OK = { ok: true };
+  const NONE = { ok: false, state: 'UNSIGNED' };
+  const BAD = { ok: false, state: 'EXPIRED_KEY' };
+  const c = (sha, d, parents, sig) => [sha, { sha, date: ago(d), parents, message: `${sha}\ncuerpo`, ...(sig ? { sig } : {}) }];
+  const data = {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([
+      c('m4', 1, ['m3', 'f2'], OK), // merge de feat: sus commits también son de main
+      c('f2', 2, ['f1'], NONE),
+      c('f1', 3, ['m2'], BAD),
+      c('m3', 2.5, ['m2'], NONE),
+      c('m2', 10, ['m1'], undefined), // la fuente no dio su firma: no cuenta ni como verificada ni como sin firma
+      c('m1', 35, [], NONE), // de hace más de 4 semanas
+      c('x1', 1, ['m4'], NONE), // solo de otra rama
+      c('z1', -1, ['m4'], NONE), // del futuro (un reloj adelantado): no entra
+    ]),
+    branches: new Map([['main', { name: 'main', sha: 'm4', isDefault: true }], ['otra', { name: 'otra', sha: 'x1' }]]),
+    pulls: new Map(),
+  };
+  const s = JSON.parse(JSON.stringify(compute(data, [], NOW).signed)); // de otro contexto (vm)
+  assert.deepEqual(
+    { branch: s.branch, total: s.total, unverified: s.unverified, unsigned: s.unsigned, invalid: s.invalid, rows: s.rows.map((r) => [r.sha, r.message, r.state]) },
+    { branch: 'main', total: 4, unverified: 3, unsigned: 2, invalid: 1, rows: [['f2', 'f2', 'UNSIGNED'], ['m3', 'm3', 'UNSIGNED'], ['f1', 'f1', 'EXPIRED_KEY']] },
+  );
+  // sin la rama por defecto por nombre, la marcada como tal; todas verificadas: 0 de n, sin filas
+  const signed = { ...data, repo: {}, commits: new Map([c('m4', 1, ['m3'], OK), c('m3', 2, [], OK)]) };
+  assert.deepEqual(JSON.parse(JSON.stringify(compute(signed, [], NOW).signed)), { branch: 'main', total: 2, unverified: 0, unsigned: 0, invalid: 0, rows: [] });
+  // ningún commit con firma conocida (otra fuente), o sin rama por defecto: null, la sección no sale
+  assert.equal(compute({ ...data, commits: new Map([c('m4', 1, [], undefined)]) }, [], NOW).signed, null);
+  assert.equal(compute({ ...data, branches: new Map() }, [], NOW).signed, null);
+  // muchas: hasta 8 filas, con la cuenta entera
+  const many = new Map();
+  for (let i = 0; i < 12; i++) many.set('k' + i, { sha: 'k' + i, date: ago(i + 0.5), parents: i < 11 ? ['k' + (i + 1)] : [], message: 'k', sig: NONE });
+  const m = JSON.parse(JSON.stringify(compute({ ...data, commits: many, branches: new Map([['main', { name: 'main', sha: 'k0', isDefault: true }]]) }, [], NOW).signed));
+  assert.deepEqual([m.total, m.unverified, m.rows.length, m.rows[0].sha], [12, 12, 8, 'k0']);
 });

@@ -193,6 +193,22 @@ test('cada rama dice cuántos de sus PRs abiertos están en borrador, y la lista
   assert.equal(build(repo()).branches[1].drafts, 0); // sin PRs cargados, ninguno
 });
 
+test('cada rama dice cuántos de sus PRs abiertos están aprobados, con lo ya cargado: un borrador o uno de un fork no cuenta', () => {
+  const d = repo();
+  d.pulls = new Map([
+    [1, { number: 1, head: 'feature', sameRepo: true, review: 'approved' }],
+    [2, { number: 2, head: 'feature', sameRepo: true, review: 'approved', ci: 'failure' }], // aprobado aunque el CI falle: lo dice su rama aparte
+    [3, { number: 3, head: 'feature', sameRepo: true }], // sin revisar
+    [4, { number: 4, head: 'feature', sameRepo: true, review: 'changes' }], // con cambios pedidos
+    [5, { number: 5, head: 'feature', sameRepo: true, draft: true, review: 'approved' }], // borrador: cuenta como borrador
+    [6, { number: 6, head: 'main', sameRepo: false, review: 'approved' }], // de un fork: su rama no es de este repo
+    [7, { number: 7, head: 'main', sameRepo: true, review: 'APPROVED' }], // solo la forma que dejan las fuentes
+  ]);
+  const by = Object.fromEntries(build(d).branches.map((b) => [b.name, [b.prs, b.drafts, b.approved]]));
+  assert.deepEqual(by, { main: [1, 0, 0], feature: [5, 1, 2] });
+  assert.equal(build(repo()).branches[1].approved, 0); // sin PRs cargados, ninguno
+});
+
 test('con la lista de PRs completa, una rama sin PR abierto propio lo dice; la por defecto y las fusionadas no', () => {
   const d = repo(); // feature ya está en la historia de main: fusionada, no «sin PR»
   const c = (sha, date) => d.commits.set(sha, { sha, parents: ['m3'], message: sha, date, author: { name: 'Ana' } });

@@ -55,6 +55,7 @@ function load(net) {
   const ctx = vm.createContext({ self, caches, Request, URL, fetch: async (r) => net(r) });
   vm.runInContext(readFileSync(join(root, 'sw.js'), 'utf8'), ctx, { filename: 'sw.js' });
   const files = vm.runInContext('FILES', ctx);
+  const onDemand = vm.runInContext('ON_DEMAND', ctx);
 
   /** Dispara un evento; devuelve lo que se pasó a respondWith (o null) y espera los waitUntil. */
   async function fire(type, props = {}) {
@@ -66,7 +67,7 @@ function load(net) {
     return { responded: !!responded, res: out };
   }
   const get = (url, more = {}) => fire('fetch', { request: { url: new URL(url, SITE).href, method: 'GET', mode: 'cors', ...more } });
-  return { store, files: Array.from(files), fire, get };
+  return { store, files: Array.from(files), onDemand: Array.from(onDemand), fire, get };
 }
 
 function res(status, body, more = {}) {
@@ -77,10 +78,14 @@ const offline = () => {
 };
 
 test('el service worker guarda todo lo que la página puede pedir, y nada más', () => {
-  const { files } = load(offline);
-  const expected = ['index.html', 'manifest.webmanifest', ...['icons', 'css', 'js', 'vendor'].flatMap(walk)];
+  const { files, onDemand } = load(offline);
+  // lo que la página pide solo a veces (js/sentry.js, al mandar un informe de errores) no se guarda: quien no lo usa no lo baja
+  assert.deepEqual(onDemand, ['js/sentry.js'], 'ON_DEMAND de sw.js: solo el emisor de los informes de errores');
+  const all = ['index.html', 'manifest.webmanifest', ...['icons', 'css', 'js', 'vendor'].flatMap(walk)];
+  for (const f of onDemand) assert.ok(all.includes(f), `${f} de ON_DEMAND no existe`);
+  const expected = all.filter((f) => !onDemand.includes(f));
   const sorted = (list) => [...list].sort();
-  assert.deepEqual(sorted(files), sorted(expected), 'FILES de sw.js tiene que listar cada archivo de icons/, css/, js/ y vendor/');
+  assert.deepEqual(sorted(files), sorted(expected), 'FILES de sw.js tiene que listar cada archivo de icons/, css/, js/ y vendor/ (salvo los de ON_DEMAND)');
   // y la página no pide nada fuera de esa lista
   const html = read('index.html').toString();
   // <link rel="canonical"> no es un pedido: nombra la dirección de la página y el navegador nunca lo carga
@@ -111,6 +116,9 @@ test('nunca toca la API de GitHub, los avatares ni otro sitio', async () => {
   assert.equal((await fire('fetch', { request: { url: SITE + 'js/app.js', method: 'POST', mode: 'cors' } })).responded, false);
   assert.equal((await get('sw.js')).responded, false, 'el propio worker no se guarda');
   assert.equal((await get('otra/cosa.js')).responded, false);
+  // el emisor de los informes de errores va directo a la red, y su POST a Sentry no pasa por aquí
+  assert.equal((await get('js/sentry.js')).responded, false, 'js/sentry.js no se guarda');
+  assert.equal((await fire('fetch', { request: { url: 'https://o1.ingest.us.sentry.io/api/7/envelope/?sentry_version=7', method: 'POST', mode: 'cors' } })).responded, false);
   assert.equal(store.size, 0);
   assert.deepEqual(seen, []);
 });
@@ -173,6 +181,8 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.ok(manifest.icons.some((i) => i.purpose === 'maskable'), 'falta el ícono adaptable (maskable)');
 
   const html = read('index.html').toString();
+  // el DSN de Sentry de la web y su host los pone quien publica la página (tools/sentry-web.mjs), nunca el repo
+  assert.equal(/name="sentry-dsn"/.test(html), false, 'index.html del repo trae un DSN de Sentry');
   assert.match(html, /<link rel="manifest" href="manifest.webmanifest">/);
   assert.match(html, /<script src="js\/pwa.js"><\/script>/);
   const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)[1].replace(/\s+/g, ' ');
@@ -182,8 +192,8 @@ test('el manifiesto, sus íconos y el CSP dejan instalar la página', () => {
   assert.ok(directive('img-src').includes("'self'"), 'los íconos del manifiesto se cargan como imágenes del propio sitio');
   assert.deepEqual(
     directive('connect-src'),
-    ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com', 'https://api.anthropic.com', 'https://api.openai.com', 'https://openrouter.ai', 'http://localhost:20128', 'http://127.0.0.1:20128'],
-    'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps, y las del gasto en IA (Anthropic, OpenAI, OpenRouter y un OmniRoute local en su puerto)',
+    ['https://api.github.com', 'https://gitlab.com', 'https://codeberg.org', 'https://api.bitbucket.org', 'https://dev.azure.com', 'https://api.anthropic.com', 'https://api.openai.com', 'https://openrouter.ai', 'http://localhost:20128', 'http://127.0.0.1:20128', 'https://api.scorecard.dev'],
+    'el CSP sigue cerrado: solo las APIs de GitHub, GitLab, Codeberg, Bitbucket y Azure DevOps, las del gasto en IA (Anthropic, OpenAI, OpenRouter y un OmniRoute local en su puerto) y la de OpenSSF Scorecard',
   );
 });
 

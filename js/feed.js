@@ -85,6 +85,9 @@
       this.synth = new GB.Synth();
       this.panOf = panOf; // lado de la pantalla de cada actividad, para el sonido
       this.renderChips();
+      // el panel vacío ya en el idioma de la página: sin esto quedaba el texto de index.html, en inglés, hasta la
+      // primera actividad (en un repo sin actividad reciente, para siempre; también en el modo TV)
+      this.render();
       setInterval(() => this.refreshTimes(), 20000);
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {

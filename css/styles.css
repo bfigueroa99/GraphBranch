@@ -941,6 +941,18 @@ kbd {
 .practice[hidden] {
   display: none;
 }
+/* con la práctica abierta el grafo guarda su alto: la terminal, sus cartas y las tres columnas del árbol de trabajo, el
+   índice y HEAD pasan de 400 px en un panel de 610 (1280×800) y, con unos comandos en la terminal, el grafo quedaba en
+   0 px y no dibujaba los commits nuevos (`dev` en rojo en la iteración 301: «la práctica de git responde a los comandos
+   en el grafo»). Lo que no cabe se desplaza dentro de la práctica; en el celular la página crece y esto no cambia nada */
+.graph-panel:has(> .practice:not([hidden])) .graph-stage {
+  min-height: 200px;
+}
+.practice {
+  min-height: 0;
+  overflow-y: auto;
+  grid-auto-rows: max-content; /* cada fila con su alto entero: sin esto las cartas (con su desplazamiento de lado) se aplastaban a 6 px */
+}
 .pr-head {
   display: flex;
   flex-wrap: wrap;
@@ -1493,7 +1505,8 @@ kbd {
 }
 .head .h-ci,
 .h3-ci,
-.tip-ci {
+.tip-ci,
+.sig-mark {
   fill: var(--ci);
   color: var(--ci);
 }
@@ -5030,6 +5043,18 @@ html.embed-hide-clock .g3-day {
   direction: ltr;
   text-align: left;
 }
+.df-fhead:has(.df-owners) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* los dueños del archivo (CODEOWNERS), en su propia línea bajo la ruta */
+.df-owners {
+  flex: 1 0 100%;
+  padding-inline-start: 14px;
+  color: var(--ink-3);
+  font: 11.5px var(--font-ui);
+  overflow-wrap: anywhere;
+}
 .df-from {
   color: var(--ink-3);
 }
@@ -5483,6 +5508,28 @@ a.hl-row:focus-visible {
   text-align: end;
   overflow-wrap: anywhere;
 }
+/* un commit sin firma verificada dice su motivo, a veces largo («Nicht verifizierte Signatur (EXPIRED_KEY)»): en una
+   pantalla angosta pasa a su propia línea, al final, en vez de partir las palabras o desbordar el panel */
+#hl-signed .hl-row {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+#hl-signed .hl-main {
+  flex: 1 1 14em;
+}
+#hl-signed .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+/* las comprobaciones de OpenSSF Scorecard: el motivo es una frase de la API (a veces con una URL entera), así que se
+   parte en vez de recortarse o desbordar el panel a 320 px */
+.hl-checks li {
+  padding: 2px 8px;
+  overflow-wrap: anywhere;
+}
 .hl-switch {
   display: flex;
   align-items: center;
@@ -5496,7 +5543,10 @@ a.hl-row:focus-visible {
   height: 18px;
 }
 .hl-none,
+/* position: relative: el bloque contenedor del .sr-only de las series por semana (lo que lee un lector de pantalla),
+   para que quede dentro de su línea y del panel que se desplaza, como en .repo-tabs */
 .hl-line {
+  position: relative;
   margin: 0;
   color: var(--ink-3);
 }
@@ -6460,6 +6510,31 @@ html.tv .agk-btn {
 .cs-gx[data-state='ghost'] .cs-name {
   color: var(--ink-2);
 }
+/* una entrega de una tarea con su último push después del plazo: borde de color y un reloj en la esquina (su nombre
+   accesible y su globo lo dicen con palabras) */
+.cs-gx[data-late='true'] {
+  border: 2px solid var(--bad);
+}
+.cs-gx[data-state='ghost'][data-late='true'] {
+  border-style: dashed;
+}
+/* el reloj no se apaga con la galaxia tenue o quieta (esas reglas tocan todo svg de la galaxia) */
+.cs-gx[data-late='true'] .cs-late {
+  grid-area: auto;
+  opacity: 1;
+  filter: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bad);
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
 .cs-gx:hover svg,
 .cs-gx:focus-visible svg {
   filter: brightness(1.25);
@@ -7138,6 +7213,21 @@ html.tv .agk-btn {
 .app.all-on .graph-panel {
   display: none;
 }
+/* el tablero de agentes con todos los repos juntos (app.js, paintAgentsScope): sin las cifras de un repo y con el
+   título de todos en lugar del nombre del que estaba a la vista */
+.app.agents-all:not(.all-on) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.app.agents-all .stats,
+.graph-panel.agents-all #repo-link,
+.graph-panel.agents-all #repo-badge,
+.graph-panel.agents-all #repo-desc,
+.graph-panel.agents-all .game-strip {
+  display: none;
+}
+#graph-all[hidden] {
+  display: none;
+}
 .all-panel[hidden] {
   display: none;
 }
@@ -7434,7 +7524,8 @@ a.ap-row {
   }
 }
 @media (max-width: 860px) {
-  .app.all-on {
+  .app.all-on,
+  .app.agents-all:not(.all-on) {
     grid-template-rows: none;
   }
   .rc-grid {
@@ -7475,6 +7566,158 @@ a.ap-row {
   .rc-card.rc-news {
     animation: none;
   }
+}
+
+/* ---------- la vista conjunta en 3D (js/allspace.js): todos los repos como torres de una misma escena ----------
+   Toma el lugar de las tarjetas (el Launchpad sigue arriba). Los rótulos de las torres son botones sobre el lienzo,
+   que app.js no mueve: allspace.js los pone sobre su torre en cada cuadro. Sin WebGL quedan en una lista. */
+.rc-grid[hidden],
+.as-stage[hidden] {
+  display: none;
+}
+.as-stage {
+  position: relative;
+  isolation: isolate; /* los rótulos se ordenan entre ellos (z-index), no con el resto de la página */
+  flex: 1;
+  min-height: 360px;
+  margin: 0 8px 4px;
+  border-radius: 9px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 85%, color-mix(in srgb, var(--s1) 9%, transparent), transparent 60%),
+    var(--surface);
+  border: 1px solid var(--line);
+}
+.as-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.as-canvas:active {
+  cursor: grabbing;
+}
+.as-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.as-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 1px;
+  max-width: 230px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--ink);
+  font: 650 12px/1.25 var(--font-ui);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.as-label:hover {
+  border-color: var(--ink-3);
+}
+/* fuera de cuadro (o detrás de la cámara) no se ve, pero sigue en el orden de Tab: al enfocarlo la cámara va a su torre */
+.as-label.is-off {
+  opacity: 0;
+  pointer-events: none;
+}
+.as-label.is-off:focus {
+  opacity: 1;
+}
+.as-lhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.as-name,
+.as-stats {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.as-name {
+  font-family: var(--font-mono);
+}
+.as-stats {
+  color: var(--ink-3);
+  font: 500 10.5px/1.3 var(--font-ui);
+}
+.as-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-3);
+}
+.as-label[data-state="live"] .as-dot {
+  background: var(--good);
+}
+.as-label[data-state="limited"] .as-dot {
+  background: var(--warn);
+}
+.as-label[data-state="error"] .as-dot {
+  background: var(--bad);
+}
+.as-label[data-state="loading"] .as-dot {
+  background: transparent;
+  border: 1.5px solid var(--ink-3);
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+.as-label.as-news {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 40%, transparent);
+  animation: rc-news 1.4s ease-out;
+}
+.as-wrap.is-many:not(.is-flat) .as-stats {
+  display: none;
+}
+.as-nogl {
+  margin: 12px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+/* sin WebGL: los repos en una lista que se puede recorrer (y abrir) igual */
+.as-wrap.is-flat .as-labels {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.as-wrap.is-flat .as-label {
+  position: static;
+}
+@media (prefers-reduced-motion: reduce) {
+  .as-label {
+    transition: none;
+  }
+  .as-label.as-news {
+    animation: none;
+  }
+  .as-label[data-state="loading"] .as-dot {
+    animation: none;
+    border-top-color: var(--ink-3);
+  }
+}
+html.tv .all-panel.as-on .as-stage {
+  margin-bottom: 8px;
+}
+/* el texto crece con la pantalla; el rótulo no (allspace.js lo ubica en píxeles: con zoom se correría) */
+html.tv .as-lhead,
+html.tv .as-stats {
+  zoom: var(--tvz, 1);
 }
 
 /* ---------- modo TV con la vista conjunta: todos los repos a la vez, en una pantalla compartida ----------
@@ -8113,6 +8356,11 @@ html.tv .rc-card.rc-news {
   font-size: 11px;
 }
 /* el ingreso de tareas */
+.sw-repo {
+  margin-inline-end: 6px;
+  color: var(--ink-3);
+  font: 600 11px/1.6 var(--font-mono);
+}
 .sw-tag {
   margin-inline-end: 6px;
   padding: 0 5px;

@@ -2852,6 +2852,14 @@ if (seccion('Varios repos a la vez'))
     // lo que llega a un repo enciende su torre
     gh.push('o/b', 'main', 'llega a la torre');
     await page.waitForSelector('.as-label[data-key="o/b"].as-news', { timeout: T(15000) });
+    // en el modo TV, el 3 cambia a las tarjetas sin guardarlo: al salir vuelve el 3D
+    await page.click('#all-tv-btn');
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv') && !document.querySelector('#tv-all3d').hidden, null, { timeout: T(3000) });
+    await page.keyboard.press('3');
+    await page.waitForFunction(() => document.querySelector('#all-space').hidden && !document.querySelector('#all-grid').hidden, null, { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv') && !document.querySelector('#all-space').hidden, null, { timeout: T(3000) });
+    if ((await page.evaluate(() => localStorage.getItem('graphbranch:allView'))) !== '"3d"') throw new Error('lo que se cambió en el modo TV quedó guardado');
     // de vuelta a las tarjetas: se dibujan sus grafos (en 3D no se dibujaban)
     await page.click('#all-2d');
     await page.waitForFunction(() => document.querySelector('#all-space').hidden && [...document.querySelectorAll('#all-grid .rc-card')].every((c) => c.querySelector('.graph-svg .node')) && document.querySelector('.rc-card[data-key="o/b"] .rc-lmsg')?.textContent === 'llega a la torre', null, { timeout: T(5000) });

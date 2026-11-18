@@ -390,7 +390,7 @@
     count: $('#feed-count'),
     onSelect: (a) => {
       // en la vista conjunta, a la tarjeta de su repo y a su commit o su rama, sin salir de ella
-      if (allOn && a.repo != null) return overview.focus(a.repo, { sha: a.sha, branch: a.branch });
+      if (allOn && a.repo != null) return spaceOn() ? allSpace.show(a.repo) : overview.focus(a.repo, { sha: a.sha, branch: a.branch }); // en 3D, a su torre
       // la actividad de otro repo seguido lleva a su pestaña (la de uno que ya no se sigue, a ninguna parte)
       if (a.repo != null) {
         const tab = tabs.find((x) => x.key === a.repo);
@@ -1134,8 +1134,10 @@
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
     if (allOn) setAll(false, { save: !tv.on });
-    if (agentsOn && agentsCombined()) setAgentsAll(false, { save: !tv.on, render: false }); // el tablero pasa a ser el de ese repo
+    const was = agentsOn && agentsCombined();
+    if (was) setAgentsAll(false, { save: !tv.on, render: false }); // el tablero pasa a ser el de ese repo
     showTab(tab);
+    if (was) renderAgents();
   }
 
   function makeTabEl(tab) {
@@ -1356,6 +1358,7 @@
     v = v === '3d' && graph3d ? '3d' : '2d';
     const was = allView;
     allView = v;
+    if (allOn && v === '3d') diffView.close(); // eran los cambios de un commit de una tarjeta, que deja de verse
     if (save && !tv.on) U.store.set('allView', v === '3d' ? '3d' : null);
     paintAllView();
     // de vuelta a las tarjetas: sus grafos no se dibujaban mientras se veía el 3D
@@ -1464,6 +1467,8 @@
       renderAllSum();
     }
     graph3d?.setActive(view === '3d' && !on && !agentsOn);
+    cortex?.setActive(cortexLive());
+    if (!on && agentsOn) renderAgents(); // el tablero que quedó detrás vuelve al día
     renderTabs();
     if (save) U.store.set('all', on || null);
     setUrlParam('all', on ? (allView === '3d' && graph3d ? '3d' : '1') : null);
@@ -2504,6 +2509,13 @@
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
   // todos los repos seguidos juntos en el tablero (se entra así desde la vista conjunta), no solo el que está a la vista
   let agentsAll = U.store.get('agentsAll', false) === true;
+  try {
+    // ?agents=all los junta y ?agents=1 no (sin guardarlo). Se lee aquí, antes de que la vista recordada reescriba la URL
+    const q = new URLSearchParams(location.search);
+    if (!EMBED && GB.agents.openParam(q)) agentsAll = GB.agents.allParam(q);
+  } catch {
+    /* sin query string */
+  }
   const agentsCombined = () => agentsAll && tabs.length > 1;
   let agentsRepoOf = null; // con todos juntos: sha -> repo de cada commit (ir a un commit lleva a su pestaña)
   let agentsTimer = 0;
@@ -2512,7 +2524,7 @@
   let agentsSeen = null; // lo que ya se mostró ({ ev: Set, edges: Map }): lo que llega después se anima
   let agentsLit = null; // a quién se ilumina en la red (puntero o foco): sobrevive a que el tablero se rehaga
   /** El id de una interacción, el mismo en cada vuelta: para saber cuál es nueva. */
-  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? ''].join('|');
+  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? '', e.repo ?? ''].join('|');
   const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
   /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
       Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
@@ -2713,7 +2725,7 @@
     cortex.setActive(cortexLive());
   }
   /** La corteza se anima mientras se ve, salvo con el modo TV en pausa (ahí la pausa detiene todo lo que se mueve). */
-  const cortexLive = () => agentsOn && !(paused && tv.on);
+  const cortexLive = () => agentsOn && !allOn && !(paused && tv.on);
 
   /** El reloj del tablero, al segundo, mientras se mira. */
   let clockTimer = 0;
@@ -2859,6 +2871,7 @@
     clearTimeout(agentsTimer);
     agentsTimer = 0;
     if (!source) return;
+    if (allOn) return void (agentsHtml = ''); // detrás de la vista conjunta no se ve: se rehace al volver (setAll)
     const html = agentsMarkup();
     if (html === agentsHtml) return pushCortex(); // la corteza igual recibe lo nuevo (un pulso más, por ejemplo)
     const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
@@ -4439,6 +4452,8 @@
       diffView.close(); // la pantalla compartida no es la de los cambios de un commit
       tv.prevView = view;
       tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
+      tv.prevAgentsAll = agentsAll; // y con qué alcance (el de un repo o todos juntos), y la vista conjunta en 2D o 3D
+      tv.prevAllView = allView;
       tv.lastNews = tv.lastAttract = Date.now();
       if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
       if (tv.prevAgents && !initialAgents && !allOn) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
@@ -4461,6 +4476,8 @@
       director?.setOn(!!U.store.get('director', false));
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
+      setAgentsAll(tv.prevAgentsAll, { save: false, render: false });
+      if (allView !== tv.prevAllView) setAllView(tv.prevAllView, { save: false });
       if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
       setAll(tv.prevAll, { save: false }); // y a la vista conjunta, si se entró desde ella (o se sale de la que se abrió en TV)
       tv.lock?.release().catch(() => {});
@@ -5093,7 +5110,6 @@
     initialBitacora = !EMBED && q0.has('bitacora') && !/^(0|false|no|off)$/i.test(q0.get('bitacora'));
     initialHealth = !EMBED && GB.health.healthParam(q0);
     initialAgents = !EMBED && GB.agents.openParam(q0);
-    if (initialAgents && GB.agents.allParam(q0)) agentsAll = true; // ?agents=all: con todos los repos juntos (sin guardarlo)
     const ig = EMBED ? null : GB.agents.graphParam(q0); // ?interactions=1 manda sobre lo guardado (y =0 lo apaga)
     if (ig != null) setAgentGraph(ig, { save: false });
     else if (agentGraph) setUrlParam('interactions', '1');

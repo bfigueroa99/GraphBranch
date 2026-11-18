@@ -7577,6 +7577,7 @@ a.ap-row {
 }
 .as-stage {
   position: relative;
+  isolation: isolate; /* los rótulos se ordenan entre ellos (z-index), no con el resto de la página */
   flex: 1;
   min-height: 360px;
   margin: 0 8px 4px;
@@ -7626,8 +7627,13 @@ a.ap-row {
 .as-label:hover {
   border-color: var(--ink-3);
 }
+/* fuera de cuadro (o detrás de la cámara) no se ve, pero sigue en el orden de Tab: al enfocarlo la cámara va a su torre */
 .as-label.is-off {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.as-label.is-off:focus {
+  opacity: 1;
 }
 .as-lhead {
   display: flex;

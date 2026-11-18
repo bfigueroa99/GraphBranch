@@ -368,6 +368,18 @@
       this.kick();
     }
 
+    /** Muestra la torre de un repo (un clic en su actividad): la cámara va a ella y su rótulo se enciende. */
+    show(key) {
+      const r = this.repos.get(key);
+      if (!r) return;
+      this.focus(key);
+      r.el.classList.remove('as-news');
+      void r.el.offsetWidth;
+      r.el.classList.add('as-news');
+      clearTimeout(r.newsTimer);
+      r.newsTimer = setTimeout(() => r.el.classList.remove('as-news'), NEWS);
+    }
+
     /** La cámara va hacia la torre de un repo (sin cambiar cuánto se ve). */
     focus(key) {
       const r = this.repos.get(key);

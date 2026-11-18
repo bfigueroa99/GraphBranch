@@ -219,7 +219,8 @@
   /** El ingreso de tareas: cada PR abierto y cada rama sin PR (salvo la principal), a quién le tocó y en qué está, de lo
       más nuevo a lo más viejo. Devuelve { items: [{ kind: 'pr'|'draft'|'branch', number, title, branch, sha, who,
       agent, ci, waiting, time, repo }] (hasta `max`), routed (cuántas lleva un agente), total }. Con varios repos juntos
-      (agents.combine) la principal es la de cada uno (`data.mains`) y `repo`, el nombre del suyo; si no, null. */
+      (agents.combine) la principal es la de cada uno (`data.mains`), `branch` es la rama sin la clave del repo y
+      `repo`, el nombre del suyo; si no, null. */
   function ingest(res, data, { max = 10 } = {}) {
     const byKey = new Map((res?.actors || []).map((a) => [a.key, a]));
     const commits = data?.commits || new Map();
@@ -232,7 +233,7 @@
       const who = prOwner(res, data, p, byKey);
       const agent = !!byKey.get(who)?.agent;
       const ci = prCi(data, p);
-      items.push({ kind: p.draft ? 'draft' : 'pr', number: p.number, title: clean(p.title) || firstLine(commits.get(sha)?.message), branch: clean(p.head, 120), sha, who, agent, ci, waiting: agent && ready(p, ci), time: Math.max(commits.get(sha)?.date || 0, p.createdAt || 0), repo: p.repo ?? null });
+      items.push({ kind: p.draft ? 'draft' : 'pr', number: p.number, title: clean(p.title) || firstLine(commits.get(sha)?.message), branch: clean(p.branch ?? p.head, 120), sha, who, agent, ci, waiting: agent && ready(p, ci), time: Math.max(commits.get(sha)?.date || 0, p.createdAt || 0), repo: p.repo ?? null });
     }
     const main = data?.repo?.defaultBranch;
     for (const [name, b] of data?.branches || []) {
@@ -240,7 +241,7 @@
       const c = commits.get(b.sha);
       if (!c) continue;
       const who = res?.owners?.get(b.sha) || null;
-      items.push({ kind: 'branch', number: null, title: firstLine(c.message), branch: clean(name, 120), sha: b.sha, who, agent: !!byKey.get(who)?.agent, ci: data?.ci?.get?.(name) ?? null, waiting: false, time: c.date || 0, repo: b.repo ?? null });
+      items.push({ kind: 'branch', number: null, title: firstLine(c.message), branch: clean(b.branch ?? name, 120), sha: b.sha, who, agent: !!byKey.get(who)?.agent, ci: data?.ci?.get?.(name) ?? null, waiting: false, time: c.date || 0, repo: b.repo ?? null });
     }
     items.sort((x, y) => y.time - x.time || (x.branch < y.branch ? -1 : 1));
     return { items: items.slice(0, max), routed: items.filter((x) => x.agent).length, total: items.length };

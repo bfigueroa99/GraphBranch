@@ -321,8 +321,10 @@
       lleva en `repo` (su clave), porque un #12 de un repo no es el #12 de otro. Devuelve lo mismo que compute y además:
         data:   un repo de mentira con lo de todos: los commits (Map sha -> commit; uno que esté en dos repos, como en
                 un fork, una sola vez) y las ramas, los PRs abiertos y los checks de cada uno con su nombre precedido
-                por el del repo (`repo:rama`), así dos `main` o dos #12 no se pisan; cada rama y cada PR lleva `repo`
-                (el nombre) y `mains` dice cuáles son la rama por defecto de su repo. Lo leen los indicadores de swarm.js.
+                por la clave del repo (`clave:rama`, `clave#12`; la clave lleva el servicio, así un mismo owner/name en
+                GitHub y en GitLab no se pisa), así dos `main` o dos #12 no se pisan; cada rama y cada PR lleva `repo`
+                (el nombre, para mostrar) y `branch` (su rama sin la clave), y `mains` dice cuáles son la rama por
+                defecto de su repo. Lo leen los indicadores de swarm.js.
         repoOf: Map sha -> clave del repo del commit (el primero que lo trajo). */
   function combine(parts, { max = EVENTS } = {}) {
     const actors = new Map();
@@ -380,14 +382,14 @@
         repoOf.set(sha, key);
         commits.set(sha, c);
       }
-      const pre = (name) => `${label}:${name}`;
+      const pre = (name) => `${key}:${name}`;
       const def = d.repo?.defaultBranch;
       for (const [name, b] of d.branches || []) {
-        branches.set(pre(name), { ...b, repo: label });
+        branches.set(pre(name), { ...b, repo: label, branch: name });
         if (name === def) mains.add(pre(name));
       }
       for (const [name, st] of d.ci || []) ci.set(pre(name), st);
-      for (const p of d.pulls?.values?.() || []) if (p?.number != null) pulls.set(`${label}#${p.number}`, { ...p, head: p.head != null ? pre(p.head) : p.head, repo: label });
+      for (const p of d.pulls?.values?.() || []) if (p?.number != null) pulls.set(`${key}#${p.number}`, { ...p, head: p.head != null ? pre(p.head) : p.head, branch: p.head, repo: label });
     }
     events.sort((x, y) => y.time - x.time);
     events = events.slice(0, max);

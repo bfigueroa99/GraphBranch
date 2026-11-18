@@ -259,11 +259,13 @@ test('combine: dos repos en una sola consola, sin mezclar sus ramas ni sus PRs',
   assert.equal(both.owners.get('a-c1'), s1.key);
   // las ramas y los PRs de cada repo, con su nombre adelante: dos `dev` y dos #201 no se pisan
   assert.equal(both.data.branches.size, 10);
-  assert.ok(both.data.branches.has('o/a:dev') && both.data.branches.has('o/b:dev'));
-  assert.deepEqual([...both.data.mains].sort(), ['o/a:dev', 'o/b:dev']);
+  // (por la clave del repo, que lleva el servicio: un mismo owner/name en dos servicios tampoco se pisa)
+  assert.ok(both.data.branches.has('gh:o/a:dev') && both.data.branches.has('gh:o/b:dev'));
+  assert.deepEqual([...both.data.mains].sort(), ['gh:o/a:dev', 'gh:o/b:dev']);
   assert.equal(both.data.pulls.size, 6);
-  assert.equal(both.data.pulls.get('o/b#201').head, 'o/b:claude/otra');
-  assert.equal(both.data.ci.get('o/b:dependabot/x'), 'failure');
+  assert.equal(both.data.pulls.get('gh:o/b#201').head, 'gh:o/b:claude/otra');
+  assert.equal(both.data.pulls.get('gh:o/b#201').branch, 'claude/otra');
+  assert.equal(both.data.ci.get('gh:o/b:dependabot/x'), 'failure');
   // los indicadores y el ingreso, sobre lo de los dos: el doble de cola, y la principal de cada uno queda fuera
   const k1 = kpis(one, copy('a'), { now: NOW });
   const k2 = kpis(both, both.data, { now: NOW });
@@ -272,7 +274,8 @@ test('combine: dos repos en una sola consola, sin mezclar sus ramas ni sus PRs',
   const g = ingest(both, both.data, { max: 50 });
   assert.equal(g.total, 2 * ingest(one, copy('a'), { max: 50 }).total);
   assert.ok(g.items.every((x) => x.repo === 'o/a' || x.repo === 'o/b'));
-  assert.ok(!g.items.some((x) => /:dev$/.test(x.branch)), 'la rama por defecto de cada repo no es una tarea');
+  assert.ok(!g.items.some((x) => x.branch === 'dev'), 'la rama por defecto de cada repo no es una tarea');
+  assert.ok(g.items.every((x) => !x.branch.includes('o/')), 'cada tarea con su rama sin la clave del repo (que ya va aparte)');
   // el log lleva el repo de cada interacción (#201 de o/a no es #201 de o/b)
   const ev = lines(both, both.data, null, { max: 100 }).filter((x) => x.type === 'event');
   assert.ok(ev.length && ev.every((x) => x.repo === 'gh:o/a' || x.repo === 'gh:o/b'));

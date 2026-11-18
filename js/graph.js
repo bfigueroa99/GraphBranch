@@ -134,9 +134,13 @@
     // de un agente (Claude Code, Copilot, un bot…): cuál, con su modelo y su sesión si el commit los firma (js/agents.js)
     const agent = GB.agents?.of(c);
     if (agent) rows.push(`<span class="tip-agent">${U.esc(tr('tip.agent', { name: [agent.name, agent.model, agent.session ? tr('agents.session', { id: GB.agents.shortSession(agent.session) }) : ''].filter(Boolean).join(' · ') }))}</span>`);
-    // su firma (ítem 230), si la fuente la dio: verificada, sin firma o firmado sin verificar, con el motivo que da GitHub
+    // su firma (ítem 230), si la fuente la dio: verificada, sin firma o firmado sin verificar, con el motivo que da GitHub.
+    // Solo la marca va en color (el verde de --good no llega a 4,5:1 como texto chico sobre la ficha clara); lo dice el texto
     const sig = c.sig;
-    if (sig) rows.push(sig.ok === true ? `<span class="tip-sig ci-success"><span aria-hidden="true">✓</span> ${U.esc(tr('tip.sigOk'))}</span>` : sig.state === 'UNSIGNED' ? `<span class="tip-sig">${U.esc(tr('tip.sigNone'))}</span>` : `<span class="tip-sig ci-failure"><span aria-hidden="true">✗</span> ${U.esc(tr('tip.sigBad', { reason: String(sig.state || '') }))}</span>`);
+    if (sig) {
+      const mark = (state, ch) => `<span class="sig-mark ci-${state}" aria-hidden="true">${ch}</span> `;
+      rows.push(`<span class="tip-sig">${sig.ok === true ? mark('success', '✓') + U.esc(tr('tip.sigOk')) : sig.state === 'UNSIGNED' ? U.esc(tr('tip.sigNone')) : mark('failure', '✗') + U.esc(tr('tip.sigBad', { reason: String(sig.state || '') }))}</span>`);
+    }
     // con las interacciones en el grafo: las que salen de este commit o llegan a él (ya traducidas; aquí se escapan)
     for (const n of (notes || []).slice(0, 4)) rows.push(`<span class="tip-ag">${U.esc(n)}</span>`);
     if (notes?.length > 4) rows.push(`<span class="tip-ag tip-ag-more">${U.esc(tr('agents.moreHere', { n: notes.length - 4 }))}</span>`);

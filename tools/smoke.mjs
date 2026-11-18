@@ -1734,14 +1734,19 @@ if (seccion('Escritorio (1280×800)'))
     await page.click('#view-2d');
     const heads = await page.$$('#graph svg .head[role=button]');
     let btn = null;
+    const seen = []; // de cada punta, su rama y qué botones trae su ficha: si falla, el error dice dónde (pendiente 1)
     for (const h of heads) {
       await h.focus();
       await page.keyboard.press('Enter');
       btn = await page.$('#graph .tip .tip-prview');
       if (btn) break;
+      seen.push(await h.evaluate((e) => `${e.__name}: ${[...document.querySelectorAll('#graph .tip .tip-actions button')].map((b) => b.className).join(' ') || (document.querySelector('#graph .tip') ? 'sin botones' : 'sin ficha')}`));
       await page.keyboard.press('Escape');
     }
-    if (!btn) throw new Error('ninguna ficha de rama con PR trae «Ver descripción y comentarios»');
+    if (!btn) {
+      const st = await page.evaluate(() => ({ prs: document.querySelector('#st-prs')?.textContent, url: location.search, vista2d: document.querySelector('#view-2d')?.getAttribute('aria-pressed') })); // un filtro o una rama oculta quedan en la URL
+      throw new Error(`ninguna ficha de rama con PR trae «Ver descripción y comentarios» (${JSON.stringify({ ...st, puntas: seen })})`);
+    }
     await btn.focus();
     await page.keyboard.press('Enter');
     await page.waitForSelector('#graph .tip .tip-prbody .pv-list li', { timeout: T(5000) });

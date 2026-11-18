@@ -119,6 +119,24 @@
       .map((c) => ({ name: c.name, score: c.score, reason: reasonOf(c.reason) }));
     return { state: 'ok', score, date: Date.parse(body.date) || null, checks };
   };
+  /** Alertas de Dependabot (ítem 232): una página de `/dependabot/alerts?state=open`, la primera (las más recientes).
+      Una gravedad de GitHub es una de estas cuatro; la salud las cuenta de la más grave a la más leve. */
+  const DEPENDABOT_PAGE = 100; // el máximo de la API: lo que pasa de ahí no se pide (la salud dice que hay más)
+  const DEPENDABOT_SEVERITIES = ['critical', 'high', 'medium', 'low'];
+  /** Una página de alertas de Dependabot como `{ state: 'ok', critical, high, medium, low, more }`, o null si no es una
+      lista: solo las cifras, nunca el paquete, el aviso ni su enlace (ni siquiera se copian). Cuenta las abiertas, cada
+      una por la gravedad del aviso o, si esa no es una de las cuatro, la de la vulnerabilidad; sin ninguna conocida, no
+      cuenta. `more`: la cabecera `Link` dice que hay otra página. */
+  const dependabotOf = (body, headers) => {
+    if (!Array.isArray(body)) return null;
+    const n = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const a of body.slice(0, DEPENDABOT_PAGE)) {
+      if (a?.state !== 'open') continue;
+      const sev = [a.security_advisory?.severity, a.security_vulnerability?.severity].find((s) => DEPENDABOT_SEVERITIES.includes(s));
+      if (sev) n[sev]++;
+    }
+    return { state: 'ok', ...n, more: /\brel="next"/.test(headers?.get?.('Link') || '') };
+  };
   /** Las revisiones de un PR como las da `/pulls/:n/reviews` (ítem 223), con su hora y su tipo como los del feed de
       eventos: aprobada (`review-ok`), con cambios pedidos (`review-changes`) o de comentario, descartada incluida (`review`,
       como la trae el feed). Una pendiente (sin enviar: solo la ve su autor) o sin una fecha que se entienda no cuenta. */
@@ -793,6 +811,50 @@
         if (err?.kind === 'aborted') return false; // la fuente se detuvo: nadie va a mirar la respuesta
       }
       this.data.scorecard = next || { state: 'error', at: Date.now() };
+      return true;
+    }
+
+    /** Las alertas de Dependabot abiertas del repo, por gravedad (ítem 232, `data.dependabot`): una consulta
+        (`/dependabot/alerts?state=open&per_page=100`, con ETag), solo cuando el panel de salud lo pide, no más de una cada
+        15 minutos y nunca dos a la vez. Solo de GitHub y GitHub Enterprise (las fuentes que heredan de esta no las tienen)
+        y solo con token: sin él no se pregunta, y la salud dice cómo verlas. La API pide un token que pueda leerlas
+        («Dependabot alerts», o `security_events` en uno clásico): un 403, un 404 (también si el repo no las tiene
+        activadas) o el token rechazado quedan como «sin permiso», y en esta visita no se vuelve a preguntar. Otro fallo
+        (un 5xx, un 422, la red, una respuesta que no es una lista) queda como fallo y se vuelve a preguntar en la próxima
+        apertura, como Scorecard; la cuota agotada lanza su error (como `syncCodeFrequency`) y no cambia nada. Nada de esto
+        corta el ciclo del grafo. Devuelve si cambió lo que muestra la salud. */
+    syncDependabot() {
+      if (this.host && this.host !== 'github') return Promise.resolve(false);
+      const prev = this.data.dependabot;
+      if (!this.token) {
+        if (prev?.state === 'notoken') return Promise.resolve(false);
+        this.data.dependabot = { state: 'notoken' };
+        return Promise.resolve(true);
+      }
+      if (prev?.state === 'denied') return Promise.resolve(false);
+      if (this.dependabotAsk) return this.dependabotAsk.then(() => false);
+      if (prev?.state === 'ok' && Date.now() - this.lastPoll.dependabot < 15 * 60000) return Promise.resolve(false);
+      this.lastPoll.dependabot = Date.now();
+      const ask = this.askDependabot().finally(() => (this.dependabotAsk = null));
+      this.dependabotAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askDependabot() {
+      let next;
+      try {
+        const { data, fresh, headers } = await this.api(`${this.base}/dependabot/alerts?state=open&per_page=${DEPENDABOT_PAGE}`, { cacheKey: 'dependabot' });
+        // con un 304, lo de la vez anterior: junto a su ETag se guardan solo las cifras, no la página entera (hasta 100
+        // alertas con su aviso), que no tiene por qué quedarse en memoria
+        next = fresh ? dependabotOf(data, headers) : data?.state === 'ok' ? { ...data } : null;
+        const kept = this.etags.get('dependabot');
+        if (kept && next && (!fresh || kept.etag === headers?.get?.('ETag'))) kept.data = { ...next };
+        else this.etags.delete('dependabot'); // sin ETag nuevo (o sin cifras) no queda nada que validar con un 304
+      } catch (err) {
+        if (err?.kind === 'rate' || err?.kind === 'aborted') throw err;
+        if (err?.kind === 'notfound' || err?.kind === 'auth' || err?.status === 403) next = { state: 'denied' };
+      }
+      this.data.dependabot = next || { state: 'error', at: Date.now() };
       return true;
     }
 

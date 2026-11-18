@@ -1852,3 +1852,144 @@ test('la firma: sigOf y restSig leen solo la forma de GitHub', () => {
   assert.deepEqual(plain(restSig({ verified: false, reason: 'gpgverify_unavailable' })), { ok: false, state: 'GPGVERIFY_UNAVAILABLE' });
   assert.equal(restSig({ verified: false, reason: 'x'.repeat(80) }).state.length, 32, 'un motivo largo se corta');
 });
+
+/* Alertas de Dependabot (ítem 232): /dependabot/alerts, solo al abrir la salud, solo con token y solo las cifras. */
+
+const DEPENDABOT = '/repos/o/r/dependabot/alerts?state=open&per_page=100';
+/** Una alerta como la da la API, con el paquete y el aviso que la página no guarda. */
+const depAlert = (n, severity, extra = {}) => ({
+  number: n,
+  state: 'open',
+  html_url: `https://github.com/o/r/security/dependabot/${n}`,
+  dependency: { package: { ecosystem: 'npm', name: 'paquete-vulnerable' }, manifest_path: 'package-lock.json', scope: 'runtime' },
+  security_advisory: { ghsa_id: 'GHSA-aaaa-bbbb-cccc', cve_id: 'CVE-2026-0001', summary: 'el aviso entero', severity },
+  security_vulnerability: { package: { ecosystem: 'npm', name: 'paquete-vulnerable' }, severity, vulnerable_version_range: '< 1.2.3' },
+  ...extra,
+});
+const depAsked = (gh) => gh.calls.filter((c) => c.includes('/dependabot/'));
+
+test('alertas de Dependabot: con token, una consulta al abrir la salud (con ETag), las abiertas por gravedad y solo sus cifras', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let reply = {
+    body: [
+      depAlert(1, 'critical'),
+      depAlert(2, 'critical'),
+      depAlert(3, 'high'),
+      depAlert(4, 'medium'),
+      depAlert(5, 'medium'),
+      depAlert(6, 'medium'),
+      depAlert(7, 'low'),
+      depAlert(8, 'rara', { security_vulnerability: { severity: 'high' } }), // la gravedad del aviso no se conoce: vale la de la vulnerabilidad
+      depAlert(9, 'high', { state: 'dismissed' }), // descartada: aunque llegue, no es abierta
+      depAlert(10, '<b>', { security_vulnerability: { severity: '__proto__' } }), // ninguna gravedad conocida: no cuenta
+      null,
+    ],
+  };
+  const inm = [];
+  gh.override = (path, opts) => {
+    if (!path.includes('/dependabot/')) return null;
+    inm.push(opts.headers?.['If-None-Match'] || null);
+    return reply;
+  };
+  const { src, errors, GB } = connect(gh, 'tok');
+  await src.cycle();
+  assert.deepEqual(depAsked(gh), [], 'sin abrir la salud no se consulta');
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(depAsked(gh), [DEPENDABOT], 'una consulta: las abiertas, 100 por página');
+  assert.equal(errors.length, 0);
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 2, high: 2, medium: 3, low: 1, more: false });
+  const saved = JSON.stringify([plain(src.data.dependabot), plain([...src.etags.values()])]);
+  assert.ok(!/paquete|GHSA|CVE|aviso|package|security\/dependabot\/\d/.test(saved), `ni el paquete ni el aviso quedan en la página: ${saved}`);
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'ok', total: 8, critical: 2, high: 2, medium: 3, low: 1, more: false, url: 'https://github.com/o/r/security/dependabot' });
+  assert.equal(await src.syncDependabot(), false, 'otra apertura antes de 15 minutos no vuelve a preguntar');
+  assert.equal(depAsked(gh).length, 1);
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  const [a, b] = await Promise.all([src.syncDependabot(), src.syncDependabot()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
+  assert.equal(depAsked(gh).length, 2);
+  assert.ok(!inm[0] && inm[1], 'la segunda llevó el ETag de la primera (y la respuesta fue un 304)');
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 2, high: 2, medium: 3, low: 1, more: false }, 'el 304 deja las mismas cifras');
+  // más de una página: la cuenta es de las primeras 100, y lo dice
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  reply = { body: Array.from({ length: 100 }, (_, i) => depAlert(i + 1, i < 3 ? 'critical' : 'low')), headers: { Link: `<${gh.base}/repos/o/r/dependabot/alerts?state=open&per_page=100&after=Y3Vyc29y>; rel="next"` } };
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 3, high: 0, medium: 0, low: 97, more: true });
+  assert.equal(GB.health.compute(src.data, [], Date.now()).dependabot.total, 100);
+  // ninguna abierta
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  reply = { body: [] };
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'ok', total: 0, critical: 0, high: 0, medium: 0, low: 0, more: false, url: 'https://github.com/o/r/security/dependabot' });
+  assert.equal(errors.length, 0);
+});
+
+test('alertas de Dependabot: sin permiso (403, 404 o el token rechazado) lo dice y no vuelve a preguntar en esa visita; sin token no consulta', async () => {
+  const denied = [
+    { status: 403, body: { message: 'Resource not accessible by personal access token' } },
+    { status: 403, body: { message: 'Dependabot alerts are disabled for this repository.' } },
+    { status: 404, body: { message: 'Not Found' } },
+    { status: 401, body: { message: 'Bad credentials' } },
+  ];
+  for (const r of denied) {
+    const gh = fakeGitHub();
+    gh.push('main', 'a1');
+    gh.override = (path) => (path.includes('/dependabot/') ? r : null);
+    const { src, errors } = connect(gh, 'tok');
+    await src.cycle();
+    assert.equal(await src.syncDependabot(), true);
+    assert.deepEqual(plain(src.data.dependabot), { state: 'denied' }, `${r.status} ${r.body.message}`);
+    src.lastPoll.dependabot = Date.now() - 24 * 3600e3;
+    assert.equal(await src.syncDependabot(), false, 'no vuelve a preguntar en esa visita, por mucho que pase');
+    assert.equal(depAsked(gh).length, 1);
+    assert.equal(errors.length, 0, 'el grafo no se entera');
+  }
+  // sin token: ninguna consulta, y la salud dice cómo verlas
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src, GB } = connect(gh);
+  await src.cycle();
+  assert.equal(await src.syncDependabot(), true, 'la primera vez, la salud se vuelve a pintar con la línea');
+  assert.equal(await src.syncDependabot(), false);
+  assert.deepEqual(depAsked(gh), [], 'sin token no se consulta');
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'notoken' });
+});
+
+test('alertas de Dependabot: la cuota agotada no es «sin permiso», un fallo se reintenta en la próxima apertura, y en GitHub Enterprise va a su host', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let reply = { status: 403, body: { message: 'API rate limit exceeded for user ID 1.' }, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + 600) } };
+  gh.override = (path) => (path.includes('/dependabot/') ? reply : null);
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  await assert.rejects(src.syncDependabot(), (err) => err.kind === 'rate');
+  assert.equal(src.data.dependabot ?? null, null, 'la cuota no es un permiso que falte');
+  await assert.rejects(src.syncDependabot(), (err) => err.kind === 'rate', 'ni deja de preguntar en la próxima apertura');
+  assert.equal(depAsked(gh).length, 2);
+  for (const r of [{ status: 500, body: { message: 'Server Error' } }, { status: 422, body: { message: 'Validation Failed' } }, { body: { message: 'no es una lista' } }]) {
+    src.lastPoll.dependabot = Date.now() - 16 * 60000;
+    reply = r;
+    assert.equal(await src.syncDependabot(), true);
+    assert.equal(src.data.dependabot.state, 'error', `${r.status || 200}: un fallo, no un permiso`);
+    reply = { body: [depAlert(1, 'high')] };
+    assert.equal(await src.syncDependabot(), true, 'la próxima apertura vuelve a preguntar enseguida');
+    assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 0, high: 1, medium: 0, low: 0, more: false });
+    reply = r;
+  }
+  gh.failOnce = (path) => path.includes('/dependabot/');
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  assert.equal(await src.syncDependabot(), true);
+  assert.equal(src.data.dependabot.state, 'error', 'sin red, también un fallo que se reintenta');
+  // GitHub Enterprise Server: la misma consulta a su host, y el enlace a su pestaña de seguridad
+  const ghe = fakeGitHub();
+  ghe.base = GHE;
+  ghe.repo.html_url = 'https://ghe.example.com/o/r'; // como lo da la API de GitHub Enterprise
+  ghe.push('main', 'a1');
+  ghe.override = (path) => (path.includes('/dependabot/') ? { body: [depAlert(1, 'critical')] } : null);
+  const c = connect(ghe, 'tok', GHE);
+  await c.src.cycle();
+  assert.equal(await c.src.syncDependabot(), true);
+  assert.deepEqual(depAsked(ghe), [DEPENDABOT]);
+  assert.ok(ghe.urls.filter((u) => u.includes('/dependabot/')).every((u) => u.startsWith(GHE + '/')));
+  assert.equal(c.GB.health.compute(c.src.data, [], Date.now()).dependabot.url, 'https://ghe.example.com/o/r/security/dependabot');
+});

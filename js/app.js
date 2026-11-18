@@ -2044,6 +2044,29 @@
     return `<section class="hl-sec" id="hl-scorecard"><h3>${U.esc(t('health.scorecard'))}</h3>${body}</section>`;
   }
 
+  /** Las alertas de Dependabot abiertas (ítem 232): cuántas de cada gravedad, de la más grave a la más leve, y el enlace a
+      la pestaña de seguridad del repo, donde están el paquete y el aviso, que la página no trae. Sin token, sin permiso
+      para leerlas o con un fallo, lo dice; sin consulta (otra fuente, un repo local), no sale. */
+  function dependabotHtml(d) {
+    if (!d) return '';
+    const note = (id, key, p) => `<p class="hl-none" id="hl-dependabot-${id}">${U.esc(t(key, p))}</p>`;
+    const body =
+      d.state === 'notoken'
+        ? note('notoken', 'health.dependabotNoToken')
+        : d.state === 'denied'
+          ? note('denied', 'health.dependabotDenied')
+          : d.state !== 'ok'
+            ? note('error', 'health.dependabotError')
+            : (d.total
+                ? `<p class="hl-line" id="hl-dependabot-count">${U.esc(t('health.dependabotCount', { n: U.fmtNum(d.total), critical: U.fmtNum(d.critical), high: U.fmtNum(d.high), medium: U.fmtNum(d.medium), low: U.fmtNum(d.low) }))}</p>`
+                : `<p class="hl-line" id="hl-dependabot-zero">${U.esc(t('health.dependabotZero'))}</p>`) +
+              (d.more ? note('more', 'health.dependabotMore', { n: U.fmtNum(d.total) }) : '') +
+              (U.safeUrl(d.url)
+                ? `<ul class="hl-list"><li><a class="hl-row" id="hl-dependabot-link" href="${U.esc(U.safeUrl(d.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(t('health.dependabotOpen'))}</span></a></li></ul>`
+                : '');
+    return `<section class="hl-sec" id="hl-dependabot"><h3>${U.esc(t('health.dependabot'))}</h3>${body}</section>`;
+  }
+
   /** La firma de un commit en palabras (ítem 230), para las filas de la salud: sin firma, o firmado sin verificar con el
       motivo que da GitHub. */
   const sigText = (r) => (r.state === 'UNSIGNED' ? t('tip.sigNone') : t('tip.sigBad', { reason: r.state }));
@@ -2107,6 +2130,7 @@
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
       signedHtml(h.signed) +
+      dependabotHtml(h.dependabot) +
       scorecardHtml(h.scorecard, data.repo?.host) +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
@@ -2385,6 +2409,7 @@
     if (asked.syncCodeFrequency) asked.syncCodeFrequency().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // líneas añadidas y borradas: solo con el panel abierto
     if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     if (asked.syncScorecard) asked.syncScorecard().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // OpenSSF Scorecard: solo con el panel abierto y de un repo público de github.com o gitlab.com
+    if (asked.syncDependabot) asked.syncDependabot().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // alertas de Dependabot: solo con el panel abierto, de GitHub y con token
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});

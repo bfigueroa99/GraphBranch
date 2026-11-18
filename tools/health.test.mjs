@@ -887,3 +887,21 @@ test('firma de los commits (ítem 230): los de la rama por defecto de las últim
   const m = JSON.parse(JSON.stringify(compute({ ...data, commits: many, branches: new Map([['main', { name: 'main', sha: 'k0', isDefault: true }]]) }, [], NOW).signed));
   assert.deepEqual([m.total, m.unverified, m.rows.length, m.rows[0].sha], [12, 12, 8, 'k0']);
 });
+
+test('alertas de Dependabot (ítem 232): las abiertas por gravedad con su total y el enlace a la pestaña de seguridad; sin consulta, nada', () => {
+  const data = repo();
+  assert.equal(compute(data, [], NOW).dependabot, null, 'sin consulta (otra fuente, la demo sin cifras), la sección no sale');
+  data.repo.url = 'https://github.com/o/r';
+  data.dependabot = { state: 'ok', critical: 1, high: 0, medium: 4, low: 2, more: false };
+  assert.deepEqual({ ...compute(data, [], NOW).dependabot }, { state: 'ok', total: 7, critical: 1, high: 0, medium: 4, low: 2, more: false, url: 'https://github.com/o/r/security/dependabot' });
+  data.dependabot = { state: 'ok', critical: -3, high: 2.7, medium: 'x', low: 1e400, more: 1 };
+  assert.deepEqual({ ...compute(data, [], NOW).dependabot }, { state: 'ok', total: 2, critical: 0, high: 2, medium: 0, low: 0, more: true, url: 'https://github.com/o/r/security/dependabot' }, 'una cifra rara cuenta 0');
+  data.repo.url = null; // la demo: sin repo de verdad no hay a dónde llevar
+  assert.equal(compute(data, [], NOW).dependabot.url, null);
+  for (const state of ['denied', 'notoken', 'error']) {
+    data.dependabot = { state, at: NOW };
+    assert.deepEqual({ ...compute(data, [], NOW).dependabot }, { state }, `${state}: la sección lo dice`);
+  }
+  data.dependabot = { state: 'raro' };
+  assert.deepEqual({ ...compute(data, [], NOW).dependabot }, { state: 'error' }, 'un estado que no se conoce se dice como un fallo');
+});

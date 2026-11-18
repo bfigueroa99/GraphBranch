@@ -301,6 +301,9 @@
           ['Dependency-Update-Tool', 10, 'update tool detected'],
         ].map(([name, score, reason]) => ({ name, score, reason })),
       };
+      // las alertas de Dependabot abiertas, como las contaría la fuente de GitHub (solo las cifras, ítem 232): una de cada
+      // gravedad por lo menos, para que se vean todas; la demo no es un repo de GitHub, así que la salud no lleva enlace
+      this.data.dependabot = { state: 'ok', critical: 1, high: 2, medium: 4, low: 3, more: false };
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },

@@ -196,7 +196,9 @@ async function quieta(page, fn) {
     demo viva fusiona los que tenía y pasa ratos sin ninguno hasta que abre otro, y un paso que mira un PR (su ficha, su
     chip en la vista de texto) fallaba entonces con «ninguna ficha de rama con PR…» o `{"named":0,…}` (pendiente 1). Medido
     en la iteración 317 con la demo viva 8 min: 17 de 95 muestras sin ninguno, la primera a los 255 s y tramos de hasta
-    50 s. Espera a que haya uno, la pausa y lo vuelve a mirar ya en pausa (pudo fusionarse justo antes). */
+    50 s; dejada sin ninguno, volvió a abrir uno a los 10, 41 y 56 s (actúa cada unos 5 s, y una de cada diez veces abre
+    un PR), y una vez pasó 120 s sin abrirlo: el tope, T(120000), son 6 min. Espera a que haya uno, la pausa y lo vuelve
+    a mirar ya en pausa (pudo fusionarse justo antes). */
 async function quietaConPr(page, fn) {
   const open = () => page.evaluate(() => Number(document.querySelector('#st-prs')?.textContent) > 0);
   const deadline = Date.now() + T(120000);

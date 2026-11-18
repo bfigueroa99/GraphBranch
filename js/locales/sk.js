@@ -568,7 +568,7 @@ GB.i18n.define('sk', {
   'health.dependabotZero': 'Žiadne otvorené upozornenia.',
   'health.dependabotMore': 'Otvorených je viac než {n}: tieto čísla sú za {n} najnovších.',
   'health.dependabotOpen': 'Zobraziť upozornenia na GitHube',
-  'health.dependabotDenied': 'Tento token nemôže čítať upozornenia Dependabotu tohto repozitára, alebo ich repozitár nemá zapnuté. Aby ich videl, token potrebuje oprávnenie „Dependabot alerts“ (čítanie), alebo security_events, ak je to klasický token.',
+  'health.dependabotDenied': 'Tento token nemôže čítať upozornenia Dependabotu tohto repozitára. Vidí ich ten, kto doň môže zapisovať (alebo komu k nim správcovia dali prístup), s tokenom s oprávnením „Dependabot alerts“ (čítanie), alebo security_events, ak je klasický, a len ak ich má repozitár zapnuté.',
   'health.dependabotError': 'Upozornenia Dependabotu sa nepodarilo načítať. Skúsi sa to znova, keď tento panel nabudúce otvoríte.',
   'health.dependabotNoToken': 'S tokenom, ktorý môže čítať upozornenia Dependabotu, sa tu počítajú otvorené podľa závažnosti.',
   'health.merges7': 'Zlúčenia, posledných 7 dní',

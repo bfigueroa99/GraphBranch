@@ -817,9 +817,10 @@
     /** Las alertas de Dependabot abiertas del repo, por gravedad (ítem 232, `data.dependabot`): una consulta
         (`/dependabot/alerts?state=open&per_page=100`, con ETag), solo cuando el panel de salud lo pide, no más de una cada
         15 minutos y nunca dos a la vez. Solo de GitHub y GitHub Enterprise (las fuentes que heredan de esta no las tienen)
-        y solo con token: sin él no se pregunta, y la salud dice cómo verlas. La API pide un token que pueda leerlas
-        («Dependabot alerts», o `security_events` en uno clásico): un 403, un 404 (también si el repo no las tiene
-        activadas) o el token rechazado quedan como «sin permiso», y en esta visita no se vuelve a preguntar. Otro fallo
+        y solo con token: sin él no se pregunta, y la salud dice cómo verlas. Las ve quien puede escribir en el repo (o a
+        quien su administración se las abrió), con un token que pueda leerlas («Dependabot alerts», o `security_events` en
+        uno clásico): un 403, un 404 (también si el repo no las tiene activadas) o el token rechazado quedan como «sin
+        permiso», y en esta visita no se vuelve a preguntar (en un repo que solo se sigue, es lo de siempre). Otro fallo
         (un 5xx, un 422, la red, una respuesta que no es una lista) queda como fallo y se vuelve a preguntar en la próxima
         apertura, como Scorecard; la cuota agotada lanza su error (como `syncCodeFrequency`) y no cambia nada. Nada de esto
         corta el ciclo del grafo. Devuelve si cambió lo que muestra la salud. */

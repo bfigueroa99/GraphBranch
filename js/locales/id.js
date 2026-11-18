@@ -557,7 +557,7 @@ GB.i18n.define('id', {
   'health.dependabotZero': 'Tidak ada peringatan terbuka.',
   'health.dependabotMore': 'Ada lebih dari {n} yang terbuka: angka ini untuk {n} yang terbaru.',
   'health.dependabotOpen': 'Lihat peringatan di GitHub',
-  'health.dependabotDenied': 'Token ini tidak bisa membaca peringatan Dependabot repositori ini, atau repositori tidak mengaktifkannya. Untuk melihatnya, token perlu izin “Dependabot alerts” (baca), atau security_events jika token klasik.',
+  'health.dependabotDenied': 'Token ini tidak bisa membaca peringatan Dependabot repositori ini. Peringatan itu terlihat oleh yang bisa menulis ke repositori (atau yang diberi akses oleh adminnya), dengan token berizin “Dependabot alerts” (baca), atau security_events jika token klasik, dan hanya jika repositori mengaktifkannya.',
   'health.dependabotError': 'Peringatan Dependabot tidak bisa dibaca. Akan dicoba lagi saat Anda membuka panel ini berikutnya.',
   'health.dependabotNoToken': 'Dengan token yang bisa membaca peringatan Dependabot, yang terbuka dihitung di sini menurut tingkat keparahan.',
   'health.merges7': 'Merge, 7 hari terakhir',

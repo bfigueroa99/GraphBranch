@@ -557,7 +557,7 @@ GB.i18n.define('tr', {
   'health.dependabotZero': 'Açık uyarı yok.',
   'health.dependabotMore': '{n} taneden fazla açık uyarı var: bu sayılar en yeni {n} tanesine ait.',
   'health.dependabotOpen': 'Uyarıları GitHub’da görün',
-  'health.dependabotDenied': 'Bu token bu deponun Dependabot uyarılarını okuyamıyor ya da depoda uyarılar açık değil. Görmek için token’ın “Dependabot alerts” iznine (okuma) ya da klasik bir token ise security_events iznine ihtiyacı var.',
+  'health.dependabotDenied': 'Bu token bu deponun Dependabot uyarılarını okuyamıyor. Uyarıları, depoya yazabilenler (ya da yöneticilerinin erişim verdiği kişiler), “Dependabot alerts” (okuma) izni olan bir token ile, klasik bir token ise security_events ile ve yalnızca depoda uyarılar açıksa görebilir.',
   'health.dependabotError': 'Dependabot uyarıları okunamadı. Bu paneli bir sonraki açışınızda yeniden denenecek.',
   'health.dependabotNoToken': 'Dependabot uyarılarını okuyabilen bir token ile açık uyarılar burada önem derecesine göre sayılır.',
   'health.merges7': 'Birleştirmeler, son 7 gün',

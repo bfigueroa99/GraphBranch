@@ -557,7 +557,7 @@ GB.i18n.define('nb', {
   'health.dependabotZero': 'Ingen åpne varsler.',
   'health.dependabotMore': 'Det er flere enn {n} åpne: tallene gjelder de {n} nyeste.',
   'health.dependabotOpen': 'Se varslene på GitHub',
-  'health.dependabotDenied': 'Dette tokenet kan ikke lese Dependabot-varslene for dette repoet, eller repoet har dem ikke slått på. For å se dem trenger tokenet tillatelsen «Dependabot alerts» (lese), eller security_events hvis det er et klassisk token.',
+  'health.dependabotDenied': 'Dette tokenet kan ikke lese Dependabot-varslene for dette repoet. De ses av dem som kan skrive til det (eller som administratorene har gitt tilgang), med et token med tillatelsen «Dependabot alerts» (lese), eller security_events hvis det er klassisk, og bare hvis repoet har dem slått på.',
   'health.dependabotError': 'Kunne ikke lese Dependabot-varslene. Det prøves igjen neste gang du åpner dette panelet.',
   'health.dependabotNoToken': 'Med et token som kan lese Dependabot-varsler, telles de åpne her etter alvorlighetsgrad.',
   'health.merges7': 'Flettinger, siste 7 dager',

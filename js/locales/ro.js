@@ -565,7 +565,7 @@ GB.i18n.define('ro', {
   'health.dependabotZero': 'Nicio alertă deschisă.',
   'health.dependabotMore': 'Sunt mai mult de {n} deschise: aceste cifre sunt pentru cele mai recente {n}.',
   'health.dependabotOpen': 'Vedeți alertele pe GitHub',
-  'health.dependabotDenied': 'Acest token nu poate citi alertele Dependabot ale acestui depozit sau depozitul nu le are activate. Ca să le vedeți, tokenul are nevoie de permisiunea „Dependabot alerts” (citire) sau, dacă e un token clasic, de security_events.',
+  'health.dependabotDenied': 'Acest token nu poate citi alertele Dependabot ale acestui depozit. Le văd cei care pot scrie în el (sau cărora administratorii le-au dat acces), cu un token cu permisiunea „Dependabot alerts” (citire) sau, dacă e clasic, security_events, și doar dacă depozitul le are activate.',
   'health.dependabotError': 'Alertele Dependabot nu au putut fi citite. Se va încerca din nou data viitoare când deschideți acest panou.',
   'health.dependabotNoToken': 'Cu un token care poate citi alertele Dependabot, aici se numără cele deschise după gravitate.',
   'health.merges7': 'Îmbinări, ultimele 7 zile',

@@ -557,7 +557,7 @@ GB.i18n.define('hu', {
   'health.dependabotZero': 'Nincs nyitott riasztás.',
   'health.dependabotMore': 'Több mint {n} nyitott van: ezek a számok a {n} legújabbra vonatkoznak.',
   'health.dependabotOpen': 'Riasztások megtekintése a GitHubon',
-  'health.dependabotDenied': 'Ez a token nem olvashatja a repozitórium Dependabot-riasztásait, vagy a repozitóriumban nincsenek bekapcsolva. A megtekintésükhöz a tokennek „Dependabot alerts” (olvasás) jogosultság kell, klasszikus tokennél pedig security_events.',
+  'health.dependabotDenied': 'Ez a token nem olvashatja a repozitórium Dependabot-riasztásait. Azok látják, akik írhatnak bele (vagy akiknek a kezelői hozzáférést adtak), olyan tokennel, amelynek „Dependabot alerts” (olvasás) jogosultsága van, klasszikus tokennél security_events, és csak akkor, ha a repozitóriumban be vannak kapcsolva.',
   'health.dependabotError': 'A Dependabot-riasztásokat nem sikerült beolvasni. A panel következő megnyitásakor újra megpróbálja.',
   'health.dependabotNoToken': 'Olyan tokennel, amely olvashatja a Dependabot-riasztásokat, itt a nyitottak súlyosság szerint jelennek meg.',
   'health.merges7': 'Egyesítések, az elmúlt 7 nap',

@@ -557,7 +557,7 @@ GB.i18n.define('zh-Hant', {
   'health.dependabotZero': '沒有未處理的警示。',
   'health.dependabotMore': '未處理的警示超過 {n} 個：這些數字來自最新的 {n} 個。',
   'health.dependabotOpen': '在 GitHub 上查看警示',
-  'health.dependabotDenied': '此權杖無法讀取此儲存庫的 Dependabot 警示，或此儲存庫沒有啟用它們。若要查看，權杖需要「Dependabot alerts」權限（讀取），若是傳統權杖，則需要 security_events。',
+  'health.dependabotDenied': '此權杖無法讀取此儲存庫的 Dependabot 警示。能看到這些警示的是可以寫入此儲存庫的人（或由管理員授予存取權的人），需要使用具有「Dependabot alerts」權限（讀取）的權杖，傳統權杖則需要 security_events，而且儲存庫必須啟用這些警示。',
   'health.dependabotError': '無法讀取 Dependabot 警示。下次開啟此面板時會重試。',
   'health.dependabotNoToken': '使用能讀取 Dependabot 警示的權杖時，這裡會依嚴重程度統計未處理的警示。',
   'health.merges7': '合併數，近 7 天',

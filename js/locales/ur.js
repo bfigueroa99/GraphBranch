@@ -600,7 +600,7 @@ GB.i18n.define('ur', {
   'health.dependabotZero': 'کوئی کھلا الرٹ نہیں۔',
   'health.dependabotMore': '{n} سے زیادہ الرٹ کھلے ہیں: یہ اعداد سب سے حالیہ {n} کے ہیں۔',
   'health.dependabotOpen': 'GitHub پر الرٹس دیکھیں',
-  'health.dependabotDenied': 'یہ ٹوکن اس ریپوزٹری کے Dependabot الرٹس نہیں پڑھ سکتا، یا ریپوزٹری میں یہ آن نہیں ہیں۔ انہیں دیکھنے کے لیے ٹوکن کو “Dependabot alerts” اجازت (پڑھنا) چاہیے، یا کلاسک ٹوکن ہو تو security_events۔',
+  'health.dependabotDenied': 'یہ ٹوکن اس ریپوزٹری کے Dependabot الرٹس نہیں پڑھ سکتا۔ یہ انہیں دکھتے ہیں جو اس میں لکھ سکتے ہیں (یا جنہیں اس کے منتظمین نے رسائی دی ہو)، “Dependabot alerts” اجازت (پڑھنا) والے ٹوکن سے، یا کلاسک ٹوکن ہو تو security_events سے، اور صرف تب جب ریپوزٹری میں یہ آن ہوں۔',
   'health.dependabotError': 'Dependabot الرٹس پڑھے نہیں جا سکے۔ اگلی بار یہ پینل کھولنے پر دوبارہ کوشش کی جائے گی۔',
   'health.dependabotNoToken': 'Dependabot الرٹس پڑھ سکنے والے ٹوکن کے ساتھ یہاں کھلے الرٹس سنگینی کے لحاظ سے گنے جاتے ہیں۔',
   'health.merges7': 'مرج، پچھلے 7 دن',

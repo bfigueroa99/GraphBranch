@@ -614,7 +614,7 @@ GB.i18n.define('he', {
   'health.dependabotZero': 'אין התראות פתוחות.',
   'health.dependabotMore': 'יש יותר מ־{n} פתוחות: המספרים האלה הם של {n} האחרונות.',
   'health.dependabotOpen': 'הצגת ההתראות ב־GitHub',
-  'health.dependabotDenied': 'האסימון הזה לא יכול לקרוא את התראות Dependabot של המאגר הזה, או שהן לא מופעלות במאגר. כדי לראות אותן, האסימון צריך את ההרשאה “Dependabot alerts” (קריאה), או security_events אם זה אסימון קלאסי.',
+  'health.dependabotDenied': 'האסימון הזה לא יכול לקרוא את התראות Dependabot של המאגר הזה. רואים אותן מי שיכולים לכתוב בו (או מי שמנהלי המאגר נתנו להם גישה), עם אסימון שיש לו ההרשאה “Dependabot alerts” (קריאה), או security_events אם הוא קלאסי, ורק אם הן מופעלות במאגר.',
   'health.dependabotError': 'לא ניתן היה לקרוא את התראות Dependabot. ננסה שוב בפעם הבאה שתפתחו את החלונית הזו.',
   'health.dependabotNoToken': 'עם אסימון שיכול לקרוא התראות Dependabot, ההתראות הפתוחות נספרות כאן לפי חומרה.',
   'health.merges7': 'מיזוגים, 7 הימים האחרונים',

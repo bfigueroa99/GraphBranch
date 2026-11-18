@@ -568,7 +568,7 @@ GB.i18n.define('cs', {
   'health.dependabotZero': 'Žádná otevřená upozornění.',
   'health.dependabotMore': 'Otevřených je víc než {n}: tato čísla jsou za {n} nejnovějších.',
   'health.dependabotOpen': 'Zobrazit upozornění na GitHubu',
-  'health.dependabotDenied': 'Tento token nemůže číst upozornění Dependabotu tohoto repozitáře, nebo je repozitář nemá zapnutá. Aby je viděl, potřebuje token oprávnění „Dependabot alerts“ (čtení), nebo security_events, pokud je to klasický token.',
+  'health.dependabotDenied': 'Tento token nemůže číst upozornění Dependabotu tohoto repozitáře. Vidí je ten, kdo do něj může zapisovat (nebo komu k nim jeho správci dali přístup), s tokenem s oprávněním „Dependabot alerts“ (čtení), nebo security_events, pokud je klasický, a jen pokud je má repozitář zapnutá.',
   'health.dependabotError': 'Upozornění Dependabotu se nepodařilo načíst. Zkusí se to znovu, až tento panel příště otevřete.',
   'health.dependabotNoToken': 'S tokenem, který může číst upozornění Dependabotu, se tu počítají otevřená podle závažnosti.',
   'health.merges7': 'Sloučení, posledních 7 dní',

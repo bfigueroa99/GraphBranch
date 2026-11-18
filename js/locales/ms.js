@@ -557,7 +557,7 @@ GB.i18n.define('ms', {
   'health.dependabotZero': 'Tiada amaran terbuka.',
   'health.dependabotMore': 'Ada lebih daripada {n} yang terbuka: angka ini untuk {n} yang terbaharu.',
   'health.dependabotOpen': 'Lihat amaran di GitHub',
-  'health.dependabotDenied': 'Token ini tidak boleh membaca amaran Dependabot repositori ini, atau repositori tidak menghidupkannya. Untuk melihatnya, token perlukan kebenaran “Dependabot alerts” (baca), atau security_events jika ia token klasik.',
+  'health.dependabotDenied': 'Token ini tidak boleh membaca amaran Dependabot repositori ini. Amaran itu dilihat oleh mereka yang boleh menulis ke repositori (atau yang diberi akses oleh pentadbirnya), dengan token yang ada kebenaran “Dependabot alerts” (baca), atau security_events jika ia token klasik, dan hanya jika repositori menghidupkannya.',
   'health.dependabotError': 'Amaran Dependabot tidak dapat dibaca. Ia akan dicuba semula apabila anda membuka panel ini lain kali.',
   'health.dependabotNoToken': 'Dengan token yang boleh membaca amaran Dependabot, amaran terbuka dikira di sini mengikut tahap keterukan.',
   'health.merges7': 'Gabungan, 7 hari lepas',

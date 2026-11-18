@@ -558,7 +558,7 @@ GB.i18n.define('fr', {
   'health.dependabotZero': 'Aucune alerte ouverte.',
   'health.dependabotMore': 'Il y en a plus de {n} ouvertes : ces chiffres portent sur les {n} plus récentes.',
   'health.dependabotOpen': 'Voir les alertes sur GitHub',
-  'health.dependabotDenied': 'Ce jeton ne peut pas lire les alertes Dependabot de ce dépôt, ou le dépôt ne les a pas activées. Pour les voir, le jeton doit avoir l’autorisation « Dependabot alerts » (lecture) ou, s’il s’agit d’un jeton classique, security_events.',
+  'health.dependabotDenied': 'Ce jeton ne peut pas lire les alertes Dependabot de ce dépôt. Elles sont visibles par les personnes qui peuvent y écrire (ou à qui ses administrateurs ont donné accès), avec un jeton ayant l’autorisation « Dependabot alerts » (lecture) ou, s’il est classique, security_events, et seulement si le dépôt les a activées.',
   'health.dependabotError': 'Impossible de lire les alertes Dependabot. Une nouvelle tentative aura lieu la prochaine fois que vous ouvrirez ce panneau.',
   'health.dependabotNoToken': 'Avec un jeton qui peut lire les alertes Dependabot, les alertes ouvertes sont comptées ici par gravité.',
   'health.merges7': 'Fusions, 7 derniers jours',

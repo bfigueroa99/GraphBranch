@@ -557,7 +557,7 @@ GB.i18n.define('ja', {
   'health.dependabotZero': '未解決のアラートはありません。',
   'health.dependabotMore': '未解決は {n} 件を超えています。この数は最新の {n} 件のものです。',
   'health.dependabotOpen': 'GitHub でアラートを見る',
-  'health.dependabotDenied': 'このトークンではこのリポジトリの Dependabot アラートを読めないか、リポジトリでアラートが有効になっていません。表示するには、トークンに「Dependabot alerts」権限（読み取り）、クラシックトークンなら security_events が必要です。',
+  'health.dependabotDenied': 'このトークンではこのリポジトリの Dependabot アラートを読めません。アラートを見られるのは、リポジトリに書き込める人（または管理者からアクセスを与えられた人）で、「Dependabot alerts」権限（読み取り）、クラシックトークンなら security_events を持つトークンを使い、リポジトリでアラートが有効な場合だけです。',
   'health.dependabotError': 'Dependabot アラートを読み込めませんでした。次にこのパネルを開いたときに再試行します。',
   'health.dependabotNoToken': 'Dependabot アラートを読めるトークンがあれば、未解決のアラートをここで重大度ごとに数えます。',
   'health.merges7': 'マージ数、直近7日',

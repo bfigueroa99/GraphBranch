@@ -557,7 +557,7 @@ GB.i18n.define('sw', {
   'health.dependabotZero': 'Hakuna tahadhari zilizo wazi.',
   'health.dependabotMore': 'Zilizo wazi ni zaidi ya {n}: idadi hizi ni za {n} za hivi karibuni.',
   'health.dependabotOpen': 'Angalia tahadhari kwenye GitHub',
-  'health.dependabotDenied': 'Tokeni hii haiwezi kusoma tahadhari za Dependabot za hazina hii, au hazina haijaziwasha. Ili kuziona, tokeni inahitaji ruhusa ya “Dependabot alerts” (kusoma), au security_events ikiwa ni tokeni ya kawaida ya zamani.',
+  'health.dependabotDenied': 'Tokeni hii haiwezi kusoma tahadhari za Dependabot za hazina hii. Huonekana kwa wanaoweza kuandika kwenye hazina (au waliopewa ufikiaji na wasimamizi wake), kwa tokeni yenye ruhusa ya “Dependabot alerts” (kusoma), au security_events ikiwa ni tokeni ya zamani, na tu ikiwa hazina imeziwasha.',
   'health.dependabotError': 'Tahadhari za Dependabot hazikuweza kusomwa. Itajaribiwa tena utakapofungua paneli hii wakati ujao.',
   'health.dependabotNoToken': 'Ukiwa na tokeni inayoweza kusoma tahadhari za Dependabot, zilizo wazi huhesabiwa hapa kwa ukali wake.',
   'health.merges7': 'Uunganishaji, siku 7 zilizopita',

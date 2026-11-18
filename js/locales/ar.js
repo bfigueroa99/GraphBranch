@@ -656,7 +656,7 @@ GB.i18n.define('ar', {
   'health.dependabotZero': 'لا توجد تنبيهات مفتوحة.',
   'health.dependabotMore': 'هناك أكثر من {n} تنبيه مفتوح: هذه الأرقام لأحدث {n} منها.',
   'health.dependabotOpen': 'عرض التنبيهات على GitHub',
-  'health.dependabotDenied': 'لا يستطيع هذا الرمز المميز قراءة تنبيهات Dependabot لهذا المستودع، أو أنها غير مفعّلة فيه. لعرضها، يحتاج الرمز المميز إلى صلاحية «Dependabot alerts» (قراءة)، أو security_events إن كان رمزًا كلاسيكيًا.',
+  'health.dependabotDenied': 'لا يستطيع هذا الرمز المميز قراءة تنبيهات Dependabot لهذا المستودع. يراها من يستطيع الكتابة فيه (أو من منحه مسؤولوه الوصول)، برمز مميز له صلاحية «Dependabot alerts» (قراءة)، أو security_events إن كان رمزًا كلاسيكيًا، وفقط إن كانت مفعّلة في المستودع.',
   'health.dependabotError': 'تعذّرت قراءة تنبيهات Dependabot. ستُعاد المحاولة في المرة القادمة التي تفتح فيها هذه اللوحة.',
   'health.dependabotNoToken': 'برمز مميز يستطيع قراءة تنبيهات Dependabot، تُعدّ هنا التنبيهات المفتوحة حسب خطورتها.',
   'health.merges7': 'عمليات الدمج، آخر 7 أيام',

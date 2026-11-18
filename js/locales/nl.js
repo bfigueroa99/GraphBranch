@@ -558,7 +558,7 @@ GB.i18n.define('nl', {
   'health.dependabotZero': 'Geen open meldingen.',
   'health.dependabotMore': 'Er staan er meer dan {n} open: deze cijfers gaan over de {n} nieuwste.',
   'health.dependabotOpen': 'Meldingen op GitHub bekijken',
-  'health.dependabotDenied': 'Dit token kan de Dependabot-meldingen van deze repository niet lezen, of de repository heeft ze niet aanstaan. Om ze te zien heeft het token de machtiging ‘Dependabot alerts’ (lezen) nodig, of security_events als het een klassiek token is.',
+  'health.dependabotDenied': 'Dit token kan de Dependabot-meldingen van deze repository niet lezen. Ze zijn zichtbaar voor wie erin kan schrijven (of wie toegang kreeg van de beheerders), met een token met de machtiging ‘Dependabot alerts’ (lezen), of security_events als het klassiek is, en alleen als de repository ze aan heeft staan.',
   'health.dependabotError': 'De Dependabot-meldingen konden niet worden gelezen. Het wordt opnieuw geprobeerd wanneer je dit paneel weer opent.',
   'health.dependabotNoToken': 'Met een token dat Dependabot-meldingen mag lezen, worden de open meldingen hier per ernst geteld.',
   'health.merges7': 'Merges, laatste 7 dagen',

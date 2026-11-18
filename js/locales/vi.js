@@ -557,7 +557,7 @@ GB.i18n.define('vi', {
   'health.dependabotZero': 'Không có cảnh báo nào đang mở.',
   'health.dependabotMore': 'Có hơn {n} cảnh báo đang mở: các con số này là của {n} cảnh báo mới nhất.',
   'health.dependabotOpen': 'Xem cảnh báo trên GitHub',
-  'health.dependabotDenied': 'Token này không đọc được cảnh báo Dependabot của kho này, hoặc kho chưa bật chúng. Để xem, token cần quyền “Dependabot alerts” (đọc), hoặc security_events nếu là token cổ điển.',
+  'health.dependabotDenied': 'Token này không đọc được cảnh báo Dependabot của kho này. Chỉ người ghi được vào kho (hoặc được quản trị viên cấp quyền truy cập) mới thấy chúng, với token có quyền “Dependabot alerts” (đọc), hoặc security_events nếu là token cổ điển, và chỉ khi kho đã bật chúng.',
   'health.dependabotError': 'Không đọc được cảnh báo Dependabot. Sẽ thử lại vào lần tới bạn mở bảng này.',
   'health.dependabotNoToken': 'Với một token đọc được cảnh báo Dependabot, các cảnh báo đang mở được đếm ở đây theo mức độ nghiêm trọng.',
   'health.merges7': 'Lượt gộp, 7 ngày qua',

@@ -557,7 +557,7 @@ GB.i18n.define('zh-Hans', {
   'health.dependabotZero': '没有未处理的警报。',
   'health.dependabotMore': '未处理的警报超过 {n} 个：这些数字来自最新的 {n} 个。',
   'health.dependabotOpen': '在 GitHub 上查看警报',
-  'health.dependabotDenied': '此令牌无法读取此仓库的 Dependabot 警报，或者此仓库没有启用它们。要查看它们，令牌需要“Dependabot alerts”权限（读取），如果是经典令牌，则需要 security_events。',
+  'health.dependabotDenied': '此令牌无法读取此仓库的 Dependabot 警报。能看到这些警报的是可以写入此仓库的人（或由管理员授予访问权限的人），需要使用具有“Dependabot alerts”权限（读取）的令牌，经典令牌则需要 security_events，而且仓库必须启用了这些警报。',
   'health.dependabotError': '无法读取 Dependabot 警报。下次打开此面板时会重试。',
   'health.dependabotNoToken': '使用能读取 Dependabot 警报的令牌时，这里会按严重程度统计未处理的警报。',
   'health.merges7': '合并数，近 7 天',

@@ -557,7 +557,7 @@ GB.i18n.define('bn', {
   'health.dependabotZero': 'কোনো খোলা সতর্কতা নেই।',
   'health.dependabotMore': '{n}-এর বেশি সতর্কতা খোলা আছে: এই সংখ্যাগুলো সবচেয়ে সাম্প্রতিক {n}টির।',
   'health.dependabotOpen': 'GitHub-এ সতর্কতাগুলো দেখুন',
-  'health.dependabotDenied': 'এই টোকেনটি এই রিপোজিটরির Dependabot সতর্কতা পড়তে পারে না, অথবা রিপোজিটরিতে সেগুলো চালু নেই। দেখতে হলে টোকেনের “Dependabot alerts” অনুমতি (পড়া) লাগবে, অথবা ক্লাসিক টোকেন হলে security_events।',
+  'health.dependabotDenied': 'এই টোকেনটি এই রিপোজিটরির Dependabot সতর্কতা পড়তে পারে না। এগুলো দেখতে পান যাঁরা এতে লিখতে পারেন (বা যাঁদের এর অ্যাডমিনরা অ্যাক্সেস দিয়েছেন), “Dependabot alerts” অনুমতি (পড়া) থাকা টোকেন দিয়ে, অথবা ক্লাসিক টোকেন হলে security_events দিয়ে, এবং শুধু রিপোজিটরিতে সেগুলো চালু থাকলে।',
   'health.dependabotError': 'Dependabot সতর্কতা পড়া যায়নি। পরের বার এই প্যানেল খুললে আবার চেষ্টা করা হবে।',
   'health.dependabotNoToken': 'Dependabot সতর্কতা পড়তে পারে এমন টোকেন থাকলে এখানে খোলা সতর্কতাগুলো গুরুত্ব অনুযায়ী গোনা হয়।',
   'health.merges7': 'মার্জ, গত ৭ দিন',

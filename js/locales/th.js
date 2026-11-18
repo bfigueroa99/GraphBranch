@@ -558,7 +558,7 @@ GB.i18n.define('th', {
   'health.dependabotZero': 'ไม่มีการแจ้งเตือนที่เปิดอยู่',
   'health.dependabotMore': 'มีที่เปิดอยู่มากกว่า {n} รายการ: ตัวเลขเหล่านี้มาจาก {n} รายการล่าสุด',
   'health.dependabotOpen': 'ดูการแจ้งเตือนบน GitHub',
-  'health.dependabotDenied': 'โทเค็นนี้อ่านการแจ้งเตือนของ Dependabot ใน repository นี้ไม่ได้ หรือ repository ไม่ได้เปิดใช้การแจ้งเตือนไว้ หากต้องการดู โทเค็นต้องมีสิทธิ์ “Dependabot alerts” (อ่าน) หรือ security_events หากเป็นโทเค็นแบบคลาสสิก',
+  'health.dependabotDenied': 'โทเค็นนี้อ่านการแจ้งเตือนของ Dependabot ใน repository นี้ไม่ได้ ผู้ที่เห็นการแจ้งเตือนได้คือผู้ที่เขียนลง repository ได้ (หรือผู้ที่ผู้ดูแลให้สิทธิ์เข้าถึง) ด้วยโทเค็นที่มีสิทธิ์ “Dependabot alerts” (อ่าน) หรือ security_events หากเป็นโทเค็นแบบคลาสสิก และเฉพาะเมื่อ repository เปิดใช้การแจ้งเตือนไว้',
   'health.dependabotError': 'อ่านการแจ้งเตือนของ Dependabot ไม่ได้ จะลองอีกครั้งเมื่อคุณเปิดแผงนี้ครั้งถัดไป',
   'health.dependabotNoToken': 'เมื่อมีโทเค็นที่อ่านการแจ้งเตือนของ Dependabot ได้ ที่นี่จะนับการแจ้งเตือนที่เปิดอยู่ตามระดับความรุนแรง',
   'health.merges7': 'การรวม 7 วันที่ผ่านมา',

@@ -557,7 +557,7 @@ GB.i18n.define('fi', {
   'health.dependabotZero': 'Ei avoimia hälytyksiä.',
   'health.dependabotMore': 'Avoimia on yli {n}: luvut koskevat {n} uusinta.',
   'health.dependabotOpen': 'Katso hälytykset GitHubissa',
-  'health.dependabotDenied': 'Tämä tunnus ei voi lukea tämän repositorion Dependabot-hälytyksiä, tai ne eivät ole repositoriossa käytössä. Jotta ne näkyisivät, tunnus tarvitsee oikeuden ”Dependabot alerts” (luku) tai klassisena tunnuksena security_events.',
+  'health.dependabotDenied': 'Tämä tunnus ei voi lukea tämän repositorion Dependabot-hälytyksiä. Ne näkee se, joka voi kirjoittaa repositorioon (tai jolle sen ylläpito on antanut pääsyn), tunnuksella, jolla on oikeus ”Dependabot alerts” (luku) tai klassisena security_events, ja vain jos ne ovat repositoriossa käytössä.',
   'health.dependabotError': 'Dependabot-hälytyksiä ei saatu luettua. Yritetään uudelleen, kun avaat tämän paneelin seuraavan kerran.',
   'health.dependabotNoToken': 'Tunnuksella, joka voi lukea Dependabot-hälytyksiä, avoimet lasketaan tässä vakavuuden mukaan.',
   'health.merges7': 'Yhdistämiset, viimeiset 7 päivää',

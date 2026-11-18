@@ -557,7 +557,7 @@ GB.i18n.define('sv', {
   'health.dependabotZero': 'Inga öppna aviseringar.',
   'health.dependabotMore': 'Det finns fler än {n} öppna: siffrorna gäller de {n} senaste.',
   'health.dependabotOpen': 'Se aviseringarna på GitHub',
-  'health.dependabotDenied': 'Den här token kan inte läsa Dependabot-aviseringarna för det här repot, eller så har repot inte dem påslagna. För att se dem behöver token behörigheten ”Dependabot alerts” (läsa), eller security_events om det är en klassisk token.',
+  'health.dependabotDenied': 'Den här token kan inte läsa Dependabot-aviseringarna för det här repot. De syns för den som kan skriva i det (eller som dess administratörer har gett åtkomst), med en token med behörigheten ”Dependabot alerts” (läsa), eller security_events om den är klassisk, och bara om repot har dem påslagna.',
   'health.dependabotError': 'Det gick inte att läsa Dependabot-aviseringarna. Det görs ett nytt försök nästa gång du öppnar den här panelen.',
   'health.dependabotNoToken': 'Med en token som kan läsa Dependabot-aviseringar räknas de öppna här efter allvarlighetsgrad.',
   'health.merges7': 'Sammanfogningar, senaste 7 dagarna',

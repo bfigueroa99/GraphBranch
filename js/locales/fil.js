@@ -558,7 +558,7 @@ GB.i18n.define('fil', {
   'health.dependabotZero': 'Walang bukas na alerto.',
   'health.dependabotMore': 'Higit sa {n} ang bukas: ang mga bilang na ito ay sa {n} pinakabago.',
   'health.dependabotOpen': 'Tingnan ang mga alerto sa GitHub',
-  'health.dependabotDenied': 'Hindi mabasa ng token na ito ang mga alerto ng Dependabot ng repository na ito, o hindi naka-on ang mga ito sa repository. Para makita ang mga ito, kailangan ng token ang pahintulot na “Dependabot alerts” (pagbasa), o security_events kung klasikong token ito.',
+  'health.dependabotDenied': 'Hindi mabasa ng token na ito ang mga alerto ng Dependabot ng repository na ito. Nakikita ang mga ito ng mga nakakasulat dito (o binigyan ng access ng mga admin nito), gamit ang token na may pahintulot na “Dependabot alerts” (pagbasa), o security_events kung klasiko, at kung naka-on lang ang mga ito sa repository.',
   'health.dependabotError': 'Hindi mabasa ang mga alerto ng Dependabot. Susubukan ulit sa susunod na buksan mo ang panel na ito.',
   'health.dependabotNoToken': 'Sa token na nakakabasa ng mga alerto ng Dependabot, binibilang dito ang mga bukas ayon sa tindi.',
   'health.merges7': 'Mga merge, huling 7 araw',

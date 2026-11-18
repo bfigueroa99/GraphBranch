@@ -563,7 +563,7 @@ GB.i18n.define('en', {
   'health.dependabotZero': 'No open alerts.',
   'health.dependabotMore': 'There are more than {n} open: these numbers are for the {n} most recent.',
   'health.dependabotOpen': 'See the alerts on GitHub',
-  'health.dependabotDenied': "This token can't read this repository's Dependabot alerts, or the repository doesn't have them turned on. To see them, the token needs the “Dependabot alerts” permission (read), or security_events if it's a classic token.",
+  'health.dependabotDenied': "This token can't read this repository's Dependabot alerts. They're visible to people who can write to it (or whom its admins gave access), with a token that has the “Dependabot alerts” permission (read), or security_events if it's a classic token, and only if the repository has them turned on.",
   'health.dependabotError': "Couldn't get the Dependabot alerts. It's tried again the next time you open this panel.",
   'health.dependabotNoToken': 'With a token that can read Dependabot alerts, the open ones are counted here by severity.',
   'health.merges7': 'Merges, last 7 days',

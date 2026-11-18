@@ -600,7 +600,7 @@ GB.i18n.define('fa', {
   'health.dependabotZero': 'هیچ هشدار بازی نیست.',
   'health.dependabotMore': 'بیش از {n} هشدار باز است: این اعداد مربوط به {n} هشدار تازه‌ترند.',
   'health.dependabotOpen': 'دیدن هشدارها در GitHub',
-  'health.dependabotDenied': 'این توکن نمی‌تواند هشدارهای Dependabot این مخزن را بخواند، یا این هشدارها در مخزن روشن نیستند. برای دیدنشان، توکن به اجازهٔ «Dependabot alerts» (خواندن) نیاز دارد، یا اگر توکن کلاسیک است، به security_events.',
+  'health.dependabotDenied': 'این توکن نمی‌تواند هشدارهای Dependabot این مخزن را بخواند. آن‌ها را کسی می‌بیند که بتواند در مخزن بنویسد (یا مدیرانش به او دسترسی داده باشند)، با توکنی که اجازهٔ «Dependabot alerts» (خواندن) را دارد، یا اگر کلاسیک است security_events را، و فقط اگر این هشدارها در مخزن روشن باشند.',
   'health.dependabotError': 'خواندن هشدارهای Dependabot ممکن نشد. دفعهٔ بعد که این پنل را باز کنید دوباره تلاش می‌شود.',
   'health.dependabotNoToken': 'با توکنی که بتواند هشدارهای Dependabot را بخواند، هشدارهای باز اینجا بر اساس شدت شمرده می‌شوند.',
   'health.merges7': 'ادغام‌ها، ۷ روز گذشته',

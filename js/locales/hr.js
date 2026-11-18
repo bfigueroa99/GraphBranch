@@ -565,7 +565,7 @@ GB.i18n.define('hr', {
   'health.dependabotZero': 'Nema otvorenih upozorenja.',
   'health.dependabotMore': 'Otvorenih je više od {n}: ovi brojevi odnose se na {n} najnovijih.',
   'health.dependabotOpen': 'Pogledajte upozorenja na GitHubu',
-  'health.dependabotDenied': 'Ovaj token ne može čitati upozorenja Dependabota ovog repozitorija ili ih repozitorij nema uključena. Da biste ih vidjeli, token treba dopuštenje „Dependabot alerts” (čitanje) ili, ako je klasični token, security_events.',
+  'health.dependabotDenied': 'Ovaj token ne može čitati upozorenja Dependabota ovog repozitorija. Vidi ih onaj tko može pisati u njega (ili kome je administracija dala pristup), s tokenom koji ima dopuštenje „Dependabot alerts” (čitanje) ili, ako je klasični, security_events, i samo ako ih repozitorij ima uključena.',
   'health.dependabotError': 'Upozorenja Dependabota nije bilo moguće pročitati. Pokušat će se ponovno sljedeći put kad otvorite ovu ploču.',
   'health.dependabotNoToken': 'S tokenom koji može čitati upozorenja Dependabota ovdje se otvorena broje po ozbiljnosti.',
   'health.merges7': 'Spajanja, zadnjih 7 dana',

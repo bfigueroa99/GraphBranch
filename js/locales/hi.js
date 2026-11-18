@@ -557,7 +557,7 @@ GB.i18n.define('hi', {
   'health.dependabotZero': 'कोई खुला अलर्ट नहीं।',
   'health.dependabotMore': '{n} से ज़्यादा अलर्ट खुले हैं: ये संख्याएँ सबसे हाल के {n} की हैं।',
   'health.dependabotOpen': 'GitHub पर अलर्ट देखें',
-  'health.dependabotDenied': 'यह टोकन इस रिपॉज़िटरी के Dependabot अलर्ट नहीं पढ़ सकता, या रिपॉज़िटरी में वे चालू नहीं हैं। उन्हें देखने के लिए टोकन को “Dependabot alerts” अनुमति (पढ़ने की) चाहिए, या क्लासिक टोकन हो तो security_events।',
+  'health.dependabotDenied': 'यह टोकन इस रिपॉज़िटरी के Dependabot अलर्ट नहीं पढ़ सकता। इन्हें वही देख सकते हैं जो इसमें लिख सकते हैं (या जिन्हें इसके एडमिन ने पहुँच दी है), “Dependabot alerts” अनुमति (पढ़ने की) वाले टोकन से, या क्लासिक टोकन हो तो security_events से, और तभी जब रिपॉज़िटरी में ये चालू हों।',
   'health.dependabotError': 'Dependabot अलर्ट पढ़े नहीं जा सके। अगली बार यह पैनल खोलने पर फिर से कोशिश की जाएगी।',
   'health.dependabotNoToken': 'Dependabot अलर्ट पढ़ सकने वाले टोकन से, यहाँ खुले अलर्ट गंभीरता के हिसाब से गिने जाते हैं।',
   'health.merges7': 'मर्ज, पिछले 7 दिन',

@@ -557,7 +557,7 @@ GB.i18n.define('ko', {
   'health.dependabotZero': '열린 알림이 없습니다.',
   'health.dependabotMore': '열린 알림이 {n}개를 넘습니다: 이 숫자는 가장 최근 {n}개의 것입니다.',
   'health.dependabotOpen': 'GitHub에서 알림 보기',
-  'health.dependabotDenied': '이 토큰은 이 저장소의 Dependabot 알림을 읽을 수 없거나, 저장소에서 알림이 켜져 있지 않습니다. 보려면 토큰에 “Dependabot alerts” 권한(읽기)이, 클래식 토큰이면 security_events가 필요합니다.',
+  'health.dependabotDenied': '이 토큰은 이 저장소의 Dependabot 알림을 읽을 수 없습니다. 알림은 저장소에 쓸 수 있는 사람(또는 관리자가 접근 권한을 준 사람)이 “Dependabot alerts” 권한(읽기)이 있는 토큰으로, 클래식 토큰이면 security_events로 볼 수 있으며, 저장소에서 알림이 켜져 있을 때만 보입니다.',
   'health.dependabotError': 'Dependabot 알림을 읽지 못했습니다. 다음에 이 패널을 열 때 다시 시도합니다.',
   'health.dependabotNoToken': 'Dependabot 알림을 읽을 수 있는 토큰이 있으면 여기서 열린 알림을 심각도별로 셉니다.',
   'health.merges7': '병합, 최근 7일',

@@ -258,3 +258,17 @@ test('la demo trae sus alertas de Dependabot (ítem 232) sin consultar nada: abi
   assert.equal(typeof src.syncDependabot, 'undefined', 'y no tiene a quién preguntar');
   assert.ok(GB);
 });
+
+test('la demo trae un PR en la cola de fusión (ítem 231): el aprobado de feature/login, el primero, esperando los checks', () => {
+  for (const seed of [1, 7, 42]) {
+    const { src } = demo(seed);
+    const queued = [...src.view().pulls.values()].filter((p) => p.queue);
+    assert.equal(queued.length, 1, 'uno solo, para que se vea sin llenar la demo');
+    const [p] = queued;
+    assert.equal(p.head, 'feature/login');
+    assert.equal(p.review, 'approved', 'en la cola va uno aprobado');
+    assert.equal(p.queue.position, 1);
+    assert.equal(p.queue.state, 'AWAITING_CHECKS');
+    assert.ok(p.queue.eta > Date.now() && p.queue.eta <= Date.now() + 10 * 60e3, 'con su hora estimada de fusión, unos minutos adelante');
+  }
+});

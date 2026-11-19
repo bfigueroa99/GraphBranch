@@ -1993,3 +1993,127 @@ test('alertas de Dependabot: la cuota agotada no es «sin permiso», un fallo se
   assert.ok(ghe.urls.filter((u) => u.includes('/dependabot/')).every((u) => u.startsWith(GHE + '/')));
   assert.equal(c.GB.health.compute(c.src.data, [], Date.now()).dependabot.url, 'https://ghe.example.com/o/r/security/dependabot');
 });
+
+/* La cola de fusión (ítem 231): con token, la consulta de PRs de siempre pide la entrada de cada PR en la cola de su base
+   (`mergeQueueEntry { position state estimatedTimeToMerge }`), sin otra consulta; un PR fuera de la cola no cambia. */
+
+const QUEUE_FIELD = 'mergeQueueEntry { position state estimatedTimeToMerge }';
+/** Las consultas GraphQL que salieron (se anotan antes de que las responda `fakeGraphQL`). */
+function gqlSent(gh) {
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql')) sent.push(JSON.parse(opts.body).query);
+    return fetch(url, opts);
+  };
+  return sent;
+}
+const prNode = (number, extra = {}) => ({ number, title: `PR ${number}`, isDraft: false, reviewDecision: 'APPROVED', url: `https://github.com/o/r/pull/${number}`, headRefName: `rama-${number}`, baseRefName: 'main', isCrossRepository: false, createdAt: '2026-01-01T00:00:00Z', author: null, commits: { nodes: [] }, ...extra });
+
+test('la cola de fusión: con token, la consulta de PRs de siempre trae el lugar, el estado y el tiempo estimado de los que están en ella', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ci = { main: 'SUCCESS', pr: null };
+  fakeGraphQL(gh, ci);
+  const sent = gqlSent(gh);
+  const nodes = [
+    prNode(7, { mergeQueueEntry: { position: 2, state: 'AWAITING_CHECKS', estimatedTimeToMerge: 600 } }),
+    prNode(8, { mergeQueueEntry: null }), // fuera de la cola
+    prNode(9, { mergeQueueEntry: { position: 1, state: 'MERGEABLE', estimatedTimeToMerge: null } }),
+    prNode(10, { mergeQueueEntry: { position: 3, state: '<b>x</b>', estimatedTimeToMerge: -5 } }), // un estado que no es de GitHub
+    prNode(11, { mergeQueueEntry: { position: '1', state: 'QUEUED' } }), // un lugar que no es un entero
+    prNode(12, { mergeQueueEntry: { position: 4, state: '__proto__', estimatedTimeToMerge: 1e12 } }),
+    prNode(13, {}), // sin el campo (una respuesta parcial)
+  ];
+  const fetch = gh.fetch;
+  gh.fetch = async (url, opts = {}) => {
+    const res = await fetch(url, opts);
+    if (!url.endsWith('/graphql') || !JSON.parse(opts.body).query.includes('defaultBranchRef')) return res;
+    const body = await res.json();
+    body.data.repository.pullRequests = { totalCount: nodes.length, nodes };
+    const text = JSON.stringify(body);
+    return { status: 200, ok: true, headers: { get: () => null }, text: async () => text, json: async () => JSON.parse(text) };
+  };
+  const { src, GB } = connect(gh, 'tok');
+  const before = Date.now();
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  const main = sent.filter((q) => q.includes('defaultBranchRef'));
+  assert.ok(main.length >= 1 && main.every((q) => q.includes(QUEUE_FIELD)), 'la consulta de PRs pide la entrada en la cola');
+  assert.equal(sent.filter((q) => q.includes('mergeQueue')).length, main.length, 'sin otra consulta para la cola');
+  const q = (n) => plain(src.data.pulls.get(n).queue ?? null);
+  const seven = q(7);
+  assert.equal(seven.position, 2);
+  assert.equal(seven.state, 'AWAITING_CHECKS');
+  assert.ok(seven.eta >= before + 600e3 && seven.eta <= Date.now() + 600e3, 'el tiempo estimado se guarda como la hora a la que se fusionaría');
+  assert.equal(q(8), null, 'fuera de la cola, nada');
+  assert.deepEqual(q(9), { position: 1, state: 'MERGEABLE', eta: null });
+  assert.deepEqual(q(10), { position: 3, state: null, eta: null }, 'un estado desconocido no se dice; un tiempo negativo tampoco');
+  assert.equal(q(11), null, 'sin un lugar entero no hay entrada');
+  assert.deepEqual(q(12), { position: 4, state: null, eta: null }, '__proto__ no es un estado; un tiempo de años, tampoco');
+  assert.equal(q(13), null);
+  assert.deepEqual(plain(GB.GitHubSource.queueOf({ position: 0, state: 'LOCKED', estimatedTimeToMerge: 0 }, 1000)), { position: 0, state: 'LOCKED', eta: 1000 }, 'el lugar 0 vale tal como lo da GitHub');
+  assert.equal(GB.GitHubSource.queueOf('x'), null);
+  assert.equal(GB.GitHubSource.queueOf({ position: -1, state: 'QUEUED' }), null);
+});
+
+test('la cola de fusión: un GitHub Enterprise sin el campo no rompe la consulta de PRs (se repite sin él y no se vuelve a pedir)', async () => {
+  const gh = fakeGitHub();
+  gh.base = GHE;
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: 'SUCCESS' });
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql') && JSON.parse(opts.body).query.includes('mergeQueueEntry')) {
+      // como un GitHub Enterprise viejo: el campo no existe en su esquema y la consulta entera falla
+      const body = JSON.stringify({ errors: [{ message: "Field 'mergeQueueEntry' doesn't exist on type 'PullRequest'", extensions: { code: 'undefinedField' } }] });
+      return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+    }
+    return fetch(url, opts);
+  };
+  const sent = gqlSent(gh); // la última envoltura: anota también las que rechaza el GitHub Enterprise viejo
+  const { src, errors } = connect(gh, 'tok', GHE);
+  await src.cycle();
+  assert.equal(src.mode, 'graphql', 'sigue con GraphQL: no pasa a REST por un campo');
+  assert.deepEqual(errors, [], 'sin aviso de error');
+  assert.equal(src.data.pulls.get(7).ci, 'success', 'los PRs llegan igual');
+  assert.equal(src.data.pulls.get(7).queue ?? null, null);
+  const asked = sent.filter((q) => q.includes('mergeQueueEntry')).length;
+  assert.equal(asked, 1, 'se pidió una vez');
+  await src.cycle();
+  assert.equal(sent.filter((q) => q.includes('mergeQueueEntry')).length, asked, 'y no se vuelve a pedir');
+  assert.equal(src.data.pulls.get(7).ci, 'success');
+});
+
+test('la cola de fusión: otro error de GraphQL no apaga la cola, y sin token (REST) no hay cola', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: 'SUCCESS', prNode: { mergeQueueEntry: { position: 1, state: 'QUEUED', estimatedTimeToMerge: 60 } } });
+  const sent = gqlSent(gh);
+  const fetch = gh.fetch;
+  let fail = 0;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql') && fail && JSON.parse(opts.body).query.includes('defaultBranchRef')) {
+      fail--;
+      const body = JSON.stringify({ errors: [{ message: 'Something went wrong while executing your query.' }] });
+      return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+    }
+    return fetch(url, opts);
+  };
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  fail = 1; // ya cargado: un error pasajero corta el ciclo y se reintenta, sin pasar a REST
+  await src.cycle();
+  assert.equal(errors.length, 1, 'el fallo se dice');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.ok(sent.filter((q) => q.includes('defaultBranchRef')).every((q) => q.includes(QUEUE_FIELD)), 'un fallo ajeno no deja de pedir la cola');
+  assert.equal(src.data.pulls.get(7).queue.position, 1);
+
+  const rest = fakeGitHub();
+  rest.push('main', 'a1');
+  rest.pulls.push({ number: 3, state: 'open', title: 'PR 3', head: { ref: 'feat', repo: { full_name: 'o/r' } }, base: { ref: 'main' }, user: { login: 'ana' }, html_url: 'https://github.com/o/r/pull/3', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z' });
+  const r = connect(rest).src;
+  await r.cycle();
+  assert.equal(r.data.pulls.get(3).queue ?? null, null, 'el REST no da la cola: nada');
+});

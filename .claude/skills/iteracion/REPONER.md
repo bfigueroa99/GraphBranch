@@ -15,6 +15,10 @@ para completar hasta 15, pero no cuenta para esos 5. El puntaje no se sube para 
 ideas de alcance 2 o 3, se repone con lo que haya y se dice en la bitácora y, una vez, en Para Benjamin (es
 quien puede abrir un frente nuevo).
 
+Si `--salud` dio una línea `Rebanado` (3 o más de las últimas capacidades nuevas son partes del mismo ítem), la
+próxima parte de ese ítem junta lo que falta, o el ítem se da por cubierto: rebanadas finas suman iteraciones de
+expansión sin terminar el ítem grande.
+
 Primero, la paridad con la app de referencia («Replica» en la directiva de `IMPROVEMENTS.md`: cuál es,
 cadencia, qué queda fuera y por qué). Las skills del pack se leen por su ruta y se siguen con los cambios
 de abajo; sus pasos que piden preguntar o esperar un sí no rigen: la directiva es la autorización.

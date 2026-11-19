@@ -2,7 +2,9 @@
 
 Parte de la skill `iteracion` (`.claude/skills/iteracion/SKILL.md`, paso 2). No se lee en cada iteración: el
 paso 2 dice cuándo aplica cada una, y solo entonces se lee aquí su sección, entera, antes de usarla. El orden,
-cuando aplican varias: skills de afuera, plan por consenso, arena.
+cuando aplican varias: skills de afuera, plan por consenso, arena. La línea `Cumplimiento` de `--salud` cuenta, de las
+últimas iteraciones, cuántas registran el verificador, el plan en los ítems de esfuerzo 3, Skills consultadas y la
+arena: un «no aplica» que se repite siempre se mira.
 
 ## Skills de afuera: buscar antes de construir
 

@@ -22,11 +22,11 @@ iteración», «Lo que trae cada expansión» y «Lo que no cambia» (lo de Repl
 está en esta skill y en sus protocolos); el ítem o el pendiente que imprime `--reclamar` (su texto entero está en
 el archivo con ese número); Mantenimiento, si la iteración es de mantenimiento; y las dos últimas entradas de la
 bitácora (el formato). Los ítems hechos (`docs/HOJA.md`) y las entradas viejas (`docs/BITACORA.md`) son historia:
-se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Seis protocolos de
+se buscan con `grep` y no se leen enteros. Del README, solo las secciones que el cambio toca. Siete protocolos de
 esta skill viven aparte, en su carpeta, y se leen solo cuando el paso que los nombra dice que tocan:
 `GUIAS.md` (la skill del repo de cada paso), `CONSTRUIR.md` (skills de afuera, plan por consenso y arena),
-`MANTENIMIENTO.md` (el de cada subtipo), `REANUDAR.md` (una iteración vencida), `REPONER.md` (la hoja de ruta) e
-`ISSUES.md` (los issues de GitHub).
+`MANTENIMIENTO.md` (el de cada subtipo), `REANUDAR.md` (una iteración vencida), `REPONER.md` (la hoja de ruta),
+`ISSUES.md` (los issues de GitHub) y `ARNES.md` (la frontera y la guardia).
 
 ### Comandos largos: se esperan en primer plano
 
@@ -72,8 +72,8 @@ clon sigue superficial, `--check` lo avisa en R3 y `--salud` y `--reclamar` lo c
   (`--reclamar` ya lo elige). Las `loop/K` ya fusionadas salen en una sola línea y no son una Acción: la
   sesión no las borra (en la nube el proxy niega el push `--delete`) ni lo anota; son de Benjamin (Para
   Benjamin). `En cola: loop/K` es una iteración reclamada antes de su turno: no se toca, se reanuda cuando
-  le toque (código 4). Las líneas `Cadencia` y `Para Benjamin` van al resumen, y un `Hueco` solo si es de
-  la última semana (los anteriores van contados en una línea).
+  le toque (código 4). Las líneas `Cadencia`, `Cumplimiento`, `Rebanado` y `Para Benjamin` van al resumen, y un
+  `Hueco` solo si es de la última semana (los anteriores van contados en una línea).
 - `node --test` en rojo sin haber tocado nada: `dev` está en rojo. Se repite una vez; si sigue, la
   iteración pasa a arreglarlo (como un pendiente Alta, `[Errores]` o `[Deuda]`) y lo dice la bitácora.
 - El prompt: solo si abrió la sesión la Routine (pausada: «Programador»), su primer mensaje se compara con
@@ -176,9 +176,8 @@ node tools/esperar.mjs puerta
 ```
 
 Hasta que la espera salga **0** (124: se vuelve a llamar; ver «Comandos largos»); un verde a medias no es
-verde. Corre `node --check`, `node --test`, las traducciones, `node tools/loop.mjs --check`, el smoke en
-Chromium, la auditoría (`tools/audit.mjs --puerta`, si el cambio toca la página) y, si el cambio toca la página
-o el escritorio, las e2e (elige Chromium y Electron solo; en Linux sin pantalla usa `xvfb-run`). Su línea
+verde. Corre los pasos de `CLAUDE.md` (la frontera, después de `node --test`) y la auditoría
+(`tools/audit.mjs --puerta`, si el cambio toca la página). Su línea
 `Validado: …` (la última de la puerta, antes de la de la espera) va a la bitácora tal cual. Si sale **2** por
 Electron (no se pudo instalar): un cambio bajo `electron/` o en `e2e/desktop.spec.mjs` no se fusiona;
 cualquier otro sí, validado con `node tools/esperar.mjs --lanzar puerta -- npm run check -- --sin-e2e` (salta
@@ -199,6 +198,7 @@ Si sale **1**:
   última (la 168 gastó cinco corridas y un relevo, 4 h, en pasos ajenos distintos). Si tampoco pasa, se registra
   (paso 4) con `- Validado: sin verde: <los pasos que fallaron en cada corrida>`, se empuja, se abre el PR sin
   fusionarlo (paso 5.1) y la sesión termina con eso en el resumen: el disparo siguiente lo reanuda por el código 4.
+- **La frontera** (`FALLA frontera`; o sin evaluar, que sale 2): `.claude/skills/iteracion/ARNES.md`.
 - **La auditoría con hallazgos nuevos**: si son del cambio, se arreglan. Si no (aparecen también sin el
   cambio), van a Mantenimiento con su `audit:<tipo>` y a la base con `node tools/audit.mjs --base`.
 - **Lo demás**: se arregla lo que falló (nunca se debilita una prueba). De `node --test`, la puerta imprime

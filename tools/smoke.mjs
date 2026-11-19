@@ -4,6 +4,10 @@
 
      node tools/smoke.mjs            escenarios básicos (unos 30 s)
      node tools/smoke.mjs --langs    además abre la app en los 40 idiomas, en pantalla de celular
+     node tools/smoke.mjs --solo GitLab --solo Celular   solo las secciones cuyo título contiene ese texto
+     node tools/smoke.mjs --seccion Bitbucket            solo la sección con ese título exacto (la puerta)
+     node tools/smoke.mjs --secciones                    los títulos de las secciones (o, con --solo o --seccion, los
+                                                         de las que correrían), sin abrir el navegador
 
    Errores (salida distinta de 0): un error de JavaScript o de consola, una consulta a
    api.github.com durante la demo (no debería hacer ninguna), un paso que no llega a su
@@ -21,9 +25,11 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { apply as withSentryDsn } from './sentry-web.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const allLangs = process.argv.includes('--langs');
+const listar = process.argv.includes('--secciones');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -72,8 +78,8 @@ const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0l
 
 const server = await serve();
 const base = `http://127.0.0.1:${server.address().port}`;
-const { chromium } = await loadPlaywright();
-const browser = await chromium.launch({
+const { chromium } = listar ? {} : await loadPlaywright();
+const browser = listar ? null : await chromium.launch({
   // como en las pruebas e2e: otro Chromium que el de esta versión de Playwright
   executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   // WebGL por software, para que la vista 3D también se pruebe sin GPU
@@ -81,10 +87,49 @@ const browser = await chromium.launch({
 });
 
 let failures = 0;
-const fail = (msg) => {
+const fail = (msg, paso = msg) => {
   failures++;
+  if (!conFallos.has(actual)) conFallos.set(actual, []);
+  conFallos.get(actual).push(paso);
   console.log(`  ✗ ${msg}`);
 };
+
+/* Secciones: cada bloque de primer nivel («if (seccion('Título'))») abre su propio contexto y no depende de
+   los demás, así que se puede correr suelto. `--solo <texto>` (se puede repetir) corre solo las secciones cuyo
+   título contiene ese texto, y `--seccion <título>`, la de ese título exacto («Bitbucket» y no también
+   «Bitbucket propio con token»): la puerta (tools/check.mjs) repite así la sección de un paso que falló una vez,
+   en lugar del smoke entero (10 minutos), y quien arregla un paso intermitente lo prueba en segundos. Al
+   terminar con fallos, cada sección que tuvo alguno sale en una línea «§ Título», y debajo, cada paso que
+   falló en ella, en una línea «· nombre del paso» (sin su error, que ya salió en su «✗»). */
+const valores = (flag) => process.argv.flatMap((a, i, v) => (a === flag && v[i + 1] ? [v[i + 1]] : []));
+const solo = valores('--solo');
+const exactas = valores('--seccion');
+const pedidas = solo.length + exactas.length;
+const corridas = [];
+const conFallos = new Map();
+let actual = '';
+function seccion(titulo) {
+  if (pedidas && !solo.some((t) => titulo.includes(t)) && !exactas.includes(titulo)) return false;
+  sinContextos();
+  corridas.push(titulo);
+  console.log(titulo);
+  if (listar) return false; // --secciones solo dice cuáles correrían
+  actual = titulo;
+  return true;
+}
+
+/* Cada sección cierra los contextos que abrió. Uno que queda vivo, aunque sea sin páginas, mantiene el service
+   worker de la app en un proceso más de Chromium hasta el final del smoke (en la iteración 275, el del paso de
+   group:g de GitLab: 7 de los 11 minutos, ~200 MB), y con el equipo cargado una sección posterior se quedaba sin
+   recursos para pedir sus archivos (`net::ERR_INSUFFICIENT_RESOURCES`, iteración 236). Al entrar
+   en la sección siguiente, y al terminar, lo que siga abierto es un fallo de la sección que lo dejó, y se cierra. */
+function sinContextos() {
+  if (!browser || !actual) return;
+  const vivos = browser.contexts();
+  if (!vivos.length) return;
+  fail(`la sección «${actual}» dejó ${vivos.length} contexto(s) del navegador sin cerrar (${vivos.reduce((n, c) => n + c.pages().length, 0)} página(s))`, 'cierra sus contextos del navegador');
+  for (const c of vivos) c.close().catch(() => {});
+}
 
 /** Abre una pestaña que anota todo error y aísla la app de lo que no es suyo. */
 async function openPage(contextOptions = {}) {
@@ -100,6 +145,13 @@ async function openPage(contextOptions = {}) {
   });
   await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ contentType: 'text/css', body: '' }));
   await page.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG_1PX }));
+  // OpenSSF Scorecard (ítem 218): abrir la salud de un repo público de GitHub simulado lo consulta; se responde un
+  // análisis sin comprobaciones para no salir a la red, y cada consulta queda anotada (la demo no debe hacer ninguna)
+  page.scorecard = [];
+  await page.route('https://api.scorecard.dev/**', (r) => {
+    page.scorecard.push({ url: r.request().url(), auth: r.request().headers().authorization || '', referer: r.request().headers().referer || '' });
+    return r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ date: new Date().toISOString(), score: 7, checks: [] }) });
+  });
   return page;
 }
 
@@ -140,6 +192,30 @@ async function quieta(page, fn) {
   }
 }
 
+/** Como `quieta`, pero con algún PR abierto en la demo (la cifra de PRs de la barra de cifras): pasados unos minutos la
+    demo viva fusiona los que tenía y pasa ratos sin ninguno hasta que abre otro, y un paso que mira un PR (su ficha, su
+    chip en la vista de texto) fallaba entonces con «ninguna ficha de rama con PR…» o `{"named":0,…}` (pendiente 1). Medido
+    en la iteración 317 con la demo viva 8 min: 17 de 95 muestras sin ninguno, la primera a los 255 s y tramos de hasta
+    50 s; dejada sin ninguno, volvió a abrir uno a los 10, 41 y 56 s (actúa cada unos 5 s, y una de cada diez veces abre
+    un PR), y una vez pasó 120 s sin abrirlo: el tope, T(120000), son 6 min. Espera a que haya uno, la pausa y lo vuelve
+    a mirar ya en pausa (pudo fusionarse justo antes). */
+async function quietaConPr(page, fn) {
+  const open = () => page.evaluate(() => Number(document.querySelector('#st-prs')?.textContent) > 0);
+  const deadline = Date.now() + T(120000);
+  while (Date.now() < deadline) {
+    const ok = await page.waitForFunction(() => Number(document.querySelector('#st-prs')?.textContent) > 0, null, { timeout: Math.max(1000, deadline - Date.now()), polling: 250 }).then(() => true, () => false);
+    if (!ok) break;
+    let ran = false;
+    await quieta(page, async () => {
+      if (!(await open())) return;
+      ran = true;
+      await fn();
+    });
+    if (ran) return;
+  }
+  throw new Error(`la demo no tuvo ningún PR abierto en ${Math.round(T(120000) / 1000)} s`);
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -152,7 +228,7 @@ async function step(page, name, fn, { allow = null } = {}) {
   // la excepción de la app explica mejor que el timeout
   errs.unshift(...page.errors.slice(before).filter((e) => !allow?.test(e)));
   if (errs.length) {
-    fail(`${name}: ${errs.join(' | ')}`);
+    fail(`${name}: ${errs.join(' | ')}`, name);
     await reset(page);
   } else console.log(`  ✓ ${name}`);
 }
@@ -304,7 +380,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 
 /* ---------- escritorio ---------- */
 
-console.log('Escritorio (1280×800)');
+if (seccion('Escritorio (1280×800)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   let has3d = false;
@@ -375,18 +451,37 @@ console.log('Escritorio (1280×800)');
   });
 
   await step(page, 'los avisos se retienen con el foco y se anuncian una sola vez', async () => {
-    const t = await page.waitForSelector('#toasts .toast:not(.leaving)', { timeout: T(30000) });
+    // el foco va a un aviso recién llegado, en la misma vuelta de la página en que entra. Antes se tomaba el primero del
+    // DOM, que es el más viejo, y se le daba el foco una ida y vuelta de Playwright después: si ya había vivido sus 6 s,
+    // se cerraba igual (iteración 306: con 6,3, 6,7 y 6,8 s de edad al recibir el foco, en la rama y en `dev`)
+    const t = (
+      await page.evaluateHandle(
+        (ms) =>
+          new Promise((ok) => {
+            const box = document.querySelector('#toasts');
+            const done = (el) => (mo.disconnect(), clearTimeout(late), el?.querySelector('.toast-main').focus(), ok(el || null));
+            const mo = new MutationObserver((list) => {
+              for (const m of list) for (const n of m.addedNodes) if (n.classList?.contains('toast')) return done(n);
+            });
+            mo.observe(box, { childList: true });
+            const late = setTimeout(() => done(null), ms);
+          }),
+        T(30000),
+      )
+    ).asElement();
+    if (!t) throw new Error('no llegó ningún aviso en 30 s');
     // regiones vivas anidadas: algunos lectores anuncian dos veces cada aviso
     const nested = await page.evaluate(() =>
       document.querySelector('#toasts')?.hasAttribute('aria-live')
         ? document.querySelectorAll('#toasts [role=status], #toasts [role=alert], #toasts [aria-live]').length
         : 0,
     );
-    await t.evaluate((el) => el.querySelector('.toast-main').focus());
-    await page.waitForTimeout(7000); // un aviso común dura 6 s
+    const held = await t.evaluate((el) => el.contains(document.activeElement) && el.classList.contains('paused'));
+    await page.waitForTimeout(7000); // un aviso común dura 6 s: con el foco, tiene que seguir ahí después
     const kept = await t.evaluate((el) => el.isConnected && !el.classList.contains('leaving'));
     await page.evaluate(() => document.activeElement?.blur());
     if (nested) throw new Error(`${nested} avisos son regiones vivas dentro de otra`);
+    if (!held) throw new Error('el aviso con el foco no se detuvo');
     if (!kept) throw new Error('el aviso con el foco se cerró solo');
   });
 
@@ -677,13 +772,45 @@ console.log('Escritorio (1280×800)');
     const sel = has3d && (await page.locator('#graph3d').isVisible()) ? '#graph3d' : '#graph';
     const rec = page.locator('#replay .rp-rec');
     const saved = page.waitForEvent('download', { timeout: T(15000) });
-    await rec.click();
-    await page.waitForTimeout(2500);
-    await rec.click();
-    await videoFile(page, await saved, sel, { minSeconds: 1.5, maxSeconds: 5 });
-    while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
-    await page.click('#replay .rp-exit');
-    await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
+    saved.catch(() => {}); // si el paso falla antes de esperarla, que su vencimiento no tumbe el smoke entero
+    // El video tiene que durar lo que se grabó: desde que arranca el grabador hasta el clic que lo para, medidos en la
+    // página. El tope fijo de 5 s (2,5 s de espera y algo de holgura) contaba también lo que tarda Playwright en dar el
+    // clic, y con la máquina cargada el segundo tardaba de 2,4 a 7,3 s: 8 de 8 videos de 5,1 a 9,9 s, cada uno igual
+    // (±0,01 s) a lo que se grabó (pendiente 1: `dura 5.6 s y no entre 1.5 y 5`; carga 7 a 9 en 2 CPU, iteración 307)
+    await page.evaluate(() => {
+      window.__recManual = { clicks: [], start: null };
+      document.addEventListener('click', (e) => e.target.closest?.('#replay .rp-rec') && window.__recManual.clicks.push(performance.now()), true);
+      const st = MediaRecorder.prototype.start;
+      MediaRecorder.prototype.start = function (...a) {
+        window.__recManual.start = performance.now();
+        return st.apply(this, a);
+      };
+    });
+    let fallo = null;
+    try {
+      await rec.click();
+      await page.waitForTimeout(2500);
+      await rec.click();
+      if ((await rec.getAttribute('aria-pressed')) !== 'false') throw new Error('el segundo clic no apaga el botón de grabar');
+      const dl = await saved;
+      const m = await page.evaluate(() => window.__recManual);
+      if (m.clicks.length !== 2 || m.start == null || m.start > m.clicks[1]) throw new Error(`el grabador no arrancó entre los dos clics: ${JSON.stringify(m)}`);
+      const grabado = (m.clicks[1] - m.start) / 1000;
+      const s2 = (x) => Math.round(x * 100) / 100; // centésimas: el fallo dice «entre 5.17 y 6.17», no 5.1695
+      await videoFile(page, dl, sel, { minSeconds: Math.max(1.5, s2(grabado - 0.5)), maxSeconds: s2(grabado + 0.5) });
+    } catch (e) {
+      fallo = e;
+    }
+    // es el último paso del Replay: se sale aunque el video haya fallado. Con la máquina cargada el video dura de más
+    // (`dura 5.6 s y no entre 1.5 y 5`) y, sin salir, los pasos que siguen trabajaban dentro del Replay y caían en
+    // cascada: la salud, los filtros por autor y por ruta, ocultar una rama, cargar más y la vista de un PR
+    // (pendiente 1; las tres puertas de la iteración 305, con carga de 3 a 13 en 2 CPU)
+    if (await page.locator('#replay').isVisible()) {
+      while ((await page.textContent('#replay .rp-speed')) !== '1×') await page.click('#replay .rp-speed');
+      await page.click('#replay .rp-exit');
+      await page.waitForSelector('#replay', { state: 'hidden', timeout: T(5000) });
+    }
+    if (fallo) throw fallo;
   });
 
   await step(page, 'ajustes', async () => {
@@ -727,27 +854,47 @@ console.log('Escritorio (1280×800)');
     });
     const dora = await page.$$eval('#hl-dora .hl-line', (ps) => ps.map((p) => p.textContent));
     if (dora.length !== 3) throw new Error(`${dora.length} líneas de entrega (DORA), se esperaban 3: ${dora.join(' | ')}`);
-    const weeks = await page.$eval('#hl-weeks', (p) => p.textContent);
+    const weeks = await page.$eval('#hl-weeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join(''));
     if (!/(\d+ · ){7}\d+$/.test(weeks) || /^(0 · ){7}0$/.test(weeks.split(': ').pop())) throw new Error(`la frecuencia de despliegue por semana no trae 8 cifras con algún release: ${weeks}`);
-    const mweeks = await page.$eval('#hl-mergeweeks', (p) => p.textContent).catch(() => '');
+    const mweeks = await page.$eval('#hl-mergeweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(mweeks) || /^(0 · ){7}0$/.test(mweeks.split(': ').pop())) throw new Error(`la tendencia de merges por semana no trae 8 cifras con algún PR fusionado: ${mweeks}`);
-    const oweeks = await page.$eval('#hl-openedweeks', (p) => p.textContent).catch(() => '');
+    const oweeks = await page.$eval('#hl-openedweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(oweeks) || /^(0 · ){7}0$/.test(oweeks.split(': ').pop())) throw new Error(`la tendencia de PRs abiertos por semana no trae 8 cifras con algún PR abierto: ${oweeks}`);
-    const cweeks = await page.$eval('#hl-closedweeks', (p) => p.textContent).catch(() => '');
+    const cweeks = await page.$eval('#hl-closedweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(cweeks) || /^(0 · ){7}0$/.test(cweeks.split(': ').pop())) throw new Error(`la tendencia de issues cerrados por semana no trae 8 cifras con algún issue cerrado: ${cweeks}`);
-    const bweeks = await page.$eval('#hl-branchweeks', (p) => p.textContent).catch(() => '');
+    const bweeks = await page.$eval('#hl-branchweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(bweeks) || /^(0 · ){7}0$/.test(bweeks.split(': ').pop())) throw new Error(`la tendencia de ramas nuevas por semana no trae 8 cifras con alguna rama creada: ${bweeks}`);
-    const kweeks = await page.$eval('#hl-commitweeks', (p) => p.textContent).catch(() => '');
+    const kweeks = await page.$eval('#hl-commitweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(kweeks) || /^(0 · ){7}0$/.test(kweeks.split(': ').pop())) throw new Error(`la tendencia de commits por semana no trae 8 cifras con algún commit: ${kweeks}`);
-    const aweeks = await page.$eval('#hl-authorweeks', (p) => p.textContent).catch(() => '');
+    const aweeks = await page.$eval('#hl-authorweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (!/(\d+ · ){7}\d+$/.test(aweeks) || /^(0 · ){7}0$/.test(aweeks.split(': ').pop())) throw new Error(`los autores por semana no traen 8 cifras con algún autor: ${aweeks}`);
     if (aweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(kweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores que commits: ${aweeks} frente a ${kweeks}`);
-    const tweeks = await page.$eval('#hl-tagweeks', (p) => p.textContent).catch(() => '');
+    const nweeks = await page.$eval('#hl-newauthorweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
+    if (!/(\d+ · ){7}\d+$/.test(nweeks) || /^(0 · ){7}0$/.test(nweeks.split(': ').pop())) throw new Error(`los autores nuevos por semana no traen 8 cifras con algún autor nuevo: ${nweeks}`);
+    if (nweeks.split(': ').pop().split(' · ').some((n, i) => Number(n) > Number(aweeks.split(': ').pop().split(' · ')[i]))) throw new Error(`alguna semana tiene más autores nuevos que autores distintos: ${nweeks} frente a ${aweeks}`);
+    // el factor de ausencia (ítem 202): una sola cifra, al menos 1 y no más que los autores, sin nombres de la demo
+    const absence = await page.$eval('#hl-absence', (p) => p.textContent).catch(() => '');
+    const absN = absence.match(/:\s*(\d+)\D+(\d+)\D+(\d+)/);
+    if (!absN || Number(absN[1]) < 1 || Number(absN[1]) > Number(absN[2]) || Number(absN[2]) > Number(absN[3])) throw new Error(`el factor de ausencia no sale o no cuadra (personas ≤ autores ≤ commits): ${absence}`);
+    // las líneas añadidas y borradas por semana (ítem 206): 8 cifras con el separador del idioma, alguna distinta de cero, y sin «calculando» en la demo
+    const lines = {};
+    for (const k of ['added', 'deleted']) {
+      const txt = await page.$eval(`#hl-${k}weeks`, (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
+      const nums = txt.split(': ').pop().split(' · ').map((x) => Number(x.replace(/\D/g, '')));
+      if (nums.length !== 8 || nums.some((n) => !Number.isFinite(n)) || !nums.some(Boolean) || /undefined|NaN|health\./.test(txt)) throw new Error(`las líneas ${k === 'added' ? 'añadidas' : 'borradas'} por semana no traen 8 cifras con alguna distinta de cero: ${txt}`);
+      lines[k] = nums;
+    }
+    if (lines.added.reduce((a, b) => a + b) <= lines.deleted.reduce((a, b) => a + b)) throw new Error(`la demo borra más líneas de las que añade: ${JSON.stringify(lines)}`);
+    if (await page.$('#hl-codepending')) throw new Error('la demo dice que GitHub todavía calcula las líneas por semana');
+    const tweeks = await page.$eval('#hl-tagweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (tweeks && (!/(\d+ · ){7}\d+$/.test(tweeks) || /^(0 · ){7}0$/.test(tweeks.split(': ').pop()))) throw new Error(`la tendencia de tags por semana no trae 8 cifras con algún tag: ${tweeks}`);
-    const iweeks = await page.$eval('#hl-issueweeks', (p) => p.textContent).catch(() => '');
+    const iweeks = await page.$eval('#hl-issueweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (iweeks && (!/(\d+ · ){7}\d+$/.test(iweeks) || /^(0 · ){7}0$/.test(iweeks.split(': ').pop()))) throw new Error(`la tendencia de issues abiertos por semana no trae 8 cifras con algún issue: ${iweeks}`);
-    const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => p.textContent).catch(() => '');
+    const pcweeks = await page.$eval('#hl-prcloseweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
     if (pcweeks && (!/(\d+ · ){7}\d+$/.test(pcweeks) || /^(0 · ){7}0$/.test(pcweeks.split(': ').pop()))) throw new Error(`la tendencia de PRs cerrados sin fusionar por semana no trae 8 cifras con algún PR: ${pcweeks}`);
+    // los forks nuevos por semana (ítem 195): la demo trae un fork de hace unos días, así que la serie sale con 8 cifras y alguna distinta de cero
+    const fkweeks = await page.$eval('#hl-forkweeks', (p) => [...p.childNodes].filter((n) => !n.classList?.contains('sr-only')).map((n) => n.textContent).join('')).catch(() => '');
+    if (!/^Forks nuevos por semana: (\d+ · ){7}\d+$/.test(fkweeks) || /^(0 · ){7}0$/.test(fkweeks.split(': ').pop())) throw new Error(`los forks nuevos por semana no traen 8 cifras con algún fork: «${fkweeks}»`);
     // El periodo de las series por semana se dice una vez, como encabezado del grupo, y no en cada línea (pendiente 12).
     const weekly = await page.evaluate(() => {
       const g = document.querySelector('#hl-weekly[role="group"]');
@@ -760,6 +907,15 @@ console.log('Escritorio (1280×800)');
     if (weekly.lines.length < 6 || largas.length) throw new Error(`las series por semana repiten el periodo en cada línea: ${largas.join(' | ') || weekly.lines.length + ' líneas'}`);
     const ciLines = await page.$$eval('#hl-ci .hl-line', (ps) => ps.map((p) => p.textContent));
     if (!ciLines.length || ciLines.some((l) => !/\d/.test(l))) throw new Error(`la tasa de fallos de CI no sale en la salud: ${ciLines.join(' | ')}`);
+    // el último despliegue de cada entorno de la demo (producción en main y staging, que sigue a develop), con su estado
+    const deploys = await page.$$eval('#hl-deploys .hl-list .hl-row', (rs) => rs.map((r) => [r.querySelector('.hl-main').textContent, r.querySelector('.hl-aside').textContent, r.matches('[data-go]')]));
+    const envs = deploys.map(([e]) => e).sort().join(',');
+    if (envs !== 'production,staging') throw new Error(`los despliegues por entorno no son los de la demo: ${JSON.stringify(deploys)}`);
+    const stg = deploys.find(([e]) => e === 'staging');
+    if (!/^\S{7} · al día con develop( · |$)/.test(stg[1]) || !stg[2]) throw new Error(`staging no sale al día con develop ni lleva a su rama: ${stg[1]}`);
+    const prod = deploys.find(([e]) => e === 'production');
+    if (!/ · salió bien( · |$)/.test(prod[1]) || !/ · (falló|en curso)( · |$)/.test(stg[1])) throw new Error(`los despliegues de la demo no dicen si salieron bien, fallaron o siguen en curso: ${JSON.stringify(deploys)}`);
+    if (deploys.some(([, a]) => /health\.|\{/.test(a))) throw new Error(`un despliegue sale con una clave cruda: ${JSON.stringify(deploys)}`);
     if (info.stats !== 3) throw new Error(`${info.stats} cifras de ritmo, se esperaban 3`);
     if (!info.rows) throw new Error('la demo tiene PRs abiertos y no salen en la lista');
     const forks = await page.$$eval('#hl-forks a.hl-row[href^="https://"][rel~="noopener"]', (as) => as.map((a) => a.textContent));
@@ -769,13 +925,25 @@ console.log('Escritorio (1280×800)');
     if (!/^★ 4 · /.test(byStars[0] || '') || /★ 0/.test(byStars.join('|'))) throw new Error(`los forks por estrellas no salen del que más tiene: ${byStars.join(' | ')}`);
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-stars'))) throw new Error('el foco se pierde al ordenar los forks por estrellas');
     await page.click('#hl-forks-stars');
+    // la demo trae un fork de hace unos días (y suma otros en vivo): los forks nuevos de la semana frente a la anterior
+    const forkTrend = await page.$eval('#hl-forks-trend', (p) => p.textContent).catch(() => '');
+    // la semana anterior se compara solo si la actividad cargada llega entera a ella; si no, el panel lo dice
+    const fm = /^Forks nuevos: (\d+) esta semana(?: · (\d+) la anterior \(([+−]\d+|±0)\)| \(la anterior no está cargada entera\))$/.exec(forkTrend);
+    if (!fm || Number(fm[1]) < 1) throw new Error(`los forks nuevos de la demo no salen en la salud: «${forkTrend}»`);
     await page.click('#hl-forks-toggle');
     const hidden = await page.$$eval('#hl-forks a.hl-row', (as) => as.length);
+    if (await page.$('#hl-forks-trend')) throw new Error('el interruptor «Mostrar forks» apagado deja la tendencia de forks');
+    if (await page.$('#hl-forkweeks')) throw new Error('el interruptor «Mostrar forks» apagado deja los forks nuevos por semana');
     if (hidden || !(await page.evaluate(() => new URL(location.href).searchParams.get('forks') === '0'))) throw new Error('el interruptor «Mostrar forks» apagado no oculta los forks ni deja forks=0 en la URL');
     if (!(await page.evaluate(() => document.activeElement?.id === 'hl-forks-toggle'))) throw new Error('el foco se pierde al apagar el interruptor de forks');
     await page.click('#hl-forks-toggle');
     if ((await page.$$eval('#hl-forks a.hl-row', (as) => as.length)) !== 2 || (await page.evaluate(() => new URL(location.href).searchParams.has('forks')))) throw new Error('el interruptor «Mostrar forks» encendido no devuelve los 2 forks ni quita forks de la URL');
+    if (!(await page.$('#hl-forkweeks'))) throw new Error('el interruptor «Mostrar forks» encendido otra vez no devuelve los forks nuevos por semana');
     if (/undefined|NaN|health\./.test(info.text)) throw new Error('texto sin resolver en el panel: ' + info.text.slice(0, 120));
+    // la demo trae una estrella de hace unos días (y suma otras en vivo): la semana actual frente a la anterior
+    const stars = await page.$eval('#hl-stars', (s) => s.querySelector('.hl-line')?.textContent || '');
+    const sm = /^(\d+) esta semana(?: · (\d+) la anterior \(([+−]\d+|±0)\)| \(la anterior no está cargada entera\))$/.exec(stars);
+    if (!sm || Number(sm[1]) < 1) throw new Error(`las estrellas nuevas de la demo no salen en la salud: «${stars}»`);
     if (info.overflow > 1) throw new Error(`el panel se desborda ${info.overflow}px`);
     await page.click('#hl-clash-go');
     await page.waitForFunction(() => document.querySelector('#hl-clash-out')?.textContent.trim() && !document.querySelector('#hl-clash-go').disabled, null, { timeout: T(8000) });
@@ -797,12 +965,22 @@ console.log('Escritorio (1280×800)');
       document.querySelector('#cmp-go').click();
       await new Promise((r) => setTimeout(r, 800));
     });
-    const marked = await page.evaluate(() => ({
-      a: document.querySelectorAll('#graph .node.cmp-a').length,
-      b: document.querySelectorAll('#graph .node.cmp-b').length,
-      base: document.querySelectorAll('#graph .node.cmp-base').length,
-      dim: document.querySelectorAll('#graph .node.pfx').length,
-    }));
+    const marked = await page.evaluate(() => {
+      // el commit del punto de separación, por su SHA corto en la fila «Punto de separación»: si falta su marca, el fallo
+      // dice si estaba dibujado (el 2D crea cada commit al entrar en pantalla; pendiente 1, `"base":0` con a y b marcados)
+      const row = [...document.querySelectorAll('#cmp-out .hl-row')].map((b) => b.textContent).find((t) => /separ/i.test(t)) || '';
+      const short = (row.match(/\b[0-9a-f]{7}\b/) || [''])[0];
+      const nodes = [...document.querySelectorAll('#graph .node')];
+      return {
+        a: document.querySelectorAll('#graph .node.cmp-a').length,
+        b: document.querySelectorAll('#graph .node.cmp-b').length,
+        base: document.querySelectorAll('#graph .node.cmp-base').length,
+        dim: document.querySelectorAll('#graph .node.pfx').length,
+        baseSha: short,
+        baseDibujado: !!short && nodes.some((n) => String(n.__sha || '').startsWith(short)),
+        dibujados: nodes.length,
+      };
+    });
     if (marked.a + marked.b < 1 || marked.base !== 1 || marked.dim < 1) throw new Error('comparar ramas: el grafo no marca los tramos ni el punto de separación: ' + JSON.stringify(marked));
     await page.evaluate(() => [...document.querySelectorAll('#cmp-out .hl-row')].find((b) => b.textContent.includes(document.documentElement.lang === 'es' ? 'Quitar el resaltado' : 'Clear the highlight'))?.click());
     const left = await page.evaluate(() => document.querySelectorAll('#graph .node.cmp-a, #graph .node.cmp-b, #graph .node.cmp-base').length);
@@ -811,6 +989,13 @@ console.log('Escritorio (1280×800)');
     if (!/^# /.test(md) || !/## .*\(\d+\)/.test(md)) throw new Error('resumen de la semana sin formato Markdown: ' + md.slice(0, 120));
     if (!/\d( · \d+){6}\n/.test(md)) throw new Error('resumen de la semana sin los commits de cada día: ' + md.slice(0, 160));
     if (/undefined|NaN|digest\./.test(md)) throw new Error('texto sin resolver en el resumen de la semana: ' + md.slice(0, 120));
+    // la demo abre un PR con autor en la semana (el del agente): el resumen dice quién abrió más
+    const openers = await page.evaluate(() => GB.i18n.t('digest.openers'));
+    if (!new RegExp(`\\n${openers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`).test(md)) throw new Error('resumen de la semana sin «quién abrió más»: ' + md.slice(0, 400));
+    // y cierra el issue #84 con autor en la semana: dice quién cerró más, debajo de los issues cerrados
+    const closers = await page.evaluate(() => GB.i18n.t('digest.closers'));
+    const closersAt = md.search(new RegExp(`\\n${closers.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\S.* \\(\\d+\\)\\n`));
+    if (closersAt < 0 || md.indexOf('#84') < 0 || closersAt < md.indexOf('#84')) throw new Error('resumen de la semana sin «quién cerró más» debajo de los issues cerrados: ' + md.slice(0, 600));
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-save')]);
     if (!/^graphbranch-.*-semana-.*\.md$/.test(dl.suggestedFilename())) throw new Error('nombre del resumen: ' + dl.suggestedFilename());
     const [png] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#digest-png')]);
@@ -818,12 +1003,42 @@ console.log('Escritorio (1280×800)');
     const pngPath = await png.path();
     const head = pngPath ? readFileSync(pngPath).subarray(0, 8).toString('hex') : '';
     if (head !== '89504e470d0a1a0a') throw new Error('la imagen del resumen no es un PNG: ' + head);
+    // el borrador de notas de la versión (ítem 220): la demo fusiona en main el #33 después del tag v1.4.0; los #31 y #34 son de antes
+    const notes = await page.evaluate(() => ({ md: document.querySelector('#notes-md')?.textContent || '', hidden: document.querySelector('#hl-notes')?.hidden, h3: document.querySelector('#hl-notes h3')?.textContent || '' }));
+    if (notes.hidden !== false || !notes.h3 || /notes\./.test(notes.h3)) throw new Error('notas de la versión: la sección no sale en la demo: ' + JSON.stringify(notes).slice(0, 200));
+    if (!/^# /.test(notes.md) || !/ v1\.4\.0 /.test(notes.md) || !/\n- #33 .+ \(@\w+\)\n/.test(notes.md) || /#3[14]\b/.test(notes.md) || !/\n- @\w+ \(\d+\)\n/.test(notes.md)) throw new Error('notas de la versión de la demo: ' + notes.md.slice(0, 400));
+    if (/undefined|NaN|notes\.|\{(tag|date|branch|repo)\}/.test(notes.md)) throw new Error('texto sin resolver en las notas de la versión: ' + notes.md.slice(0, 300));
+    const [nd] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#notes-save')]);
+    if (!/^graphbranch-.*-notas-.*\.md$/.test(nd.suggestedFilename())) throw new Error('nombre de las notas de la versión: ' + nd.suggestedFilename());
+    const ndPath = await nd.path();
+    if (ndPath && readFileSync(ndPath, 'utf8') !== notes.md) throw new Error('el .md de las notas de la versión no es el borrador que se ve');
     const states = await page.evaluate(() => ({
       groups: [...document.querySelectorAll('#hl-prstates .hl-sub')].map((d) => d.querySelector('h4').textContent.trim()),
       inGroups: document.querySelectorAll('#hl-prstates .hl-sub li').length,
       open: document.querySelectorAll('#health .hl-list[data-list="prs"] li').length,
     }));
     if (!states.groups.length || states.inGroups !== states.open || states.groups.some((x) => /undefined|NaN|health\./.test(x))) throw new Error('PRs por estado en la demo: ' + JSON.stringify(states));
+    // PRs sin revisión hace más de 7 días: los de la demo son de hace 3, así que la lista sale vacía y con su total en 0
+    const unrev = await page.evaluate(() => {
+      const box = document.querySelector('#hl-unreviewed');
+      return box && { head: box.querySelector('h3')?.textContent.trim() || '', n: box.querySelector('.hl-n')?.textContent.trim(), rows: box.querySelectorAll('li').length, none: !!box.querySelector('.hl-none') };
+    });
+    if (!unrev || !unrev.head || /undefined|NaN|health\./.test(unrev.head) || unrev.n !== '0' || unrev.rows || !unrev.none) throw new Error('PRs sin revisión en la demo: ' + JSON.stringify(unrev));
+    // el tiempo de ciclo por etapas (ítem 217): la historia de la demo trae dos PRs fusionados con revisión y aprobación y el de
+    // Dependabot sin revisión, todos abiertos después de la actividad más vieja cargada
+    const cycle = await page.evaluate(() => ({
+      head: document.querySelector('#hl-cycle h3')?.textContent || '',
+      stages: ['open', 'review', 'merge'].map((k) => document.querySelector(`#hl-cycle-${k}`)?.textContent || ''),
+      skipped: document.querySelector('#hl-cycle-skipped')?.textContent || '',
+      early: !!document.querySelector('#hl-cycle-early'),
+      noReviews: !!document.querySelector('#hl-cycle-noreviews'),
+    }));
+    if (!/últimas 4 semanas/.test(cycle.head)) throw new Error(`el tiempo de ciclo no dice su periodo: «${cycle.head}»`);
+    const stageRe = [/^De abierto a la primera revisión: mediana \d+\s\S+ · PRs medidos: (\d+)$/, /^De la primera revisión a la aprobación: mediana \d+\s\S+ · PRs medidos: (\d+)$/, /^De la aprobación a la fusión: mediana \d+\s\S+ · PRs medidos: (\d+)$/];
+    const bad = cycle.stages.filter((l, i) => !(stageRe[i].exec(l)?.[1] >= 2));
+    if (bad.length) throw new Error(`las etapas del tiempo de ciclo de la demo no salen con su mediana y al menos 2 PRs: ${cycle.stages.join(' | ')}`);
+    if (!(/^Fusionados sin revisión: (\d+) · revisados y fusionados sin aprobación: \d+$/.exec(cycle.skipped)?.[1] >= 1)) throw new Error(`el PR de Dependabot, fusionado sin revisión, no se cuenta aparte: «${cycle.skipped}»`);
+    if (cycle.early || cycle.noReviews) throw new Error(`la demo dice que le faltan revisiones: ${JSON.stringify(cycle)}`);
     await page.click('#health .hl-list[data-list="prs"] [data-go]');
     await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
@@ -903,7 +1118,7 @@ console.log('Escritorio (1280×800)');
   });
 
   // la región viva dice al abrir los tags, releases y forks; si la demo publica antes de leerla ya dice «Novedades»
-  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quieta(page, async () => {
+  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quietaConPr(page, async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
@@ -930,6 +1145,9 @@ console.log('Escritorio (1280×800)');
     // la marca «CI fallando» de una rama (si la demo tiene alguna con el CI en rojo) también está en su nombre accesible
     const ciMarks = await page.evaluate(() => [...document.querySelectorAll('#textview .tv-ci-fail')].map((n) => ({ tag: n.textContent.replace(/^✗\s*/, ''), label: n.closest('[role="treeitem"]').getAttribute('aria-label') })));
     for (const m of ciMarks) if (!m.tag || !m.label.includes(m.tag)) throw new Error('«CI fallando» no está en el nombre accesible: ' + JSON.stringify(m));
+    // las marcas de una rama y la nota de un commit ya van en el nombre accesible de su nodo: no se leen dos veces
+    const loud = await page.evaluate(() => [...document.querySelectorAll('#textview [role="treeitem"][aria-label] :is(.tv-tag, .tv-aside)')].filter((n) => !n.closest('[aria-hidden="true"]')).map((n) => n.className + ': ' + n.textContent));
+    if (loud.length) throw new Error('marcas que el lector leería dos veces (sin aria-hidden): ' + loud.slice(0, 3).join(' | '));
     // los commits con tag lo dicen en su nombre accesible («tag v1.0.0») y la región viva cuenta cuántos hay al abrir
     const marks = await page.evaluate(() => {
       const commits = [...document.querySelectorAll('#textview .tv-commit')];
@@ -942,7 +1160,7 @@ console.log('Escritorio (1280×800)');
     });
     if (marks.marked !== marks.named) throw new Error(`commits con tag sin decirlo en su nombre accesible: ${marks.marked} vs ${marks.named}`);
     // la demo publica v1.4.0 como release sobre un commit con ese tag: se dice «release» en su nombre y la región viva lo cuenta
-    if (!marks.released || !/Commits con release: \d+(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
+    if (!marks.released || !/Commits con release: \d+(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(marks.live)) throw new Error(`el release de la demo no se dice (${marks.released}): ${marks.live}`);
     if (marks.marked && !/^Commits con tag: \d+/.test(marks.live)) throw new Error('la región viva no cuenta los commits con tag: ' + marks.live);
     // los 2 forks activos de la demo salen como lista de enlaces aparte del árbol, el más reciente primero, y la región viva los cuenta
     const forks = await page.evaluate(() => ({
@@ -986,6 +1204,54 @@ console.log('Escritorio (1280×800)');
     });
     const gotMerged = mergedBr.filter((m) => m.label || m.chip);
     if (gotMerged.length !== 1 || gotMerged[0].b !== 'hecha' || !gotMerged[0].label || !gotMerged[0].chip) throw new Error('la vista de texto no dice la rama fusionada: ' + JSON.stringify(mergedBr));
+    // los PRs en borrador: su rama lo dice en su nombre accesible y con una marca («PRs en borrador: n»), y la lista del CI
+    // en rojo lo dice tras el PR (árbol montado aparte, con PRs fijos: en la demo un borrador puede pasar a listo)
+    const drafts = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2), c('g', ['a'], 3)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['wip', { name: 'wip', sha: 'f' }], ['lista', { name: 'lista', sha: 'g' }]]),
+        pulls: new Map([[21, { number: 21, title: 'a medias', head: 'wip', sameRepo: true, draft: true, ci: 'failure' }], [22, { number: 22, title: 'lista', head: 'lista', sameRepo: true, draft: false, ci: 'failure' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return {
+        branches: [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: /, PRs en borrador: 1,/.test(n.getAttribute('aria-label')), chip: /PRs en borrador: 1/.test(n.querySelector('.tv-head').textContent) })),
+        ci: [...box.querySelectorAll('.tv-cipulls .tv-name')].map((n) => n.textContent),
+      };
+    });
+    const gotDrafts = drafts.branches.filter((m) => m.label || m.chip);
+    if (gotDrafts.length !== 1 || gotDrafts[0].b !== 'wip' || !gotDrafts[0].label || !gotDrafts[0].chip) throw new Error('la vista de texto no dice la rama con un PR en borrador: ' + JSON.stringify(drafts));
+    if (drafts.ci.length !== 2 || !/^#22 lista, rama lista$/.test(drafts.ci[0]) || !/^#21 a medias, rama wip, en borrador$/.test(drafts.ci[1])) throw new Error('la lista del CI en rojo no marca el PR en borrador: ' + JSON.stringify(drafts.ci));
+    // los PRs aprobados: su rama lo dice en su nombre accesible y con una marca («PRs aprobados: n»); un borrador
+    // aprobado cuenta como borrador (árbol montado aparte, con PRs fijos: en la demo una revisión cambia el estado)
+    const approvedBr = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2), c('g', ['a'], 3)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['lista', { name: 'lista', sha: 'f' }], ['espera', { name: 'espera', sha: 'g' }]]),
+        pulls: new Map([[31, { number: 31, title: 'uno', head: 'lista', sameRepo: true, review: 'approved' }], [32, { number: 32, title: 'dos', head: 'lista', sameRepo: true, review: 'approved' }], [33, { number: 33, title: 'tres', head: 'espera', sameRepo: true, review: 'changes' }], [34, { number: 34, title: 'cuatro', head: 'espera', sameRepo: true, draft: true, review: 'approved' }]]) };
+      const box = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {} });
+      view.render(GB.textview.build(data, { now: 6 }));
+      return [...box.querySelectorAll('.tv-branch')].map((n) => ({ b: n.dataset.branch, label: (n.getAttribute('aria-label').match(/, PRs aprobados: (\d+),/) || [])[1] || '', chip: (n.querySelector('.tv-head').textContent.match(/PRs aprobados: (\d+)/) || [])[1] || '' }));
+    });
+    if (JSON.stringify(approvedBr.filter((m) => m.label || m.chip)) !== JSON.stringify([{ b: 'lista', label: '2', chip: '2' }])) throw new Error('la vista de texto no dice los PRs aprobados de cada rama: ' + JSON.stringify(approvedBr));
+    // los PRs abiertos con el CI en rojo salen en una lista aparte del árbol (árbol montado aparte, con PRs fijos): el de
+    // url https es un enlace, el otro solo texto, el título entra como texto y la región viva los cuenta
+    const ciPulls = await page.evaluate(() => {
+      const c = (sha, parents, date) => [sha, { sha, parents, message: sha, date, author: { name: 'Ana' } }];
+      const data = { repo: { defaultBranch: 'main' }, commits: new Map([c('a', [], 1), c('f', ['a'], 2)]), branches: new Map([['main', { name: 'main', sha: 'a', isDefault: true }], ['roja', { name: 'roja', sha: 'f' }]]), ci: new Map([['roja', 'failure']]),
+        pulls: new Map([[12, { number: 12, title: '<img src=x onerror=alert(1)> arregla', head: 'roja', sameRepo: true, url: 'https://github.com/o/r/pull/12' }], [13, { number: 13, title: 'sin enlace', head: 'roja', sameRepo: true, url: null }], [14, { number: 14, title: 'verde', head: 'main', sameRepo: true, ci: 'success' }]]) };
+      const box = document.createElement('div');
+      const live = document.createElement('div');
+      const view = GB.textview.mount(box, { text: (k, p) => GB.i18n.t(k, p), ago: () => "", onGo() {}, live });
+      view.render(GB.textview.build(data, { now: 6 }));
+      const sec = box.querySelector('.tv-cipulls');
+      return { h: sec?.querySelector('h3')?.textContent, labelled: sec?.getAttribute('aria-labelledby') === sec?.querySelector('h3')?.id, rows: [...(sec?.querySelectorAll('li > .tv-cipull') || [])].map((n) => ({ tag: n.tagName, href: n.getAttribute('href'), rel: n.getAttribute('rel'), txt: n.querySelector('.tv-name').textContent })), img: box.querySelectorAll('img').length, inTree: !!box.querySelector('[role="tree"] .tv-cipulls'), live: live.textContent };
+    });
+    if (ciPulls.h !== 'PRs abiertos con CI fallando: 2' || !ciPulls.labelled || ciPulls.inTree || ciPulls.img || ciPulls.rows.length !== 2) throw new Error('la vista de texto no lista los PRs con CI fallido: ' + JSON.stringify(ciPulls));
+    if (ciPulls.rows[0].tag !== 'SPAN' || ciPulls.rows[0].txt !== '#13 sin enlace, rama roja' || ciPulls.rows[1].tag !== 'A' || ciPulls.rows[1].href !== 'https://github.com/o/r/pull/12' || !/noopener/.test(ciPulls.rows[1].rel) || ciPulls.rows[1].txt !== '#12 <img src=x onerror=alert(1)> arregla, rama roja') throw new Error('los PRs con CI fallido no salen como deben: ' + JSON.stringify(ciPulls.rows));
+    if (!/PRs abiertos con CI fallando: 2$/.test(ciPulls.live)) throw new Error('la región viva no cuenta los PRs con CI fallido: ' + ciPulls.live);
+    // y en la demo: si hay algún PR abierto con el CI en rojo, su lista dice cuántos son y trae esas filas, fuera del árbol
+    const demoCi = await page.evaluate(() => ({ rows: document.querySelectorAll('#textview .tv-cipulls .tv-cipull').length, h: document.querySelector('#textview .tv-cipulls h3')?.textContent || '', inTree: !!document.querySelector('#textview [role="tree"] .tv-cipulls') }));
+    if (demoCi.h && (demoCi.inTree || !/^PRs abiertos con CI fallando: \d+$/.test(demoCi.h) || Math.min(Number(demoCi.h.match(/\d+$/)[0]), 20) !== demoCi.rows)) throw new Error('la lista de PRs con CI fallido de la demo no coincide con su título: ' + JSON.stringify(demoCi));
     // la rama por defecto viene abierta: ↓ baja a su primer commit; ← sube a la rama y otra ← la cierra
     await page.keyboard.press('ArrowDown');
     const onCommit = await page.evaluate(() => document.activeElement.classList.contains('tv-commit'));
@@ -1045,14 +1311,20 @@ console.log('Escritorio (1280×800)');
   }));
 
   await step(page, 'vista de texto: filtra por rama y avisa en la región viva de lo nuevo sin repetir', async () => {
-    await page.click('#textview-btn');
-    await page.waitForSelector('#textview[open]', { timeout: T(3000) });
-    const live = await page.evaluate(() => {
-      const l = document.querySelector('#textview-live');
-      return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
+    // se abre con la demo en pausa: con la máquina cargada abrir tarda de 4 a 7 s, y un commit que llega en ese tiempo
+    // es una novedad de verdad y no algo viejo anunciado al abrir (pendiente 1: `al abrir, la región viva ya anuncia
+    // algo más…: Novedades: 0 ramas, 2 commits`; 5 de 30 aperturas con carga 10 en 2 CPU, y 0 de 30 en pausa, iteración 307)
+    let live = null;
+    await quieta(page, async () => {
+      await page.click('#textview-btn');
+      await page.waitForSelector('#textview[open]', { timeout: T(3000) });
+      live = await page.evaluate(() => {
+        const l = document.querySelector('#textview-live');
+        return { role: l.getAttribute('role'), polite: l.getAttribute('aria-live'), text: l.textContent };
+      });
     });
     if (live.role !== 'status' || live.polite !== 'polite') throw new Error('la región viva no es role=status polite');
-    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
+    if (live.text && !/^Commits con tag: \d+(\. Commits con release: \d+)?(\. PRs abiertos con CI fallando: \d+)?(\. Forks activos: \d+)?$/.test(live.text)) throw new Error('al abrir, la región viva ya anuncia algo más que los tags y releases: ' + live.text);
     // filtro: un nombre que no existe vacía el árbol; el de la primera rama lo deja con esa rama
     const first = await page.evaluate(() => document.querySelector('#textview .tv-branch').dataset.branch);
     await page.fill('#textview-filter', 'zzz-no-existe');
@@ -1096,6 +1368,95 @@ console.log('Escritorio (1280×800)');
     if (await page.evaluate(() => document.querySelector('#cmdk').open)) throw new Error('la paleta sigue abierta tras accionar');
     await page.keyboard.press('Escape');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
+  });
+
+  await step(page, 'barra superior: tres grupos y un botón que abre la paleta de comandos, con su atajo a la vista', async () => {
+    const bar = await page.evaluate(() => ({
+      seps: document.querySelectorAll('.controls > .ctl-sep').length,
+      kbd: document.querySelector('#cmdk-kbd')?.textContent || '',
+      kbdShown: !!document.querySelector('#cmdk-kbd')?.checkVisibility?.(),
+      name: document.querySelector('#cmdk-btn')?.getAttribute('aria-label') || '',
+    }));
+    if (bar.seps !== 2) throw new Error(`la barra tiene ${bar.seps} separadores (se esperan 2: en vivo · explorar · preferencias)`);
+    if (!bar.kbdShown || !/K$/.test(bar.kbd)) throw new Error(`el atajo no se ve junto al botón: «${bar.kbd}»`);
+    if (!bar.name || /cmdk\./.test(bar.name)) throw new Error(`el botón de la paleta sin nombre traducido: «${bar.name}»`);
+    await page.click('#cmdk-btn');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-input'))) throw new Error('al abrir con el botón, el foco no está en el campo');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cmdk:not([open])', { state: 'attached', timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'cmdk-btn'))) throw new Error('al cerrar, el foco no vuelve al botón de la paleta');
+  });
+
+  await step(page, 'panel de actividad: su borde se mueve con el teclado y el ratón, se pliega a una franja que cuenta lo nuevo y se recuerda', async () => {
+    const width = () => page.evaluate(() => Math.round(document.querySelector('#feed-panel').getBoundingClientRect().width));
+    const stored = (k) => page.evaluate((key) => localStorage.getItem('graphbranch:' + key), k);
+    const w0 = await width();
+    await page.focus('#feed-resize');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    const w1 = await width();
+    if (Math.abs(w1 - (w0 + 48)) > 2) throw new Error(`dos flechas a la izquierda: ${w0} → ${w1} px (se esperaban ${w0 + 48})`);
+    const now = await page.evaluate(() => Number(document.querySelector('#feed-resize').getAttribute('aria-valuenow')));
+    if (Math.abs(now - w1) > 2) throw new Error(`aria-valuenow dice ${now} y el panel mide ${w1}`);
+    await page.keyboard.press('Home');
+    if (Math.abs((await width()) - 280) > 2 || (await stored('feedWidth')) !== '280') throw new Error(`Inicio no lo deja en 280 px ni lo recuerda: ${await width()} px, guardado ${await stored('feedWidth')}`);
+    await page.dblclick('#feed-resize');
+    if (Math.abs((await width()) - 370) > 2 || (await stored('feedWidth')) !== null) throw new Error(`doble clic no vuelve al ancho de siempre: ${await width()} px`);
+    // con el ratón: el borde se arrastra 100 px hacia el grafo
+    const r = await page.$eval('#feed-resize', (e) => e.getBoundingClientRect().toJSON());
+    await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(r.x + r.width / 2 - 100, r.y + r.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(() => Math.abs(document.querySelector('#feed-panel').getBoundingClientRect().width - 470) <= 4, null, { timeout: T(3000) });
+    await page.dblclick('#feed-resize');
+    // plegado: una franja angosta, el grafo más ancho y lo que llega en vivo contado en la franja
+    const g0 = await page.evaluate(() => document.querySelector('#graph-panel').getBoundingClientRect().width);
+    await page.click('#feed-fold');
+    const folded = await page.evaluate(() => ({
+      on: document.querySelector('.main').classList.contains('feed-folded'),
+      w: document.querySelector('#feed-panel').getBoundingClientRect().width,
+      list: document.querySelector('#feed').checkVisibility(),
+      expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded'),
+      graph: document.querySelector('#graph-panel').getBoundingClientRect().width,
+    }));
+    if (!folded.on || folded.w > 60 || folded.list || folded.expanded !== 'false') throw new Error(`el panel no se pliega: ${JSON.stringify(folded)}`);
+    if (folded.graph < g0 + 250) throw new Error(`el grafo no gana el ancho del panel: ${Math.round(g0)} → ${Math.round(folded.graph)} px`);
+    if ((await stored('feedFolded')) !== 'true') throw new Error('el panel plegado no se recuerda');
+    await page.waitForFunction(() => /^\+\d+$/.test(document.querySelector('#feed-unseen').textContent) && !document.querySelector('#feed-unseen').hidden, null, { timeout: T(20000) });
+    await page.click('#feed-fold');
+    const back = await page.evaluate(() => ({ list: document.querySelector('#feed').checkVisibility(), unseen: document.querySelector('#feed-unseen').hidden, expanded: document.querySelector('#feed-fold').getAttribute('aria-expanded') }));
+    if (!back.list || !back.unseen || back.expanded !== 'true') throw new Error(`el panel no vuelve entero: ${JSON.stringify(back)}`);
+    if ((await stored('feedFolded')) !== null) throw new Error('desplegado, el panel sigue guardado como plegado');
+  });
+
+  await step(page, 'salud del repo: en pantalla ancha, sus secciones en dos columnas', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #health-body .hl-sec', { timeout: T(5000) });
+    const cols = await page.evaluate(() => new Set([...document.querySelectorAll('#health-body > .hl-sec')].map((s) => Math.round(s.getBoundingClientRect().left))).size);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    if (cols < 2) throw new Error(`las secciones de la salud están en ${cols} columna`);
+  });
+
+  await step(page, 'avisos en mazo: el más nuevo entero y los anteriores asomando detrás, desplegados con el puntero', async () => {
+    await page.mouse.move(5, 5);
+    await page.evaluate(() => document.activeElement?.blur());
+    // la demo trae actividad cada 3 a 7 s y un aviso común dura 6: se espera a tener dos a la vez
+    await page.waitForFunction(() => document.querySelectorAll('#toasts .toast:not(.leaving)').length >= 2, null, { timeout: T(45000) });
+    // el aviso de atrás se pliega con una transición de max-height (0,25 s): bajo carga se medía a medio plegar
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving)')].every((t) => t.dataset.depth === '0' || t.getBoundingClientRect().height <= 20), null, { timeout: T(2000) }).catch(() => {});
+    const deck = await page.evaluate(() => {
+      const ts = [...document.querySelectorAll('#toasts .toast:not(.leaving)')];
+      return { depths: ts.map((t) => t.dataset.depth), back: ts.filter((t) => t.dataset.depth !== '0').map((t) => Math.round(t.getBoundingClientRect().height)), front: Math.round(ts.find((t) => t.dataset.depth === '0')?.getBoundingClientRect().height || 0) };
+    });
+    if (deck.depths.filter((d) => d === '0').length !== 1) throw new Error(`profundidades: ${deck.depths.join(',')} (se espera un solo aviso al frente)`);
+    if (deck.front < 40 || deck.back.some((h) => h > 20)) throw new Error(`el mazo no se pliega: al frente ${deck.front} px, detrás ${deck.back.join(', ')} px`);
+    await page.hover('#toasts .toast[data-depth="0"]');
+    // desplegado: los de atrás vuelven a su alto (o ya se fueron, que también vale)
+    await page.waitForFunction(() => [...document.querySelectorAll('#toasts .toast:not(.leaving):not([data-depth="0"])')].every((t) => t.getBoundingClientRect().height > 30), null, { timeout: T(3000) });
+    await page.mouse.move(5, 5);
   });
 
   await step(page, 'paleta de comandos: escribir el nombre de una rama o el SHA de un commit ofrece saltar a él, sin consultas', async () => {
@@ -1227,13 +1588,19 @@ console.log('Escritorio (1280×800)');
     await page.fill('#search-path', word);
     await page.press('#search-path', 'Enter');
     await page.waitForSelector('#search-path-clear:not([hidden])', { timeout: T(3000) });
-    const on = await page.evaluate(() => ({
-      dim: document.querySelectorAll('#graph svg .node.pfx').length,
-      all: document.querySelectorAll('#graph svg .node').length,
-      status: document.querySelector('#search-path-status').textContent,
-      mark: document.querySelector('#search-btn').classList.contains('filtered'),
-    }));
-    if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all}`);
+    const on = await page.evaluate(() => {
+      // la palabra sale del primer resultado: si todo queda atenuado, el fallo dice si ese commit estaba dibujado
+      const hit = document.querySelector('#search .sr-hit')?.dataset.sha || '';
+      return {
+        dim: document.querySelectorAll('#graph svg .node.pfx').length,
+        all: document.querySelectorAll('#graph svg .node').length,
+        status: document.querySelector('#search-path-status').textContent,
+        mark: document.querySelector('#search-btn').classList.contains('filtered'),
+        hit: hit.slice(0, 7),
+        hitDibujado: [...document.querySelectorAll('#graph svg .node')].some((n) => n.__sha === hit),
+      };
+    });
+    if (!on.dim || on.dim >= on.all) throw new Error(`el filtro no acota: ${on.dim} atenuados de ${on.all} («${word}», ${on.status}; el commit ${on.hit} ${on.hitDibujado ? 'está' : 'no está'} dibujado)`);
     if (!on.status || /undefined|NaN|search\./.test(on.status) || !on.mark) throw new Error('sin aviso del filtro: ' + on.status);
     await page.click('#search-path-clear');
     await page.waitForFunction(() => !document.querySelectorAll('#graph svg .node.pfx').length, null, { timeout: T(3000) }).catch(() => {});
@@ -1312,19 +1679,74 @@ console.log('Escritorio (1280×800)');
     await page.waitForSelector('#search:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
-  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
+  await step(page, 'cargar más: la ficha de main trae su historia de a 6 commits, el grafo los dibuja y al llegar a la raíz el botón se va', async () => {
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    // en pausa: lo que cuenta el paso (los commits dibujados) no puede cambiar porque la demo publique a mitad
+    await quieta(page, async () => {
+      const count = () => page.evaluate(() => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')));
+      const openMain = async () => {
+        await page.keyboard.press('Escape');
+        // Enter sobre la etiqueta de main, despachado en ella: con el foco en el SVG, el teclado de Playwright puede
+        // caer en otro lado si la etiqueta está fuera de la vista (la ficha sería la de otra rama)
+        const ok = await page.evaluate(() => {
+          const h = [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((n) => n.__name === 'main');
+          if (!h) return false;
+          h.focus();
+          h.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+          return true;
+        });
+        if (!ok) throw new Error('la etiqueta de main no está en el grafo');
+        await page.waitForSelector('#graph .tip:not([hidden]) .tip-actions', { timeout: T(3000) });
+        return page.$('#graph .tip:not([hidden]) .tip-more');
+      };
+      for (let round = 1; round <= 2; round++) {
+        const before = await count();
+        const btn = await openMain();
+        if (!btn) throw new Error(`vuelta ${round}: la ficha de main no ofrece «Cargar más» con su historia cortada`);
+        const of = await btn.getAttribute('data-branch');
+        if (of !== 'main') throw new Error(`vuelta ${round}: «Cargar más» es de ${of}, no de main (foco en ${await page.evaluate(() => document.activeElement?.__name || document.activeElement?.className?.baseVal || document.activeElement?.className)}; etiquetas ${await page.evaluate(() => [...document.querySelectorAll('#graph svg .head')].map((h) => h.__name + (h.classList.contains('exit') ? '(exit)' : '')).join(','))})`);
+        await btn.focus();
+        await page.keyboard.press('Enter');
+        await page.waitForFunction((b) => Number(document.querySelector('#st-commits').textContent.replace(/\D/g, '')) >= b + 6, before, { timeout: T(5000) }).catch(async () => {
+          throw new Error(`vuelta ${round}: el grafo no dibujó los 6 commits nuevos (antes ${before}, ahora ${await count()})`);
+        });
+        const after = await count();
+        if (after !== before + 6) throw new Error(`vuelta ${round}: se dibujaron ${after - before} commits más, no 6`);
+        const r = await page.evaluate(() => ({
+          note: document.querySelector('#graph .tip .tip-more-note')?.textContent || '',
+          role: document.querySelector('#graph .tip .tip-more-note')?.getAttribute('role'),
+          btn: !!document.querySelector('#graph .tip .tip-more'),
+          focus: document.activeElement?.className || '',
+        }));
+        if (!r.note || /undefined|NaN|tip\./.test(r.note) || r.role !== 'status') throw new Error(`vuelta ${round}: la nota no dice qué pasó: ` + JSON.stringify(r));
+        // los 12 commits de antes de la semilla: tras la segunda tanda main llega a su raíz y el botón se va, con el foco en la nota
+        if (round === 1 && !r.btn) throw new Error('el botón se fue con historia por traer');
+        if (round === 2 && (r.btn || !/tip-more-note/.test(r.focus))) throw new Error('al llegar a la raíz, el botón sigue o el foco se perdió: ' + JSON.stringify(r));
+      }
+      if (await openMain()) throw new Error('con toda la historia cargada, la ficha de main sigue ofreciendo «Cargar más»');
+      await page.keyboard.press('Escape');
+    });
+  });
+
+  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', () => quietaConPr(page, async () => {
     await page.keyboard.press('Escape');
     await page.click('#view-2d');
     const heads = await page.$$('#graph svg .head[role=button]');
     let btn = null;
+    const seen = []; // de cada punta, su rama y qué botones trae su ficha: si falla, el error dice dónde (pendiente 1)
     for (const h of heads) {
       await h.focus();
       await page.keyboard.press('Enter');
       btn = await page.$('#graph .tip .tip-prview');
       if (btn) break;
+      seen.push(await h.evaluate((e) => `${e.__name}: ${[...document.querySelectorAll('#graph .tip .tip-actions button')].map((b) => b.className).join(' ') || (document.querySelector('#graph .tip') ? 'sin botones' : 'sin ficha')}`));
       await page.keyboard.press('Escape');
     }
-    if (!btn) throw new Error('ninguna ficha de rama con PR trae «Ver descripción y comentarios»');
+    if (!btn) {
+      const st = await page.evaluate(() => ({ prs: document.querySelector('#st-prs')?.textContent, url: location.search, vista2d: document.querySelector('#view-2d')?.getAttribute('aria-pressed') })); // un filtro o una rama oculta quedan en la URL
+      throw new Error(`ninguna ficha de rama con PR trae «Ver descripción y comentarios» (${JSON.stringify({ ...st, puntas: seen })})`);
+    }
     await btn.focus();
     await page.keyboard.press('Enter');
     await page.waitForSelector('#graph .tip .tip-prbody .pv-list li', { timeout: T(5000) });
@@ -1340,6 +1762,31 @@ console.log('Escritorio (1280×800)');
     const hidden = await page.$eval('.tip-prbody', (b) => b.hidden);
     if (!hidden) throw new Error('pulsarlo otra vez no esconde la vista del PR');
     await page.keyboard.press('Escape');
+  }));
+
+  await step(page, 'firma de los commits: la ficha de un commit dice su firma, y la salud cuenta los de main sin firma verificada y lleva a cada uno', async () => {
+    // la demo firma cada commit como lo diría GitHub (ítem 230): verificada, sin firma o firmado sin verificar con su motivo
+    await page.keyboard.press('Escape');
+    await page.click('#view-2d');
+    const sig = await openBranchTip(page, '.tip-sig');
+    const said = (await sig.textContent()).trim();
+    if (!/^(✓ Firma verificada|Sin firma|✗ Firma sin verificar \([A-Z_]+\))$/.test(said)) throw new Error(`la ficha de un commit dice su firma así: «${said}»`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-signed-count', { timeout: T(3000) });
+    const signed = await page.evaluate(() => ({
+      head: document.querySelector('#hl-signed h3')?.textContent || '',
+      count: (document.querySelector('#hl-signed-count')?.textContent || '').replace(/[\u2068\u2069]/g, ''),
+      rows: [...document.querySelectorAll('#hl-signed .hl-list[data-list="signed"] .hl-row')].map((r) => [r.querySelector('.hl-main').textContent, r.querySelector('.hl-aside').textContent, r.matches('button[data-go]')]),
+    }));
+    const m = /^Commits de main de las últimas 4 semanas sin firma verificada: (\d+) de (\d+)$/.exec(signed.count);
+    if (signed.head !== 'Firma de los commits' || !m || Number(m[1]) < 2 || Number(m[1]) >= Number(m[2])) throw new Error('la salud no cuenta los commits de main sin firma verificada: ' + JSON.stringify(signed).slice(0, 400));
+    // las más recientes, hasta 8; cuáles son depende de lo que la demo hizo hasta aquí (cada autor firma siempre igual)
+    if (signed.rows.length !== Math.min(8, Number(m[1])) || signed.rows.some(([main, , go]) => !/^[0-9a-f]{7} \S/.test(main) || !go)) throw new Error('las filas sin firma verificada no llevan su SHA corto, su titular y a su commit: ' + JSON.stringify(signed.rows).slice(0, 400));
+    const asides = signed.rows.map(([, a]) => a);
+    if (asides.some((a) => !/^(Sin firma|Firma sin verificar \([A-Z_]+\))$/.test(a))) throw new Error('las filas no dicen si el commit no tiene firma o la tiene sin verificar: ' + asides.join(' | '));
+    await page.click('#hl-signed .hl-list[data-list="signed"] [data-go]');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'cambios de un commit: desde su ficha, con teclado se pasa al anterior y se vuelve, y Esc cierra', async () => {
@@ -1459,21 +1906,50 @@ console.log('Escritorio (1280×800)');
 
 
   await step(page, 'quién tocó un archivo: el botón del diff lista los últimos commits con su autor, y otro clic lo cierra', async () => {
+    // el panel puede seguir cargando el commit que abrió el paso anterior: al llegar, rehace sus archivos (pendiente 1 de
+    // la iteración 259: con un localizador, el segundo clic caía en el botón nuevo, abría su lista y el paso fallaba)
+    await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
     const file = page.locator('#diff-panel .df-file').first();
     await file.evaluate((d) => (d.open = true));
-    const btn = file.locator('.df-blame');
-    await btn.waitFor({ timeout: T(5000) });
+    await file.locator('.df-blame').waitFor({ timeout: T(5000) });
+    // los dos clics, al mismo botón y a su misma lista: si la demo vuelve a dibujar el panel en el medio, el
+    // segundo sigue siendo sobre la lista que abrió el primero
+    const btn = await file.locator('.df-blame').elementHandle();
+    const log = await btn.evaluateHandle((b) => b.closest('.df-file').querySelector('.df-blamelog'));
     if (!/\S/.test((await btn.getAttribute('aria-label')) || '') || /diff\.|undefined/.test(await btn.textContent())) throw new Error('el botón no tiene nombre');
     await btn.click({ timeout: T(5000) });
-    await file.locator('.df-blamelist li').first().waitFor({ timeout: T(5000) }).catch(() => {
-      throw new Error('no apareció ningún commit: ' + ('' + 'sin lista'));
+    await page.waitForFunction((l) => l.querySelector('.df-blamelist li'), log, { timeout: T(5000) }).catch(() => {
+      throw new Error('no apareció ningún commit: sin lista');
     });
     if ((await btn.getAttribute('aria-expanded')) !== 'true') throw new Error('aria-expanded no pasó a true');
-    const row = await file.locator('.df-blamelist li').first().textContent();
+    const row = await log.evaluate((l) => l.querySelector('.df-blamelist li').textContent);
     if (/undefined|diff\./.test(row) || row.trim().length < 5) throw new Error('fila vacía o con claves: ' + row);
-    if (!/\d+\D+\d+/.test(await file.locator('.df-blamelist li .df-blame-lines').first().textContent())) throw new Error('la demo no mostró tramos de líneas');
-    await btn.click();
-    if (await file.locator('.df-blamelog').isVisible()) throw new Error('el segundo clic no cerró la lista');
+    if (!/\d+\D+\d+/.test(await log.evaluate((l) => l.querySelector('.df-blamelist li .df-blame-lines')?.textContent || ''))) throw new Error('la demo no mostró tramos de líneas');
+    const after = await btn.evaluate((b, l) => {
+      b.click();
+      return { hidden: l.hidden, expanded: b.getAttribute('aria-expanded') };
+    }, log);
+    if (!after.hidden) throw new Error('el segundo clic no cerró la lista');
+    if (after.expanded !== 'false') throw new Error('aria-expanded no volvió a false');
+  });
+  await step(page, 'dueños del código: cada archivo del diff de la demo dice sus dueños según su CODEOWNERS, sin claves crudas', async () => {
+    await page.waitForFunction(() => !document.querySelector('#diff-panel').classList.contains('loading'), null, { timeout: T(5000) });
+    // los dueños llegan después que los archivos (la fuente pide el CODEOWNERS una vez): se espera a que estén en todos
+    await page
+      .waitForFunction(() => {
+        const files = [...document.querySelectorAll('#diff-panel:not([hidden]) .df-file')];
+        return files.length && files.every((f) => f.querySelector(':scope > .df-fhead > .df-owners'));
+      }, null, { timeout: T(5000) })
+      .catch(() => {
+        throw new Error('algún archivo del diff de la demo quedó sin dueños');
+      });
+    const seen = await page.evaluate(() =>
+      [...document.querySelectorAll('#diff-panel .df-file > .df-fhead > .df-owners')].map((o) => ({ text: o.textContent, title: o.title })),
+    );
+    for (const o of seen) {
+      if (/diff\.|undefined|\{/.test(o.text + o.title) || !/@/.test(o.text)) throw new Error('dueños mal escritos: ' + JSON.stringify(o));
+      if (!o.title.includes('.github/CODEOWNERS')) throw new Error('el título no dice de dónde salen: ' + o.title);
+    }
   });
   await step(page, 'cambios de un commit: un clic en el grafo cambia de commit, lado a lado con palabras marcadas, filtro y panel ancho', async () => {
     // cada espera dice cuál fue si vence (la corrida larga trae mucha historia de la demo y lo recorta)
@@ -1640,9 +2116,15 @@ console.log('Escritorio (1280×800)');
     // se avanza hasta él, y sus cambios son los de verdad
     for (let i = 0; i < 6 && (await page.textContent('#diff-panel .df-msg')) !== opened.msg; i++) {
       await page.waitForFunction(() => !document.querySelector('#diff-panel .df-newer').disabled, null, { timeout: T(5000) });
+      const was = await page.textContent('#diff-panel .df-msg');
       await page.focus('#diff-panel .df-newer');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
+      // una señal y no 200 ms: bajo carga el commit siguiente tarda en cargar, y un segundo Enter sobre el panel a
+      // medio cambiar se pasaba del commit buscado (el panel queda en uno más nuevo y el mensaje nunca coincide)
+      await page.waitForFunction((w) => {
+        const m = document.querySelector('#diff-panel .df-msg')?.textContent;
+        return m && m !== w && !document.querySelector('#diff-panel.loading');
+      }, was, { timeout: T(5000) });
     }
     await page.waitForFunction((m) => document.querySelector('#diff-panel .df-msg')?.textContent === m, opened.msg, { timeout: T(5000) });
     await page.waitForSelector('#diff-panel:not(.loading) .df-file .dl-add', { timeout: T(5000) });
@@ -1681,6 +2163,33 @@ console.log('Escritorio (1280×800)');
       if (await page.locator('#replay').isVisible()) throw new Error('el Replay reproduce el repo anterior');
     },
     { allow: /status of 404/ },
+  );
+
+  await step(
+    page,
+    'un repo vacío (409 «Git Repository is empty») se rotula «Repo vacío» y no reintenta cada pocos segundos',
+    async () => {
+      await page.unroute('https://api.github.com/**');
+      await page.route('https://api.github.com/**', (r) => {
+        const path = new URL(r.request().url()).pathname;
+        if (/^\/repos\/acme\/vacio\/(commits|branches)/.test(path)) return r.fulfill({ status: 409, json: { message: 'Git Repository is empty.' } });
+        if (path === '/repos/acme/vacio') return r.fulfill({ json: { name: 'vacio', owner: { login: 'acme' }, default_branch: 'main', html_url: 'https://github.com/acme/vacio' } });
+        if (path.endsWith('/events')) return r.fulfill({ json: [] });
+        return r.fulfill({ status: 404, json: { message: 'Not Found' } });
+      });
+      await page.fill('#repo-input', 'acme/vacio');
+      await page.press('#repo-input', 'Enter');
+      await page.waitForFunction(() => document.querySelector('#status-text')?.textContent === 'Repo vacío', null, { timeout: T(10000) });
+      const { sub, title } = await page.$eval('#status', (el) => ({ sub: el.querySelector('#status-sub').textContent, title: el.title }));
+      if (!/vacío/.test(title)) throw new Error(`el detalle no dice que está vacío: «${title}»`);
+      // sin token, el reintento es de 5 minutos (unos 300 s), no los 5 s del primer fallo de red
+      const secs = Number((sub.match(/(\d+)\s*s/) || [])[1]);
+      if (!/min/.test(sub) && !(secs > 120)) throw new Error(`reintenta demasiado pronto: «${sub}»`);
+      // el aviso de repo vacío, no la tarjeta de error con «Reintentar»
+      const ov = await page.$eval('#overlay', (o) => ({ kind: o.dataset.kind, text: o.textContent }));
+      if (ov.kind !== 'empty' || !/todavía no tiene commits/.test(ov.text)) throw new Error(`el overlay no dice que el repo está vacío: ${ov.kind} «${ov.text.trim()}»`);
+    },
+    { allow: /status of (404|409)/ },
   );
 
   await page.context().close();
@@ -1783,13 +2292,15 @@ function fakeGitHub() {
     }
     return repos.get(full);
   };
-  /** /orgs/{org}/repos y /users/{u}/repos: sus repos, el de push más reciente primero. */
+  /** /orgs/{org}/repos y /users/{u}/repos: sus repos, el de push más reciente primero. `pushedAt` (en `more` de `repo`)
+      fecha a mano su último push, para una entrega antes o después del plazo de una tarea. */
   const listed = (owner) =>
     [...repos.values()]
       .filter((r) => r.full.split('/')[0] === owner)
       .sort((a, b) => b.pushed - a.pushed)
-      .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
-  const orgEvents = []; // /orgs/acme/events: el más reciente primero
+      .map((r) => ({ name: r.full.split('/')[1], owner: { login: owner }, fork: !!r.fork, archived: !!r.archived, private: false, pushed_at: r.pushedAt || new Date(Date.now() - 1e6 + r.pushed).toISOString() }));
+  const orgEvents = []; // /orgs/{org}/events de cada organización: el más reciente primero
+  const repoEvents = new Map(); // /repos/{full}/events: el más reciente primero
   const route = (path, q) => {
     const own = path.match(/^\/(orgs|users)\/([^/]+)\/repos$/);
     if (own) {
@@ -1797,19 +2308,21 @@ function fakeGitHub() {
       const found = kind === 'orgs' ? orgs.has(who) : !orgs.has(who) && listed(who).length > 0;
       return found ? { body: listed(who) } : { status: 404, body: { message: 'Not Found' } };
     }
-    if (path === '/orgs/acme/events') return { body: orgEvents };
+    const evs = path.match(/^\/orgs\/([^/]+)\/events$/);
+    if (evs && orgs.has(evs[1])) return { body: orgEvents };
     const m = path.match(/^\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
     if (!m || !repos.has(m[1])) return { status: 404, body: { message: 'Not Found' } };
     const r = repos.get(m[1]);
     const [owner, name] = m[1].split('/');
     const rest = m[2] || '';
-    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: false, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
+    if (!rest) return { body: { name, owner: { login: owner }, default_branch: 'main', html_url: `https://github.com/${m[1]}`, private: !!r.private, description: '', open_issues_count: r.openItems ?? 0, stargazers_count: r.stars ?? 0, forks_count: r.forks ?? 0 } }; // GitHub cuenta issues y PRs juntos
     if (rest === '/branches') return { body: [...r.branches].map(([b, s]) => ({ name: b, commit: { sha: s }, protected: false })) };
     if (rest === '/pulls' && m[1] === 'o/b') {
-      const pr = (number, title, draft) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString() });
-      return { body: [pr(7, 'Cambio en revisión', false), pr(8, 'Borrador a medias', true)] };
+      const pr = (number, title, draft, extra = {}) => ({ number, title, html_url: `https://github.com/o/b/pull/${number}`, state: 'open', draft, head: { ref: 'main', repo: { full_name: 'o/b' } }, base: { ref: 'main' }, user: { login: 'bea', avatar_url: null }, created_at: new Date(Date.now() - number * 60000).toISOString(), ...extra });
+      return { body: [pr(7, 'Cambio en revisión', false, { requested_reviewers: [{ login: 'ana' }] }), pr(8, 'Borrador a medias', true)] };
     }
-    if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity') return { body: [] }; // /activity: solo con token
+    if (rest === '/events' && repoEvents.has(m[1])) return { body: repoEvents.get(m[1]) };
+    if (rest === '/events' || rest === '/pulls' || rest === '/tags' || rest === '/deployments' || rest === '/forks' || rest === '/activity' || rest === '/stats/code_frequency') return { body: [] }; // /activity: solo con token
     if (rest === '/commits') {
       let s = r.branches.get(q.get('sha')) || q.get('sha');
       const out = [];
@@ -1819,6 +2332,8 @@ function fakeGitHub() {
       }
       return out.length ? { body: out } : { status: 404, body: { message: 'No commit found' } };
     }
+    const reviews = rest.match(/^\/pulls\/(\d+)\/reviews$/); // las revisiones de un PR (`prReviews` en `more` de `repo`: número -> lista)
+    if (reviews) return r.prReviews?.has(Number(reviews[1])) ? { body: r.prReviews.get(Number(reviews[1])) } : { status: 404, body: { message: 'Not Found' } };
     if (/^\/commits\/[^/]+\/check-runs$/.test(rest)) return { body: { total_count: 1, check_runs: [{ status: 'completed', conclusion: 'success' }] } };
     const file = rest.match(/^\/contents\/(.+)$/); // un archivo de una rama (el editor, js/editor.js)
     if (file) return { body: { type: 'file', encoding: 'base64', size: 20, content: Buffer.from(`// ${decodeURIComponent(file[1])} en ${q.get('ref')}\n`).toString('base64'), sha: 'blob-' + file[1].length } };
@@ -1831,6 +2346,11 @@ function fakeGitHub() {
     writes,
     repo,
     org: (name) => orgs.add(name),
+    repoEvent: (full, ev) => {
+      if (!repoEvents.has(full)) repoEvents.set(full, []);
+      const list = repoEvents.get(full);
+      list.unshift({ id: `${full}:${list.length + 1}`, actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev });
+    },
     orgEvent: (ev) => orgEvents.unshift({ id: String(orgEvents.length + 1), actor: { login: 'ana' }, created_at: new Date().toISOString(), payload: {}, ...ev }),
     push: (full, branch, message, at) => commit(repo(full), branch, message, at),
     handle: (r) => {
@@ -1880,7 +2400,7 @@ const repoTabs = (page) =>
     })),
   );
 
-console.log('Varios repos a la vez');
+if (seccion('Varios repos a la vez'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b', 'o/c']) gh.repo(r);
@@ -2052,6 +2572,92 @@ console.log('Varios repos a la vez');
     }));
     const want = [['draft', '#8 Borrador a medias | o/b · main · bea'], ['waiting', '#7 Cambio en revisión | o/b · main · bea']];
     if (!/2/.test(lp.title || '') || lp.groups.length !== 2 || want.some(([id, row], i) => lp.groups[i].id !== id || lp.groups[i].rows.length !== 1 || !lp.groups[i].rows[0].startsWith(row)) || /\{|undefined|NaN/.test(lp.title + lp.groups.map((g) => g.rows.join()).join())) throw new Error('el Launchpad: ' + JSON.stringify(lp));
+    // la persona incluye los PRs en que se le pidió revisión: «ana» no abrió ninguno, pero el #7 le pide revisión; viaja en ?by=
+    await page.selectOption('#all-prs .ap-person', 'ana');
+    const who = await page.evaluate(() => ({
+      opts: [...document.querySelectorAll('#all-prs .ap-person option')].map((o) => o.textContent),
+      rows: [...document.querySelectorAll('#all-prs .ap-row')].map((r) => ({ n: r.dataset.number, role: r.querySelector('.ap-role')?.textContent || '', label: r.getAttribute('aria-label') })),
+      by: new URL(location.href).searchParams.get('by'),
+      focus: document.activeElement?.matches('.ap-person'),
+    }));
+    if (who.opts.join('|') !== 'Todas las personas|ana (1)|bea (2)' || who.rows.length !== 1 || who.rows[0].n !== '7' || who.rows[0].role !== 'Revisión pedida a ana' || !who.rows[0].label.endsWith('Revisión pedida a ana') || who.by !== 'ana' || !who.focus) throw new Error('el Launchpad por persona, con la revisión pedida: ' + JSON.stringify(who));
+    await page.selectOption('#all-prs .ap-person', 'bea');
+    const bea = await page.evaluate(() => [...document.querySelectorAll('#all-prs .ap-row')].map((r) => r.dataset.number + (r.querySelector('.ap-role') ? '+' : '')).sort().join());
+    if (bea !== '7,8') throw new Error('lo que abrió la persona no lleva marca: ' + bea);
+    await page.selectOption('#all-prs .ap-person', '');
+    if (await page.evaluate(() => new URL(location.href).searchParams.has('by') || document.querySelectorAll('#all-prs .ap-row').length !== 2)) throw new Error('«Todas las personas» no volvió a mostrar todo ni quitó ?by=');
+    // fijar un PR arriba: se recuerda por repo y número (sin el título) y el mismo botón lo suelta
+    const pinSel = '#all-prs .ap-row[data-number="7"] + .ap-pin';
+    await page.click(pinSel);
+    const pinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), pinSel);
+    if (pinned.pressed !== 'true' || pinned.saved !== '["o/b#7"]' || !pinned.focus || /\{|undefined/.test(pinned.label || '')) throw new Error('fijar un PR del Launchpad: ' + JSON.stringify(pinned));
+    await page.click(pinSel);
+    const unpinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prpins') }), pinSel);
+    if (unpinned.pressed !== 'false' || unpinned.saved !== null) throw new Error('soltar un PR del Launchpad: ' + JSON.stringify(unpinned));
+    // posponer un PR un día: baja (atenuado) al final de su grupo, se recuerda por repo y número con su vencimiento, y fijarlo lo deja de posponer
+    const zzSel = '#all-prs .ap-row[data-number="7"] ~ .ap-snooze';
+    await page.click(zzSel);
+    const snoozed = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
+      const saved = JSON.parse(localStorage.getItem('graphbranch:prsnooze') || 'null');
+      return { pressed: b?.getAttribute('aria-pressed'), label: b?.getAttribute('aria-label'), cls: b?.closest('li')?.classList.contains('snoozed'), ids: Object.keys(saved || {}), hours: saved && (saved['o/b#7'] - Date.now()) / 3.6e6, focus: document.activeElement?.matches(sel) };
+    }, zzSel);
+    if (snoozed.pressed !== 'true' || !snoozed.cls || snoozed.ids.join() !== 'o/b#7' || !(snoozed.hours > 23.9 && snoozed.hours <= 24) || !snoozed.focus || !/7/.test(snoozed.label || '') || /\{|undefined/.test(snoozed.label || '')) throw new Error('posponer un PR del Launchpad: ' + JSON.stringify(snoozed));
+    await page.click(pinSel);
+    const pinWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), snooze: localStorage.getItem('graphbranch:prsnooze'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (pinWins.pressed !== 'false' || pinWins.snooze !== null || pinWins.pins !== '["o/b#7"]') throw new Error('fijar un PR pospuesto: ' + JSON.stringify(pinWins));
+    await page.click(zzSel);
+    const snoozeWins = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), pins: localStorage.getItem('graphbranch:prpins') }), zzSel);
+    if (snoozeWins.pressed !== 'true' || snoozeWins.pins !== null) throw new Error('posponer un PR fijado: ' + JSON.stringify(snoozeWins));
+    await page.click(zzSel);
+    const unsnoozed = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), saved: localStorage.getItem('graphbranch:prsnooze') }), zzSel);
+    if (unsnoozed.pressed !== 'false' || unsnoozed.saved !== null) throw new Error('dejar de posponer un PR del Launchpad: ' + JSON.stringify(unsnoozed));
+    // los issues abiertos que vio la actividad de cada repo, en su grupo: un enlace a su página, se fijan como un PR y un
+    // cierre los saca. Sin token los eventos se leen cada 2 minutos: mientras tanto se leen en cada ciclo
+    await page.evaluate(() => {
+      const P = window.GB.GitHubSource.prototype;
+      P.dueBefore = P.due;
+      P.due = function (name) {
+        return name === 'events' || this.dueBefore(name);
+      };
+    });
+    const issueSel = '#all-prs .ap-group[data-group="issues"] .ap-row';
+    try {
+      gh.repoEvent('o/b', { type: 'IssuesEvent', actor: { login: 'carla' }, payload: { action: 'opened', issue: { number: 9, title: 'Falla el login', html_url: 'https://github.com/o/b/issues/9' } } });
+      await page.waitForSelector(issueSel, { timeout: T(15000) });
+      const iss = await page.evaluate((sel) => {
+        const r = document.querySelector(sel);
+        return {
+          rows: document.querySelectorAll(sel).length,
+          tag: r.tagName,
+          href: r.getAttribute('href'),
+          target: r.getAttribute('target'),
+          rel: r.getAttribute('rel'),
+          t: r.querySelector('.ap-t').textContent,
+          m: r.querySelector('.ap-m').textContent,
+          label: r.getAttribute('aria-label'),
+          group: r.closest('.ap-group').querySelector('.ap-gname').textContent,
+          last: document.querySelector('#all-prs .ap-group:last-child')?.dataset.group,
+          title: document.querySelector('#all-prs .ap-title').textContent,
+          who: [...document.querySelectorAll('#all-prs .ap-person option')].map((o) => o.textContent).join('|'),
+        };
+      }, issueSel);
+      if (iss.rows !== 1 || iss.tag !== 'A' || iss.href !== 'https://github.com/o/b/issues/9' || iss.target !== '_blank' || iss.rel !== 'noopener' || iss.t !== '#9 Falla el login' || iss.m !== 'o/b · carla' || iss.group !== 'Issues abiertos · 1' || iss.last !== 'issues' || !/: 2$/.test(iss.title) || !iss.who.includes('carla (1)') || !/^Issue #9 de o\/b: Falla el login/.test(iss.label || '') || /\{|undefined|NaN/.test(Object.values(iss).join())) throw new Error('los issues en el Launchpad: ' + JSON.stringify(iss));
+      const ipin = '#all-prs .ap-group[data-group="issues"] .ap-pin';
+      await page.click(ipin);
+      const ipinned = await page.evaluate((sel) => ({ pressed: document.querySelector(sel)?.getAttribute('aria-pressed'), label: document.querySelector(sel)?.getAttribute('aria-label'), saved: localStorage.getItem('graphbranch:prpins'), focus: document.activeElement?.matches(sel) }), ipin);
+      if (ipinned.pressed !== 'true' || ipinned.saved !== '["o/b#issue-9"]' || !ipinned.focus || !/issue #9/i.test(ipinned.label || '')) throw new Error('fijar un issue del Launchpad: ' + JSON.stringify(ipinned));
+      await page.click(ipin);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:prpins'))) !== null) throw new Error('soltar un issue del Launchpad no lo olvidó');
+      gh.repoEvent('o/b', { type: 'IssuesEvent', actor: { login: 'ana' }, payload: { action: 'closed', issue: { number: 9, title: 'Falla el login', html_url: 'https://github.com/o/b/issues/9' } } });
+      await page.waitForFunction(() => !document.querySelector('#all-prs .ap-group[data-group="issues"]'), null, { timeout: T(15000) });
+    } finally {
+      await page.evaluate(() => {
+        const P = window.GB.GitHubSource.prototype;
+        P.due = P.dueBefore;
+        delete P.dueBefore;
+      });
+    }
     await page.click('#all-prs .ap-row[data-number="7"]');
     await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
     await page.click('#all-tab');
@@ -2115,6 +2721,212 @@ console.log('Varios repos a la vez');
     await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
   });
 
+  await step(page, 'modo TV en la vista conjunta: entra con todos los repos a la vista y sin desplazarse, R pasa al grafo y vuelve, y al salir queda como estaba sin guardar nada', async () => {
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    const saved = await page.evaluate(() => localStorage.getItem('graphbranch:all'));
+    await page.click('#all-tv-btn'); // el botón de la cabecera: el de la barra del grafo no se ve con la vista conjunta
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const tvState = () =>
+      page.evaluate(() => {
+        const grid = document.querySelector('#all-grid');
+        const bar = document.querySelector('#tv-bar');
+        return {
+          all: document.querySelector('.app').classList.contains('all-on') && !document.querySelector('#all-panel').hidden,
+          graph: document.querySelector('#graph-panel').checkVisibility(),
+          bar: bar.closest('#all-panel') ? 'todos' : bar.closest('#graph-panel') ? 'grafo' : 'otro',
+          barShown: bar.checkVisibility(),
+          pressed: document.querySelector('#tv-all').getAttribute('aria-pressed'),
+          grid: `${grid.style.getPropertyValue('--tv-cols')}x${grid.style.getPropertyValue('--tv-rows')}`,
+          scroll: grid.scrollHeight - grid.clientHeight,
+          inside: [...grid.querySelectorAll('.rc-card')].every((c) => {
+            const r = c.getBoundingClientRect();
+            return r.height > 120 && r.top >= 0 && r.bottom <= innerHeight + 1;
+          }),
+          controls: ['#all-panel .hint', '.ap-pin', '.ap-snooze', '.ap-person'].filter((s) => document.querySelector(s)?.checkVisibility()),
+          focus: document.activeElement?.id || '',
+        };
+      });
+    const on = await tvState();
+    if (!on.all || on.bar !== 'todos' || !on.barShown || on.pressed !== 'true') throw new Error(`al entrar desde la vista conjunta no se queda en ella con su barra: ${JSON.stringify(on)}`);
+    if (on.grid !== '2x1' || on.scroll > 1 || !on.inside) throw new Error(`las tarjetas no entran en la pantalla: ${JSON.stringify(on)}`);
+    if (on.controls.length) throw new Error(`en TV se ven controles: ${on.controls.join(', ')}`);
+    if (on.focus !== 'all-panel') throw new Error(`el foco quedó en ${on.focus || 'el documento'} y no en la vista`);
+    // lo que llega a un repo enciende su tarjeta (en la vista conjunta no se salta de un repo a otro)
+    gh.push('o/b', 'main', 'llega en la TV');
+    await page.waitForSelector('.rc-card[data-key="o/b"].rc-news', { timeout: T(15000) });
+    if (!(await tvState()).all) throw new Error('una novedad sacó la pantalla de la vista conjunta');
+    await page.keyboard.press('r');
+    await page.waitForFunction(() => !document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    const graph = await tvState();
+    if (!graph.graph || graph.bar !== 'grafo' || graph.pressed !== 'false') throw new Error(`R no pasa al grafo con su barra: ${JSON.stringify(graph)}`);
+    await page.click('#tv-all');
+    await page.waitForFunction(() => document.querySelector('.app').classList.contains('all-on'), null, { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    const off = await page.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), saved: localStorage.getItem('graphbranch:all'), url: new URL(location.href).searchParams.get('tv') }));
+    if (!off.all || off.saved !== saved || off.url) throw new Error(`al salir del modo TV no queda como estaba: ${JSON.stringify(off)} (guardado antes: ${saved})`);
+    // el foco no se pierde: sigue en la vista (como en el grafo al salir con Esc)
+    if (!(await page.evaluate(() => document.activeElement && document.activeElement !== document.body && document.activeElement.getClientRects().length > 0))) throw new Error('al salir del modo TV, el foco se perdió');
+    await page.click('#all-tab'); // deja la vista conjunta como estaba para los pasos que siguen
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+  });
+
+  await step(page, 'agentes de todos los repos: desde la vista conjunta el tablero junta a los de cada repo (arriba y en TV), y un commit de otro repo lleva a su pestaña', async () => {
+    // tres sesiones de Claude: una en cada repo y otra que trabaja en los dos (es una sola, con lo de los dos)
+    const ses = (id) => `\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_${id}`;
+    gh.push('o/a', 'claude/a', 'trabajo en a' + ses('soloEnAaaaa1'));
+    gh.push('o/b', 'claude/b', 'trabajo en b' + ses('soloEnBbbbb2'));
+    gh.push('o/a', 'claude/ab', 'mitad en a' + ses('enLosDos0003'));
+    gh.push('o/b', 'claude/ab', 'mitad en b' + ses('enLosDos0003'));
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    await page.click('#agents-btn');
+    await page.waitForSelector('#graph-panel.agents-all #agents:not([hidden]) #ag-list', { timeout: T(5000) });
+    // las ramas nuevas llegan con el sondeo de cada repo: el tablero se rehace solo hasta tener las tres sesiones
+    await page.waitForFunction(() => document.querySelectorAll('#ag-list .hl-main').length === 3, null, { timeout: T(20000) });
+    const board = () =>
+      page.evaluate(() => ({
+        all: document.querySelector('.app').classList.contains('all-on'),
+        scope: document.querySelector('#graph-all').checkVisibility() ? document.querySelector('#graph-all').textContent : null,
+        repo: document.querySelector('#repo-link').checkVisibility(),
+        stats: document.querySelector('.stats').checkVisibility(),
+        box: document.querySelector('#agents-all').checked,
+        current: document.querySelectorAll('#repo-tabs [aria-current="true"]').length,
+        url: new URL(location.href).searchParams.get('agents'),
+        agents: [...document.querySelectorAll('#ag-list .hl-main')].map((n) => n.textContent),
+      }));
+    const on = await board();
+    if (on.all || on.scope !== 'Todos los repositorios (2)' || on.repo || on.stats || !on.box || on.current || on.url !== 'all') throw new Error('el tablero no es el de todos: ' + JSON.stringify(on));
+    const sessions = on.agents.map((x) => /sesión (\S+)/.exec(x)?.[1]).sort().join(' ');
+    if (sessions !== 'Aaaaa1 Bbbbb2 os0003') throw new Error(`agentes de los dos repos, la sesión compartida una vez: ${JSON.stringify(on.agents)}`);
+    // el interruptor lo deja en el repo a la vista (o/a: su sesión y la compartida) y lo vuelve a juntar
+    await page.click('#agents-all');
+    await page.waitForFunction(() => !document.querySelector('#graph-panel').classList.contains('agents-all') && document.querySelectorAll('#ag-list .hl-main').length === 2, null, { timeout: T(5000) });
+    if ((await board()).url !== '1') throw new Error('con un solo repo la URL sigue diciendo agents=all');
+    await page.click('#agents-all');
+    await page.waitForFunction(() => document.querySelectorAll('#ag-list .hl-main').length === 3, null, { timeout: T(5000) });
+    // el botón de los agentes, otra vez: de vuelta a la vista conjunta
+    await page.click('#agents-btn');
+    await page.waitForSelector('#all-panel:not([hidden])', { timeout: T(3000) });
+    // en el modo TV: A (o el robot de su barra) abre el de todos desde la vista conjunta y vuelve a ella
+    await page.click('#all-tv-btn');
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    await page.click('#tv-agents');
+    await page.waitForSelector('#graph-panel.agents-all #agents:not([hidden]) .ab-head #tv-bar', { timeout: T(5000) });
+    if ((await board()).agents.length !== 3) throw new Error('en TV el tablero no junta a los dos repos');
+    await page.keyboard.press('a');
+    await page.waitForSelector('#all-panel:not([hidden]) #tv-bar', { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(3000) });
+    // un commit de o/b, desde el tablero de todos con o/a a la vista: lleva a la pestaña de o/b y a su commit
+    if ((await shown()) !== 'o/a') await page.click('#repo-tabs .rt:nth-child(1) .rt-main');
+    await page.click('#all-tab');
+    await page.click('#agents-btn');
+    await page.waitForSelector('#graph-panel.agents-all #ag-list', { timeout: T(5000) });
+    const row = page.locator('#ag-list button.hl-row', { hasText: 'Bbbbb2' });
+    await row.click();
+    await page.waitForFunction(() => document.querySelector('#agents').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const after = await board();
+    if (after.current !== 1 || after.url || !after.stats) throw new Error('después del commit no queda el grafo de o/b: ' + JSON.stringify(after));
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+
+  await step(page, 'vista conjunta en 3D: cada repo es una torre de la misma escena, con su rótulo, en vivo, y el rótulo abre el repo', async () => {
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(5000) });
+    await page.click('#all-3d');
+    await page.waitForSelector('#all-space:not([hidden]) canvas.as-canvas', { timeout: T(5000) });
+    // un rótulo por repo, sobre su torre (dentro de la escena) y con sus cifras
+    await page.waitForFunction(
+      () => {
+        const box = document.querySelector('#all-space').getBoundingClientRect();
+        const shown = [...document.querySelectorAll('#all-space .as-label')].filter((b) => {
+          const r = b.getBoundingClientRect();
+          return b.checkVisibility({ visibilityProperty: true }) && r.top >= box.top - 1 && r.bottom <= box.bottom + 1 && r.left >= box.left - 1 && r.right <= box.right + 1;
+        });
+        return shown.length === 2 && shown.every((b) => /\d/.test(b.querySelector('.as-stats').textContent));
+      },
+      null,
+      { timeout: T(10000) },
+    );
+    const st = await page.evaluate(() => ({
+      grid: document.querySelector('#all-grid').checkVisibility(),
+      pressed: [document.querySelector('#all-3d').getAttribute('aria-pressed'), document.querySelector('#all-2d').getAttribute('aria-pressed')].join(' '),
+      url: new URL(location.href).searchParams.get('all'),
+      saved: localStorage.getItem('graphbranch:allView'),
+      names: [...document.querySelectorAll('#all-space .as-label .as-name')].map((n) => n.textContent).join(' '),
+      aria: document.querySelector('#all-space').getAttribute('aria-label'),
+      label: document.querySelector('.as-label[data-key="o/b"]').getAttribute('aria-label'),
+    }));
+    if (st.grid || st.pressed !== 'true false' || st.url !== '3d' || st.saved !== '"3d"') throw new Error('el 3D no tomó el lugar de las tarjetas: ' + JSON.stringify(st));
+    if (st.names !== 'o/a o/b' || !/\(2\)/.test(st.aria || '') || !/^o\/b, .*abrir en su pestaña$/.test(st.label || '')) throw new Error('rótulos: ' + JSON.stringify(st));
+    // la escena dibuja algo: las torres tienen el color de sus ramas
+    const png = await page.locator('#all-space').screenshot();
+    const colors = await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set();
+      for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3));
+      return seen.size;
+    }, png.toString('base64'));
+    if (colors < 40) throw new Error(`la escena casi no tiene dibujo: ${colors} colores`);
+    // lo que llega a un repo enciende su torre
+    gh.push('o/b', 'main', 'llega a la torre');
+    await page.waitForSelector('.as-label[data-key="o/b"].as-news', { timeout: T(15000) });
+    // en el modo TV, el 3 cambia a las tarjetas sin guardarlo: al salir vuelve el 3D
+    await page.click('#all-tv-btn');
+    await page.waitForFunction(() => document.documentElement.classList.contains('tv') && !document.querySelector('#tv-all3d').hidden, null, { timeout: T(3000) });
+    await page.keyboard.press('3');
+    await page.waitForFunction(() => document.querySelector('#all-space').hidden && !document.querySelector('#all-grid').hidden, null, { timeout: T(3000) });
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('tv') && !document.querySelector('#all-space').hidden, null, { timeout: T(3000) });
+    if ((await page.evaluate(() => localStorage.getItem('graphbranch:allView'))) !== '"3d"') throw new Error('lo que se cambió en el modo TV quedó guardado');
+    // de vuelta a las tarjetas: se dibujan sus grafos (en 3D no se dibujaban)
+    await page.click('#all-2d');
+    await page.waitForFunction(() => document.querySelector('#all-space').hidden && [...document.querySelectorAll('#all-grid .rc-card')].every((c) => c.querySelector('.graph-svg .node')) && document.querySelector('.rc-card[data-key="o/b"] .rc-lmsg')?.textContent === 'llega a la torre', null, { timeout: T(5000) });
+    if ((await page.evaluate(() => new URL(location.href).searchParams.get('all'))) !== '1') throw new Error('con las tarjetas la URL sigue diciendo all=3d');
+    // y el rótulo de una torre abre su repo, con el foco en su pestaña
+    await page.click('#all-3d');
+    await page.locator('.as-label[data-key="o/b"]').press('Enter'); // con el teclado: la ciudad gira y el rótulo con ella
+    await page.waitForFunction(() => document.querySelector('#all-panel').hidden && document.querySelector('#repo-link')?.textContent === 'o/b', null, { timeout: T(5000) });
+    const focus = await page.evaluate(() => document.activeElement?.closest('.rt')?.querySelector('.rt-name')?.textContent);
+    if (focus !== 'o/b') throw new Error(`el foco quedó en ${focus || 'otro lado'} y no en la pestaña de o/b`);
+    // deja la vista conjunta con las tarjetas, como estaba, para los pasos que siguen
+    await page.click('#all-tab');
+    await page.click('#all-2d');
+    await page.click('#all-tab');
+    await page.waitForSelector('#all-panel', { state: 'hidden', timeout: T(3000) });
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+
+  await step(page, '?all=1&tv=1 abre el modo TV con todos los repos a la vista; ?tv=1 solo, con el grafo', async () => {
+    for (const [query, want] of [['all=1&tv=1', true], ['tv=1', false]]) {
+      const p = await openPage({ viewport: { width: 1280, height: 800 } });
+      try {
+        await p.unroute('https://api.github.com/**');
+        await p.route('https://api.github.com/**', gh.handle);
+        await p.addInitScript(quickCycles);
+        await p.goto(`${base}/index.html?lang=es&repo=o/a&repo=o/b&${query}`);
+        await p.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
+        if (want) await p.waitForSelector('#all-panel:not([hidden]) .rc-card', { timeout: T(10000) });
+        else await p.waitForTimeout(1500);
+        const got = await p.evaluate(() => ({ all: document.querySelector('.app').classList.contains('all-on'), btn: !document.querySelector('#tv-all').hidden }));
+        if (got.all !== want || !got.btn) throw new Error(`?${query}: ${JSON.stringify(got)}`);
+        if (p.errors.length) throw new Error(`?${query}: ${p.errors.join(' | ')}`);
+      } finally {
+        await p.context().close();
+      }
+    }
+  });
+
   await step(page, 'cerrar la pestaña deja de seguir el repo', async () => {
     await page.focus('#repo-tabs .rt:nth-child(1) .rt-close'); // o/a, con el teclado
     await page.keyboard.press('Enter');
@@ -2165,10 +2977,20 @@ console.log('Varios repos a la vez');
     if ((await lab.evaluate(() => document.activeElement?.className)) !== 'pr-input') throw new Error('el foco no quedó en la línea de comandos');
     const nodes = () => lab.locator('#graph svg .node').count();
     const before = await nodes();
-    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'push origin main']) {
+    for (const c of ['checkout -b feature', 'commit -m uno', 'git commit -m "dos <img src=x onerror=alert(1)>"', 'bisect start']) {
       await lab.fill('.pr-input', c);
       await lab.press('.pr-input', 'Enter');
     }
+    // a 1280×800 la terminal, sus cartas y las tres columnas no caben junto al grafo: el grafo guarda su alto y la
+    // práctica se desplaza por dentro, con la línea de comandos a la vista (en la 301 el grafo quedaba en 0 px)
+    const fit = await lab.evaluate(() => {
+      const box = (s) => document.querySelector(s).getBoundingClientRect();
+      const p = box('#practice');
+      const i = box('.pr-input');
+      return { graph: Math.round(box('#graph').height), input: i.top >= p.top - 1 && i.bottom <= p.bottom + 1 };
+    });
+    if (fit.graph < 150) throw new Error(`con la práctica abierta el grafo quedó en ${fit.graph} px de alto`);
+    if (!fit.input) throw new Error('la línea de comandos quedó fuera de la vista de la práctica');
     await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length >= n, before + 2, { timeout: T(10000) });
     const log = await lab.textContent('.pr-log');
     if (!log.includes('<img src=x onerror=alert(1)>')) throw new Error('el mensaje no se ve tal cual');
@@ -2177,6 +2999,93 @@ console.log('Varios repos a la vez');
     if ((await lab.textContent('.pr-status')).trim() === '') throw new Error('el primer ejercicio no se dio por resuelto');
     await lab.selectOption('.pr-ex', '3');
     await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('reset'), null, { timeout: T(5000) });
+  });
+  await step(lab, 'las cartas de comandos escriben su comando en la línea sin ejecutarlo, y se recorren con el teclado', async () => {
+    const cards = lab.locator('.pr-cards[role="toolbar"] .pr-card');
+    if ((await cards.count()) < 8) throw new Error(`solo ${await cards.count()} cartas`);
+    if (!(await lab.getAttribute('.pr-cards', 'aria-label'))) throw new Error('la barra de cartas no tiene nombre');
+    const desc = (await lab.textContent('.pr-card[data-cmd="commit"] .pr-card-desc')).trim();
+    if (!desc || desc === 'practice.card.commit') throw new Error(`la carta de commit no tiene descripción: «${desc}»`);
+    const rows = await lab.locator('.pr-log .pr-row').count();
+    await lab.click('.pr-card[data-cmd="commit"]');
+    const state = await lab.evaluate(() => {
+      const i = document.querySelector('.pr-input');
+      return { value: i.value, focus: document.activeElement === i, caret: i.selectionStart };
+    });
+    if (state.value !== 'commit -m ""' || !state.focus || state.caret !== 11) throw new Error(`la carta escribió ${JSON.stringify(state)}`);
+    if ((await lab.locator('.pr-log .pr-row').count()) !== rows) throw new Error('la carta ejecutó el comando');
+    await lab.keyboard.type('desde la carta');
+    await lab.press('.pr-input', 'Enter');
+    await lab.waitForFunction(() => document.querySelector('.pr-log')?.textContent.includes('$ git commit -m "desde la carta"'), null, { timeout: T(5000) });
+    // un solo punto de tabulación: las flechas, Inicio y Fin se mueven entre las cartas, y Enter escribe la enfocada
+    if ((await lab.locator('.pr-card[tabindex="0"]').count()) !== 1) throw new Error('la barra no tiene un único punto de tabulación');
+    await lab.focus('.pr-card[tabindex="0"]');
+    await lab.keyboard.press('Home');
+    await lab.keyboard.press('ArrowRight');
+    const second = await lab.evaluate(() => document.activeElement?.dataset.cmd);
+    const first = await lab.getAttribute('.pr-card:nth-child(1)', 'data-cmd');
+    const secondId = await lab.getAttribute('.pr-card:nth-child(2)', 'data-cmd');
+    if (second !== secondId) throw new Error(`ArrowRight desde ${first} fue a ${second}`);
+    await lab.keyboard.press('End');
+    await lab.keyboard.press('ArrowRight'); // da la vuelta
+    if ((await lab.evaluate(() => document.activeElement?.dataset.cmd)) !== first) throw new Error('ArrowRight desde la última no volvió a la primera');
+    await lab.keyboard.press('Enter');
+    const line = await lab.evaluate(() => [document.querySelector('.pr-input').value, document.activeElement?.className]);
+    if (line[1] !== 'pr-input' || !line[0].startsWith(first)) throw new Error(`Enter en la carta dejó ${JSON.stringify(line)}`);
+    await lab.fill('.pr-input', '');
+    // de derecha a izquierda, ArrowLeft avanza a la carta siguiente
+    await lab.goto(`${base}/index.html?lang=ar&practice=1`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-card', { timeout: T(15000) });
+    await lab.focus('.pr-card[tabindex="0"]');
+    await lab.keyboard.press('Home');
+    await lab.keyboard.press('ArrowLeft');
+    if ((await lab.evaluate(() => document.activeElement?.dataset.cmd)) !== secondId) throw new Error('en árabe ArrowLeft no fue a la carta siguiente');
+    await lab.goto(`${base}/index.html?lang=es`);
+    await loaded(lab);
+    await lab.click('#practice-btn');
+    await lab.waitForFunction(() => !document.querySelector('#practice').hidden, null, { timeout: T(15000) });
+  });
+  await step(lab, 'el árbol de trabajo, el índice y HEAD se ven al momento con touch, add y commit', async () => {
+    const col = (k) => lab.evaluate((key) => {
+      const box = document.querySelector(`.pr-areas[role="group"] .pr-area[data-area="${key}"]`);
+      return { head: box?.querySelector('.pr-area-h')?.textContent || '', label: box?.querySelector('ul')?.getAttribute('aria-labelledby') || '', items: [...(box?.querySelectorAll('li:not(.pr-area-empty)') || [])].map((li) => li.textContent.trim()) };
+    }, k);
+    if (!(await lab.getAttribute('.pr-areas', 'aria-label'))) throw new Error('las áreas no tienen nombre');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('touch --new areas.md');
+    let work = await col('work');
+    if (!work.items.some((t) => t.startsWith('areas.md') && t.includes('sin seguir'))) throw new Error(`touch no llevó el archivo al árbol de trabajo: ${JSON.stringify(work)}`);
+    if (!/^Árbol de trabajo \(\d+\)$/.test(work.head) || !work.label) throw new Error(`la columna del árbol no tiene título: ${JSON.stringify(work)}`);
+    await send('add areas.md');
+    const index = await col('index');
+    if (!index.items.some((t) => t.startsWith('areas.md') && t.includes('nuevo'))) throw new Error(`add no llevó el archivo al índice: ${JSON.stringify(index)}`);
+    if ((await col('work')).items.some((t) => t.startsWith('areas.md'))) throw new Error('el archivo preparado sigue en el árbol de trabajo');
+    if ((await col('head')).items.includes('areas.md')) throw new Error('el archivo preparado ya está en HEAD');
+    await send('commit -m "areas"');
+    if ((await col('index')).items.length) throw new Error('el índice no quedó vacío tras el commit');
+    if (!(await col('head')).items.includes('areas.md')) throw new Error(`el commit no llevó el archivo a HEAD: ${JSON.stringify(await col('head'))}`);
+    if ((await lab.locator('.pr-area ul[tabindex="0"]').count()) !== 3) throw new Error('las listas de las áreas, que se desplazan, no se alcanzan con el teclado');
+  });
+  await step(lab, 'un conflicto de merge se ve en el índice y se resuelve con add y commit', async () => {
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    const index = () => lab.evaluate(() => [...document.querySelectorAll('.pr-area[data-area="index"] li:not(.pr-area-empty)')].map((li) => li.textContent.trim()));
+    await lab.selectOption('.pr-ex', '15');
+    await send('merge feature');
+    await lab.waitForFunction(() => /CONFLICT \(content\): Merge conflict in login\.js/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (!(await index()).some((t) => t.startsWith('login.js') && t.includes('en conflicto'))) throw new Error(`el índice no muestra el conflicto: ${JSON.stringify(await index())}`);
+    await send('commit -m "antes de tiempo"');
+    await lab.waitForFunction(() => /unmerged files/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (await lab.textContent('.pr-status')) throw new Error('el ejercicio se dio por resuelto sin resolver el conflicto');
+    await send('add login.js');
+    if ((await index()).some((t) => t.includes('en conflicto'))) throw new Error('add no marcó resuelto el conflicto');
+    await send('commit');
+    await lab.waitForFunction(() => /Resuelto/.test(document.querySelector('.pr-status')?.textContent || ''), null, { timeout: T(5000) });
   });
   await step(lab, 'la práctica entiende switch y restore', async () => {
     const send = async (c) => {
@@ -2314,6 +3223,101 @@ console.log('Varios repos a la vez');
     await lab.fill('.pr-input', 'tag v1.0.1');
     await lab.press('.pr-input', 'Enter');
     await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+  });
+  await step(lab, 'el ejercicio de push y fetch: el remoto rechaza el push, fetch trae origin/main al grafo y se resuelve', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=14`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('fetch'), null, { timeout: T(5000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const heads = () => lab.evaluate(() => [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim()));
+    if (!(await heads()).includes('origin/main')) throw new Error('el grafo no muestra origin/main');
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    await send('push');
+    await lab.waitForFunction(() => /\[rejected\][\s\S]*fetch first/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    const nodes = await lab.locator('#graph svg .node').count();
+    await send('fetch');
+    // el commit de Ana llega al grafo por origin/main, sin mover main
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n + 1, nodes, { timeout: T(5000) });
+    await send('status');
+    await lab.waitForFunction(() => /have diverged/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('se resolvió sin subir');
+    await send('merge origin/main');
+    await send('push');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+    await send('log --oneline');
+    await lab.waitForFunction(() => /\(HEAD -> main, origin\/main\) Merge remote-tracking branch 'origin\/main'/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+  });
+  await step(lab, 'el ejercicio de pull y poda: pull trae la fusión de Ana, fetch --prune quita origin/feature del grafo y push --delete borra experiment', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=15`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForFunction(() => document.querySelector('.pr-goal')?.textContent.includes('--prune'), null, { timeout: T(5000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const heads = () => lab.evaluate(() => [...document.querySelectorAll('#graph svg .head .h-name')].map((n) => n.textContent.trim()));
+    const start = await heads();
+    if (!start.includes('origin/feature') || !start.includes('origin/experiment')) throw new Error('el grafo no muestra las ramas subidas: ' + JSON.stringify(start));
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('el ejercicio parte resuelto');
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    const nodes = await lab.locator('#graph svg .node').count();
+    await send('pull');
+    // la fusión de Ana llega al grafo y main avanza rápido hasta ella
+    await lab.waitForFunction((n) => document.querySelectorAll('#graph svg .node').length === n + 1, nodes, { timeout: T(5000) });
+    await lab.waitForFunction(() => /Fast-forward/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    if (!(await heads()).includes('origin/feature')) throw new Error('pull sin --prune quitó origin/feature');
+    await send('fetch --prune');
+    await lab.waitForFunction(() => /\[deleted\]\s+\(none\)\s+-> origin\/feature/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await lab.waitForFunction(() => ![...document.querySelectorAll('#graph svg .head .h-name')].some((n) => n.textContent.trim() === 'origin/feature'), null, { timeout: T(5000) });
+    await send('branch -d feature');
+    await send('push origin --delete experiment');
+    await lab.waitForFunction(() => document.querySelector('.pr-status')?.textContent.trim() !== '', null, { timeout: T(5000) });
+    // la etiqueta borrada se deshace en polvo: se espera a que se vaya, no un tiempo
+    await lab.waitForFunction(() => ![...document.querySelectorAll('#graph svg .head .h-name')].some((n) => n.textContent.trim() === 'origin/experiment'), null, { timeout: T(5000) });
+  });
+  await step(lab, 'branch --merged y --no-merged en la práctica: antes del pull feature no está en main, después sí, y listar no toca el grafo', async () => {
+    await lab.goto(`${base}/index.html?lang=es&practice=15`);
+    await lab.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: T(15000) });
+    await lab.waitForSelector('#graph svg .node', { state: 'attached', timeout: T(10000) });
+    const send = async (c) => {
+      await lab.fill('.pr-input', c);
+      await lab.press('.pr-input', 'Enter');
+    };
+    // la salida de cada comando: las líneas que siguen a su eco en la terminal, hasta el comando siguiente
+    const out = (c) =>
+      lab.evaluate((cmd) => {
+        const lines = document.querySelector('.pr-log').innerText.split('\n');
+        const at = lines.map((l) => l.trim()).lastIndexOf(`$ git ${cmd}`);
+        if (at < 0) return null;
+        const rest = lines.slice(at + 1);
+        const end = rest.findIndex((l) => l.trim().startsWith('$ '));
+        return rest.slice(0, end < 0 ? rest.length : end).map((l) => l.trim()).filter(Boolean);
+      }, c);
+    const said = async (c, want) => {
+      await send(c);
+      await lab.waitForFunction(([cmd, w]) => {
+        const lines = document.querySelector('.pr-log')?.innerText.split('\n').map((l) => l.trim()) || [];
+        const at = lines.lastIndexOf(`$ git ${cmd}`);
+        return at >= 0 && w.every((x) => lines.slice(at + 1).includes(x));
+      }, [c, want], { timeout: T(5000) }).catch(async () => {
+        throw new Error(`${c} dijo ${JSON.stringify(await out(c))} y se esperaba ${JSON.stringify(want)}`);
+      });
+    };
+    const nodes = await lab.locator('#graph svg .node').count();
+    await said('branch --no-merged', ['experiment', 'feature']);
+    await said('branch --merged', ['* main']);
+    if ((await out('branch --merged')).includes('feature')) throw new Error('antes del pull feature sale como contenida en main');
+    if ((await lab.locator('#graph svg .node').count()) !== nodes) throw new Error('listar las ramas cambió el grafo');
+    if ((await lab.textContent('.pr-status')).trim() !== '') throw new Error('listar resolvió el ejercicio');
+    await send('pull');
+    await lab.waitForFunction(() => /Fast-forward/.test(document.querySelector('.pr-log')?.textContent || ''), null, { timeout: T(5000) });
+    await said('branch --merged', ['feature', '* main']);
+    await said('branch --no-merged', ['experiment']);
+    if ((await out('branch --no-merged')).includes('feature')) throw new Error('después del pull feature sigue sin estar en main');
   });
   await step(lab, 'el ejercicio de revert se abre por su número, deshace un commit con otro nuevo y se marca resuelto', async () => {
     await lab.goto(`${base}/index.html?lang=es&practice=6`);
@@ -2472,6 +3476,8 @@ console.log('Varios repos a la vez');
       const gx = await full.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ label: b.getAttribute('aria-label'), r: b.getBoundingClientRect().toJSON() })));
       if (gx.length !== 20) throw new Error(`la constelación tiene ${gx.length} galaxias`);
       if (gx.some((g) => !g.label || /undefined|NaN|constellation\./.test(g.label))) throw new Error('galaxia sin nombre o con texto sin resolver: ' + JSON.stringify(gx.map((g) => g.label)));
+      // repos que no cargaron ningún commit (dan 404): su galaxia no dice cuánto hace de un commit que no hay
+      if (gx.some((g) => /\bhace\b|\bahora\b/.test(g.label))) throw new Error('una galaxia sin commits dice cuánto hace: ' + JSON.stringify(gx.map((g) => g.label)));
       for (let i = 0; i < gx.length; i++)
         for (let j = i + 1; j < gx.length; j++) {
           const a = gx[i].r, b = gx[j].r;
@@ -2568,12 +3574,33 @@ console.log('Varios repos a la vez');
           if ((await rec.$eval('#constellation-order', (s) => s.value)) !== 'recent') throw new Error('?order=recent no deja el selector en último commit');
           const byRecent = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => b.dataset.key).join(' '));
           if (byRecent !== 'rec/uno rec/tres rec/dos') throw new Error('?order=recent no abre la constelación con el commit más reciente primero: ' + byRecent);
+          // cada galaxia dice cuánto hace de su commit más reciente ya cargado, en su nombre accesible y en su globo
+          const when = await rec.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => [b.getAttribute('aria-label'), b.title]));
+          for (const [label, title] of when)
+            if (!/, (ahora|hace \d+ (s|min))(,|$)/.test(label) || !/ · (ahora|hace \d+ (s|min))$/.test(title)) throw new Error('la galaxia no dice cuánto hace de su último commit: ' + JSON.stringify(when));
           await rec.selectOption('#constellation-order', 'tabs');
           await rec.selectOption('#constellation-order', 'recent');
           const recentSaid = await rec.$eval('#constellation-status', (e) => e.textContent.trim());
           if (!/Último commit/.test(recentSaid) || /undefined|constellation\./.test(recentSaid)) throw new Error('el orden por último commit no se anuncia: ' + recentSaid);
         } finally {
           await rec.context().close();
+        }
+        // una galaxia quieta (su commit más reciente cargado tiene más de 30 días) lo dice en su nombre y su globo; la reciente no
+        const old = Date.now() - 45 * 864e5;
+        for (const c of gh.repo('rec/viejo').commits.values()) c.commit.author.date = c.commit.committer.date = new Date(old).toISOString();
+        const qui = await openPage({ viewport: { width: 1280, height: 800 } });
+        try {
+          await qui.unroute('https://api.github.com/**');
+          await qui.route('https://api.github.com/**', gh.handle);
+          await qui.goto(`${base}/index.html?lang=es&repo=rec/viejo&repo=rec/uno`);
+          await qui.waitForFunction(() => { const t = [...document.querySelectorAll('#repo-tabs .rt')]; return t.length === 2 && t.every((x) => x.dataset.state === 'live'); }, null, { timeout: T(15000) });
+          await qui.click('#constellation-btn');
+          await qui.waitForSelector('#constellation[open]', { timeout: T(3000) });
+          const quiet = await qui.$$eval('#constellation .cs-gx', (bs) => Object.fromEntries(bs.map((b) => [b.dataset.key, { label: b.getAttribute('aria-label'), title: b.title, quiet: b.dataset.quiet === 'true' }])));
+          if (!/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].label) || !/sin actividad hace más de 30 días/.test(quiet['rec/viejo'].title) || !quiet['rec/viejo'].quiet) throw new Error('la galaxia quieta no lo dice: ' + JSON.stringify(quiet['rec/viejo']));
+          if (/sin actividad/.test(quiet['rec/uno'].label) || quiet['rec/uno'].quiet) throw new Error('la galaxia reciente dice que está quieta: ' + JSON.stringify(quiet['rec/uno']));
+        } finally {
+          await qui.context().close();
         }
       } finally {
         for (const r of ['o/a', 'o/b', 'o/c']) Object.assign(gh.repo(r), { openItems: 0, stars: 0, forks: 0 });
@@ -2650,7 +3677,7 @@ console.log('Varios repos a la vez');
   await phonePage.context().close();
 }
 
-console.log('Una organización o un usuario entero');
+if (seccion('Una organización o un usuario entero'))
 {
   const gh = fakeGitHub();
   gh.org('acme');
@@ -2686,6 +3713,32 @@ console.log('Una organización o un usuario entero');
     if (!lists.length || lists.some((c) => c !== '/orgs/acme/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`); // las renovaciones piden la misma, una por organización
     const saved = await page.evaluate(() => localStorage.getItem('graphbranch:repos'));
     if (saved !== '["acme/api","acme/web","acme/viejo"]') throw new Error(`se guardó ${saved}`);
+  });
+
+  await step(page, 'la salud se rehace al llegar las líneas por semana y el foco sigue donde estaba', async () => {
+    // GitHub tarda en responder /stats/code_frequency: se retiene hasta que el foco ya está dentro del panel
+    let release;
+    const held = new Promise((r) => (release = r));
+    const pattern = 'https://api.github.com/repos/acme/api/stats/code_frequency';
+    await page.route(pattern, async (r) => {
+      await held;
+      await gh.handle(r);
+    });
+    try {
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open] #digest-org-md', { timeout: T(5000) });
+      await page.focus('#digest-org-md');
+      await page.evaluate(() => document.querySelector('#health-body .hl-sec').setAttribute('data-viejo', '')); // desaparece al rehacerse
+      release();
+      await page.waitForFunction(() => !document.querySelector('#health-body [data-viejo]'), null, { timeout: T(8000) });
+      const at = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+      if (at !== 'digest-org-md') throw new Error(`al rehacerse el panel el foco cayó en ${at}`);
+    } finally {
+      release();
+      await page.unroute(pattern);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
   });
 
   await step(page, 'el resumen de la semana de la organización junta sus repos abiertos', async () => {
@@ -2726,6 +3779,30 @@ console.log('Una organización o un usuario entero');
     if (!toast) throw new Error('sin aviso del repo nuevo');
     await page.waitForTimeout(4000); // dos renovaciones más: el cerrado no regresa
     if ((await names()).includes('acme/viejo')) throw new Error(`volvió el cerrado: ${await names()}`);
+  });
+
+  await step(page, 'la constelación dibuja tenue el repo de la organización sin pestaña, con su último push y sin consultarlo, y elegirlo lo abre', async () => {
+    const viejo = () => gh.calls.filter((c) => c.startsWith('/repos/acme/viejo')).length;
+    const before = viejo();
+    await page.click('#constellation-btn');
+    await page.waitForSelector('#constellation[open] .cs-gx[data-state="ghost"]', { timeout: T(3000) });
+    const gx = await page.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ key: b.dataset.key, ghost: b.dataset.state === 'ghost', label: b.getAttribute('aria-label') })));
+    const ghosts = gx.filter((g) => g.ghost);
+    // la lista de acme trae api, web, nuevo y viejo (sin el fork ni el archivado): solo viejo no tiene pestaña
+    if (ghosts.map((g) => g.key).join() !== 'acme/viejo') throw new Error('galaxias tenues: ' + JSON.stringify(gx));
+    if (gx.filter((g) => !g.ghost).map((g) => g.key).sort().join() !== 'acme/api,acme/nuevo,acme/web') throw new Error('galaxias de las pestañas: ' + JSON.stringify(gx));
+    if (!/^acme\/viejo, último push hace .+, sin pestaña: elígela para abrirla$/.test(ghosts[0].label)) throw new Error('la galaxia tenue dice: ' + ghosts[0].label);
+    await page.waitForTimeout(1600); // una renovación de la lista de por medio: dibujarla no consulta el repo
+    if (viejo() !== before) throw new Error('la galaxia tenue consultó su repo: ' + gh.calls.filter((c) => c.startsWith('/repos/acme/viejo')).slice(before).join(', '));
+    await page.focus('#constellation .cs-gx[data-state="ghost"]');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'acme/viejo', null, { timeout: T(10000) });
+    if (!(await names()).includes('acme/viejo*')) throw new Error(`elegir la galaxia tenue no abrió su pestaña: ${await names()}`);
+    if (viejo() === before) throw new Error('la pestaña abierta no cargó su repo');
+    // se cierra otra vez: los pasos que siguen cuentan las pestañas de acme sin ella
+    await page.locator('.rt', { hasText: 'acme/viejo' }).locator('.rt-close').click();
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(5000) });
   });
 
   await step(page, 'al cerrar el último repo de la organización deja de seguirse', async () => {
@@ -2780,6 +3857,289 @@ console.log('Una organización o un usuario entero');
     if (left.length) throw new Error(`la dirección sigue con ${left}`);
   }, { allow: /404/ });
   await page.context().close();
+}
+
+/* Una tarea de GitHub Classroom (ítem 216): un repo por estudiante en la organización del curso, con el prefijo de la
+   tarea. org:curso/tarea-1-* sigue solo los de ese prefijo, con la lista de la organización entera (la misma
+   consulta); su renovación, sus eventos y sus galaxias sin pestaña son solo los de la tarea. */
+if (seccion('Una tarea de GitHub Classroom'))
+{
+  const gh = fakeGitHub();
+  gh.org('curso');
+  // el de push más reciente al final: la lista dice tarea-1-ana, tarea-1-beto, proyecto, tarea-2-ana, tarea-1-caro
+  for (const r of ['curso/tarea-1-caro', 'curso/tarea-2-ana', 'curso/proyecto', 'curso/tarea-1-beto', 'curso/tarea-1-ana']) gh.repo(r);
+  gh.repo('curso/tarea-1-copia', { fork: true });
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await page.addInitScript(quickCycles);
+  // la renovación de la lista y los eventos de la organización, que son de 30 y 5 minutos, aquí cada 1,5 s
+  await page.addInitScript(() => {
+    const real = window.setInterval;
+    window.setInterval = (fn, ms, ...a) => real(fn, ms === 30 * 60 * 1000 || ms === 5 * 60 * 1000 ? 1500 : ms, ...a);
+  });
+  const names = async () => (await repoTabs(page)).map((t) => `${t.name}${t.on ? '*' : ''}`).join(' ');
+  const asked = (full) => gh.calls.filter((c) => c.startsWith(`/repos/${full}`)).length;
+
+  await step(page, 'org:curso/tarea-1-* sigue solo las entregas de la tarea, con la lista de la organización', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.fill('#repo-input', 'org:curso/tarea-1-*');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-1-ana* curso/tarea-1-beto curso/tarea-1-caro') throw new Error(`pestañas: ${await names()}`);
+    // la tarea va aislada (FSI…PDI), para que en árabe no se le dé vuelta el «-*» del final
+    const toast = await page.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de \u2068curso/tarea-1-*\u2069")', { timeout: T(5000) });
+    const detail = await toast.$eval('.toast-detail', (d) => d.textContent);
+    if (detail !== 'tarea-1-ana, tarea-1-beto, tarea-1-caro') throw new Error(`el aviso dice ${detail}`);
+    const lists = gh.calls.filter((c) => /^\/(orgs|users)\/[^/]+\/repos$/.test(c));
+    if (!lists.length || lists.some((c) => c !== '/orgs/curso/repos')) throw new Error(`consultas de la lista: ${lists.join(', ')}`);
+    for (const other of ['curso/tarea-2-ana', 'curso/proyecto']) if (asked(other)) throw new Error(`se consultó ${other}, que no es de la tarea`);
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== '{"curso/tarea-1-*":["tarea-1-ana","tarea-1-beto","tarea-1-caro"]}') throw new Error(`se guardó ${owners}`);
+  });
+
+  await step(page, 'la tarea queda seguida: una entrega nueva se suma sola y la de otra tarea no', async () => {
+    gh.repo('curso/tarea-2-beto');
+    gh.push('curso/tarea-2-beto', 'main', 'otra tarea');
+    gh.repo('curso/tarea-1-dani');
+    gh.push('curso/tarea-1-dani', 'main', 'primera entrega');
+    await page.waitForFunction(() => [...document.querySelectorAll('#repo-tabs .rt-name')].some((n) => n.textContent === 'curso/tarea-1-dani'), null, { timeout: T(15000) });
+    await page.waitForSelector('#toasts .toast:has-text("curso/tarea-1-*"):has(.toast-detail:text-is("tarea-1-dani"))', { timeout: T(5000) });
+    await page.waitForTimeout(3500); // dos renovaciones más: la de la tarea 2 no entra
+    if ((await names()).includes('tarea-2')) throw new Error(`se sumó otra tarea: ${await names()}`);
+    if (asked('curso/tarea-2-beto')) throw new Error('se consultó la entrega de otra tarea');
+  });
+
+  await step(page, 'los eventos de la organización llegan al panel solo de las entregas de la tarea sin pestaña', async () => {
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-2-ana' } }); // de otra tarea: no
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-1-eva' } }); // de la tarea y sin pestaña: sí
+    gh.orgEvent({ type: 'WatchEvent', repo: { name: 'curso/tarea-1-ana' } }); // con pestaña: ya lo trae la suya
+    await page.waitForFunction(() => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('curso/tarea-1-eva')), null, { timeout: T(15000) });
+    const shown = await page.$$eval('#feed .act', (els) => els.map((a) => a.textContent));
+    if (shown.some((x) => x.includes('curso/tarea-2-ana'))) throw new Error('llegó el evento de otra tarea');
+    if (shown.filter((x) => x.includes('curso/tarea-1-eva')).length !== 1) throw new Error('el evento de la entrega sin pestaña no salió una vez');
+  });
+
+  await step(page, 'la constelación dibuja tenue la entrega sin pestaña, no las de otra tarea, y elegirla la abre', async () => {
+    await page.locator('.rt', { hasText: 'curso/tarea-1-caro' }).locator('.rt-close').click();
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 3, null, { timeout: T(5000) });
+    await page.waitForTimeout(1000); // lo que la pestaña cerrada ya había pedido termina de llegar
+    const before = asked('curso/tarea-1-caro');
+    await page.click('#constellation-btn');
+    await page.waitForSelector('#constellation[open] .cs-gx[data-state="ghost"]', { timeout: T(3000) });
+    const gx = await page.$$eval('#constellation .cs-gx', (bs) => bs.map((b) => ({ key: b.dataset.key, ghost: b.dataset.state === 'ghost', label: b.getAttribute('aria-label') })));
+    const ghosts = gx.filter((g) => g.ghost);
+    // la lista de la tarea trae dani, ana, beto y caro: solo caro no tiene pestaña; proyecto y la tarea 2 no son de ella
+    if (ghosts.map((g) => g.key).join() !== 'curso/tarea-1-caro') throw new Error('galaxias tenues: ' + JSON.stringify(gx));
+    if (gx.filter((g) => !g.ghost).map((g) => g.key).sort().join() !== 'curso/tarea-1-ana,curso/tarea-1-beto,curso/tarea-1-dani') throw new Error('galaxias de las pestañas: ' + JSON.stringify(gx));
+    if (!/^curso\/tarea-1-caro, último push hace .+, sin pestaña: elígela para abrirla$/.test(ghosts[0].label)) throw new Error('la galaxia tenue dice: ' + ghosts[0].label);
+    if (asked('curso/tarea-1-caro') !== before) throw new Error('la galaxia tenue consultó su repo');
+    await page.focus('#constellation .cs-gx[data-state="ghost"]');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#constellation:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'curso/tarea-1-caro', null, { timeout: T(10000) });
+    if (!(await names()).includes('curso/tarea-1-caro*')) throw new Error(`elegir la galaxia tenue no abrió su pestaña: ${await names()}`);
+    if (asked('curso/tarea-1-caro') === before) throw new Error('la pestaña abierta no cargó su repo');
+  });
+
+  await step(page, 'al cerrar la última entrega deja de seguirse; un prefijo sin repos y uno sin estrella lo dicen en el campo', async () => {
+    // con otro repo de por medio: con una sola pestaña la barra se esconde
+    await page.fill('#repo-input', 'curso/proyecto');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 5, null, { timeout: T(15000) });
+    for (const n of ['curso/tarea-1-ana', 'curso/tarea-1-beto', 'curso/tarea-1-caro', 'curso/tarea-1-dani']) await page.locator('.rt', { hasText: n }).locator('.rt-close').click();
+    await page.waitForTimeout(2000); // una renovación de por medio: no vuelve a guardarla ni reabre nada
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== null) throw new Error(`sigue guardada: ${owners}`);
+    if ((await names()) !== 'curso/proyecto*') throw new Error(`volvieron entregas de la tarea dejada: ${await names()}`);
+    await page.fill('#repo-input', 'org:curso/examen-*');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('examen-'), null, { timeout: T(10000) });
+    const empty = await page.$eval('#repo-input', (i) => i.validationMessage);
+    if (empty !== 'Ningún repositorio de curso empieza con “\u2068examen-\u2069” (entre los 100 de push más reciente, sin contar forks ni archivados). Revisa el prefijo de la tarea.') throw new Error(`el campo dice ${JSON.stringify(empty)}`);
+    await page.fill('#repo-input', 'org:curso/tarea-1-');
+    await page.press('#repo-input', 'Enter');
+    await page.waitForFunction(() => document.querySelector('#repo-input').validationMessage.includes('prefijo*'), null, { timeout: T(5000) });
+    if ((await repoTabs(page)).length !== 1) throw new Error('cambiaron las pestañas');
+  });
+
+  await step(page, 'con ?repo=org:curso/tarea-2-* en la URL se sigue esa tarea', async () => {
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(`${base}/index.html?lang=es&repo=org:curso/tarea-2-*`);
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 2, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-2-beto* curso/tarea-2-ana') throw new Error(`pestañas: ${await names()}`);
+    const owners = await page.evaluate(() => localStorage.getItem('graphbranch:owners'));
+    if (owners !== '{"curso/tarea-2-*":["tarea-2-beto","tarea-2-ana"]}') throw new Error(`se guardó ${owners}`);
+  });
+
+  await step(page, 'la organización entera se sigue aparte de su tarea, también con su repo más reciente ya a la vista', async () => {
+    gh.push('curso/tarea-2-beto', 'main', 'otra entrega'); // el de push más reciente de curso es el que ya se ve
+    await page.fill('#repo-input', 'org:curso');
+    await page.press('#repo-input', 'Enter');
+    // sin dibujarlas aquí, las pestañas nuevas no aparecían: mostrar el que ya estaba a la vista no hace nada
+    await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 7, null, { timeout: T(15000) });
+    if ((await names()) !== 'curso/tarea-2-beto* curso/tarea-2-ana curso/tarea-1-dani curso/tarea-1-ana curso/tarea-1-beto curso/proyecto curso/tarea-1-caro') throw new Error(`pestañas: ${await names()}`);
+    const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('graphbranch:repos')));
+    if (saved.length !== 7) throw new Error(`se guardaron ${saved.length} repos`);
+    const owners = Object.keys(JSON.parse(await page.evaluate(() => localStorage.getItem('graphbranch:owners')))).join();
+    if (owners !== 'curso/tarea-2-*,curso') throw new Error(`se siguen ${owners}`);
+  });
+
+  // ítem 222: el plazo de una tarea. Cada paso en un contexto nuevo, sin lo guardado ni la renovación cada 1,5 s de esta
+  // página (un `localStorage.clear()` seguido de `goto` perdía la carrera con esa renovación, que volvía a guardar las
+  // tareas de los pasos de arriba). El plazo vence al terminar ese día (en la hora local); los pushes van a mediodía UTC
+  await page.goto('about:blank'); // esta página sigue la organización curso entera: abriría las entregas nuevas
+  gh.repo('curso/parcial-ana', { pushedAt: '2026-01-10T12:00:00Z' }); // a tiempo
+  gh.repo('curso/parcial-beto', { pushedAt: '2026-01-16T12:00:00Z' }); // un día tarde
+  gh.repo('curso/parcial-caro', { pushedAt: '2026-02-01T12:00:00Z' }); // tarde, y sin pestaña
+  /** Una página nueva con este GitHub simulado; `fn(p, pedidos)` la usa (`pedidos`: las rutas que pidió ella) y sus errores
+      de consola cuentan como los de la sección. */
+  const aparte = async (opts, fn) => {
+    const p = await openPage({ viewport: { width: 1280, height: 800 }, ...opts });
+    const pedidos = [];
+    try {
+      await p.unroute('https://api.github.com/**');
+      await p.route('https://api.github.com/**', (r) => {
+        pedidos.push(new URL(r.request().url()).pathname);
+        return gh.handle(r);
+      });
+      await fn(p, pedidos);
+      if (p.errors.length) throw new Error(p.errors.join(' · '));
+    } finally {
+      await p.context().close();
+    }
+  };
+  const tabsAre = (p, n) => p.waitForFunction((k) => document.querySelectorAll('#repo-tabs .rt').length === k, n, { timeout: T(15000) });
+
+  await step(page, '?plazo= marca en la constelación las entregas con push después del plazo, y su campo lo cambia', () =>
+    aparte({}, async (p, pedidos) => {
+      const caro = () => pedidos.filter((x) => x.startsWith('/repos/curso/parcial-caro')).length;
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso/parcial-*&plazo=2026-01-15`);
+      await tabsAre(p, 3);
+      await p.locator('.rt', { hasText: 'curso/parcial-caro' }).locator('.rt-close').click();
+      await tabsAre(p, 2);
+      await p.waitForTimeout(1000); // lo que la pestaña cerrada ya había pedido termina de llegar
+      const before = caro();
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx[data-late="true"]', { timeout: T(3000) });
+      const read = () =>
+        p.evaluate(() => {
+          const count = document.querySelector('#constellation-late');
+          return {
+            late: [...document.querySelectorAll('#constellation .cs-gx[data-late="true"]')].map((b) => b.dataset.key).sort().join(),
+            clocks: document.querySelectorAll('#constellation .cs-gx[data-late="true"] > .cs-late').length,
+            said: Object.fromEntries([...document.querySelectorAll('#constellation .cs-gx')].map((b) => [b.dataset.key, `${b.getAttribute('aria-label')} | ${b.title}`])),
+            field: !document.querySelector('#constellation-due-field').hidden,
+            value: document.querySelector('#constellation-due').value,
+            count: count.hidden ? null : count.textContent,
+          };
+        });
+      let r = await read();
+      if (r.late !== 'curso/parcial-beto,curso/parcial-caro' || r.clocks !== 2) throw new Error('fuera de plazo: ' + JSON.stringify(r));
+      if (!r.field || r.value !== '2026-01-15') throw new Error(`el campo del plazo: ${JSON.stringify(r)}`);
+      if (r.count !== 'Con push después del plazo: 2 de 3') throw new Error(`la cuenta dice ${r.count}`);
+      // con palabras, en el nombre accesible y en el globo (no solo con el color del borde)
+      if (!/^curso\/parcial-beto, commits: .*, con push después del plazo \| curso\/parcial-beto · .* · con push después del plazo$/.test(r.said['curso/parcial-beto'])) throw new Error('la entrega tarde dice: ' + r.said['curso/parcial-beto']);
+      if (!/^curso\/parcial-caro, último push .+, con push después del plazo, .*sin pestaña: elígela para abrirla \|/.test(r.said['curso/parcial-caro'])) throw new Error('la entrega tarde sin pestaña dice: ' + r.said['curso/parcial-caro']);
+      if (/plazo/.test(r.said['curso/parcial-ana'])) throw new Error('la entrega a tiempo dice: ' + r.said['curso/parcial-ana']);
+      // el campo: con el 16, la de ese día llega a tiempo (el plazo vence al terminar el día)
+      await p.fill('#constellation-due', '2026-01-16');
+      await p.waitForFunction(() => document.querySelector('#constellation-late').textContent === 'Con push después del plazo: 1 de 3', null, { timeout: T(3000) });
+      r = await read();
+      if (r.late !== 'curso/parcial-caro' || r.clocks !== 1) throw new Error('con el plazo del 16: ' + JSON.stringify(r));
+      // sin plazo, nada marcado ni contado; el campo sigue ahí para ponerlo
+      await p.fill('#constellation-due', '');
+      await p.waitForFunction(() => document.querySelector('#constellation-late').hidden, null, { timeout: T(3000) });
+      r = await read();
+      if (r.late || r.clocks || !r.field || Object.values(r.said).some((x) => /plazo/.test(x))) throw new Error('sin plazo: ' + JSON.stringify(r));
+      if (caro() !== before) throw new Error('marcar el plazo consultó la entrega sin pestaña');
+    }),
+  );
+
+  // con el teclado, Chromium arma el año de a un dígito (0002, 0020, 0202, 2026): el campo no se vacía a medio escribir
+  // (pasaba en la primera versión: el plazo inválido se devolvía al campo) ni marca todas las entregas por un instante
+  await step(page, 'el plazo se escribe con el teclado en el campo, dígito a dígito', () =>
+    aparte({ locale: 'en-US' }, async (p) => {
+      // en-US: mm/dd/aaaa
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso/parcial-*`);
+      await tabsAre(p, 3);
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx', { timeout: T(3000) });
+      await p.focus('#constellation-due');
+      const seen = [];
+      for (const ch of '01162026') {
+        await p.keyboard.type(ch);
+        seen.push(await p.evaluate(() => `${document.querySelector('#constellation-due').value}:${document.querySelectorAll('#constellation .cs-gx[data-late]').length}`));
+      }
+      if (seen.at(-1) !== '2026-01-16:1' || seen.slice(0, -1).some((x) => !x.endsWith(':0'))) throw new Error(`el campo, tecla a tecla: ${seen.join(' ')}`);
+      const count = await p.$eval('#constellation-late', (el) => el.textContent);
+      if (count !== 'Con push después del plazo: 1 de 3') throw new Error(`la cuenta dice ${count}`);
+    }),
+  );
+
+  await step(page, 'sin una tarea seguida no aparece el campo del plazo, aunque la URL traiga ?plazo=', () =>
+    aparte({}, async (p) => {
+      await p.goto(`${base}/index.html?lang=es&repo=org:curso&plazo=2026-01-15`);
+      await p.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length > 1, null, { timeout: T(15000) });
+      await p.click('#constellation-btn');
+      await p.waitForSelector('#constellation[open] .cs-gx', { timeout: T(3000) });
+      const r = await p.evaluate(() => ({ field: !document.querySelector('#constellation-due-field').hidden, count: !document.querySelector('#constellation-late').hidden, late: document.querySelectorAll('#constellation .cs-gx[data-late]').length }));
+      if (r.field || r.count || r.late) throw new Error('una organización entera no tiene entregas: ' + JSON.stringify(r));
+    }),
+  );
+  await page.context().close();
+}
+
+/* Más pestañas de las que caben: la fila se desliza sola y la página no se estira. El texto para el lector de pantalla
+   de cada pestaña (y de cada tarjeta de «Todos») es absoluto; mientras su bloque contenedor quedó fuera de la fila, la
+   fila no lo recortaba y cada pestaña que no cabía ensanchaba la página: en árabe quedaba corrida o en blanco
+   (pendiente 1, iteración 297: 2.422 px de ancho en 1280 con 20 pestañas). */
+if (seccion('Pestañas que no caben en su fila'))
+{
+  const gh = fakeGitHub();
+  gh.org('acme');
+  for (let i = 1; i <= 24; i++) gh.repo(`acme/servicio-${String(i).padStart(2, '0')}`);
+  /** El ancho y el alto de la página contra la pantalla, si está corrida, y cuánto se desliza la fila. */
+  const medir = (page) =>
+    page.evaluate(() => {
+      const de = document.documentElement;
+      const tabs = document.querySelector('#repo-tabs');
+      const brand = document.querySelector('.brand').getBoundingClientRect();
+      return {
+        ancho: de.scrollWidth - de.clientWidth,
+        alto: de.scrollHeight - de.clientHeight,
+        corrida: document.scrollingElement.scrollLeft,
+        fila: tabs.scrollWidth - tabs.clientWidth,
+        marca: brand.left >= 0 && brand.right <= de.clientWidth,
+      };
+    });
+  for (const [lang, opts] of [['ar', { viewport: { width: 1280, height: 800 } }], ['ar', { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }], ['es', { viewport: { width: 1280, height: 800 } }]]) {
+    const page = await openPage(opts);
+    await page.unroute('https://api.github.com/**');
+    await page.route('https://api.github.com/**', gh.handle);
+    const w = opts.viewport.width;
+    await step(page, `[${lang}, ${w} px] con 20 pestañas la fila se desliza y la página no se ensancha ni queda corrida`, async () => {
+      await page.goto(`${base}/index.html?lang=${lang}&repo=org:acme`);
+      await page.waitForFunction(() => document.querySelectorAll('#repo-tabs .rt').length === 20 && document.querySelector('#repo-tabs .rt.on')?.dataset.state === 'live', null, { timeout: T(15000) });
+      const m = await medir(page);
+      if (m.fila < 200) throw new Error(`la fila no llega a deslizarse (${m.fila} px de más): la prueba no prueba nada`);
+      if (m.ancho > 1 || m.corrida !== 0 || !m.marca) throw new Error(`la página es ${m.ancho} px más ancha que la pantalla, corrida ${m.corrida} px, la marca ${m.marca ? 'a la vista' : 'fuera de la vista'}`);
+    });
+    if (w < 860) {
+      await page.context().close();
+      continue; // en el celular «Todos» apila las tarjetas y la página crece hacia abajo a propósito
+    }
+    await step(page, `[${lang}, ${w} px] «Todos» con 20 tarjetas: se desliza la cuadrícula y la página no crece hacia abajo`, async () => {
+      await page.click('#all-tab');
+      await page.waitForFunction(() => document.querySelectorAll('#all-grid .rc-card').length === 20, null, { timeout: T(10000) });
+      const m = await medir(page);
+      const grid = await page.$eval('#all-grid', (g) => g.scrollHeight - g.clientHeight);
+      if (grid < 200) throw new Error(`la cuadrícula no llega a deslizarse (${grid} px de más): la prueba no prueba nada`);
+      if (m.alto > 1 || m.ancho > 1) throw new Error(`la página es ${m.alto} px más alta y ${m.ancho} px más ancha que la pantalla`);
+    });
+    await page.context().close();
+  }
 }
 
 /* ---------- celular ---------- */
@@ -2867,13 +4227,14 @@ function fakeGitLab() {
         { path_with_namespace: 'g/viejo', archived: true, visibility: 'public' },
       ] };
     }
-    const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado)(\/.*)?$/.exec(path);
+    // g/abierto y g/nuevo: públicos y sin subgrupo, para OpenSSF Scorecard (ítem 225); los cuatro sirven las mismas ramas
+    const m = /^\/api\/v4\/projects\/(g%2Fsub%2Fp|g%2Fprivado|g%2Fabierto|g%2Fnuevo)(\/.*)?$/.exec(path);
     if (!m) return { status: 404, body: { message: '404 Project Not Found' } };
     const priv = m[1] === 'g%2Fprivado';
     if (priv && auth !== `Bearer ${GITLAB_TOKEN}`) return auth ? { status: 401, body: { message: '401 Unauthorized' } } : { status: 404, body: { message: '404 Project Not Found' } };
     const rest = m[2] || '';
     if (!rest) {
-      const name = priv ? 'g/privado' : 'g/sub/p';
+      const name = decodeURIComponent(m[1]);
       return { body: { id: priv ? 2 : 1, path_with_namespace: name, default_branch: 'main', web_url: `https://gitlab.com/${name}`, visibility: priv ? 'private' : 'public', description: 'Un proyecto de GitLab' } };
     }
     if (rest === '/repository/branches') return { body: [...branches].map(([name, sha]) => ({ name, commit: commits.get(sha), protected: name === 'main' })), headers: { 'X-Total': branches.size } };
@@ -2947,7 +4308,7 @@ const quickGitLab = () => {
   hook();
 };
 
-console.log('GitLab');
+if (seccion('GitLab'))
 {
   const gl = fakeGitLab();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -2970,19 +4331,24 @@ console.log('GitLab');
   });
 
   await step(page, 'group:g sigue los proyectos del grupo de GitLab, sin forks ni archivados, con una consulta', async () => {
+    // su propio contexto, que se cierra entero (también si el paso falla): cerrar solo la página dejaba el
+    // contexto vivo, con el service worker de la app en un proceso más, hasta el final del smoke
     const other = await openPage({ viewport: { width: 1280, height: 800 } });
-    await other.route('https://gitlab.com/**', gl.handle);
-    await other.addInitScript(quickGitLab);
-    await other.goto(`${base}/index.html?lang=es`);
-    await loaded(other);
-    await other.fill('#repo-input', 'group:g');
-    await other.press('#repo-input', 'Enter');
-    await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: T(15000) });
-    const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
-    if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
-    const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
-    if (lists.length !== 1) throw new Error(`consultas de la lista: ${lists.length}`);
-    await other.close();
+    try {
+      await other.route('https://gitlab.com/**', gl.handle);
+      await other.addInitScript(quickGitLab);
+      await other.goto(`${base}/index.html?lang=es`);
+      await loaded(other);
+      await other.fill('#repo-input', 'group:g');
+      await other.press('#repo-input', 'Enter');
+      await other.waitForSelector('#toasts .toast:has-text("Ahora sigues los repositorios más activos de g")', { timeout: T(15000) });
+      const saved = await other.evaluate(() => localStorage.getItem('graphbranch:repos'));
+      if (saved !== '["gitlab:g/sub/p"]') throw new Error(`se guardó ${saved}`);
+      const lists = gl.calls.filter((c) => c.startsWith('/api/v4/groups/g/projects'));
+      if (lists.length !== 1) throw new Error(`consultas de la lista: ${lists.length}`);
+    } finally {
+      await other.context().close();
+    }
   });
 
   await step(page, 'en 2D, la rama de la MR lleva !5 y su ficha dice MR', async () => {
@@ -3054,6 +4420,64 @@ console.log('GitLab');
     if (!sent.length || sent.some((a) => a.auth !== `Bearer ${GITLAB_TOKEN}`)) throw new Error(`a g/privado fue ${[...new Set(sent.map((a) => a.auth))]}`);
   }, { allow: /40[14]/ });
 
+  await step(page, 'OpenSSF Scorecard de gitlab.com: un proyecto público lo consulta al abrir la salud, una vez y sin el token de GitLab; uno de un subgrupo lo dice sin consultar y uno privado no consulta', async () => {
+    // ítem 225: con el token de GitLab ya guardado (el paso anterior), que no tiene que salir a Scorecard
+    const asked = [];
+    await page.unroute('https://api.scorecard.dev/**');
+    await page.route('https://api.scorecard.dev/**', (r) => {
+      const u = new URL(r.request().url());
+      const h = r.request().headers();
+      asked.push({ path: u.pathname, auth: h.authorization || '', referer: h.referer || '', cookie: h.cookie || '' });
+      const headers = { 'access-control-allow-origin': '*' };
+      if (u.pathname !== '/projects/gitlab.com/g/abierto') return r.fulfill({ status: 404, headers, body: '' }); // sin análisis: como la API, 404 sin cuerpo
+      return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify({ date: new Date().toISOString(), score: 4.6, checks: [{ name: 'Code-Review', score: 2, reason: 'Found 4/20 approved changesets -- score normalized to 2' }, { name: 'Packaging', score: -1, reason: 'packaging workflow not detected' }] }) });
+    });
+    const open = async (repo) => {
+      if (await page.evaluate(() => document.querySelector('#health')?.open)) await page.keyboard.press('Escape');
+      await page.fill('#repo-input', `gitlab:${repo}`);
+      await page.press('#repo-input', 'Enter');
+      await page.waitForFunction((r) => document.querySelector('#repo-link')?.textContent === r && document.querySelector('#overlay').hidden && document.querySelector('#status')?.dataset.state !== 'loading', repo, { timeout: T(15000) });
+      await page.click('#health-btn');
+      await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    };
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/privado', null, { timeout: T(5000) });
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    await page.waitForTimeout(1000);
+    if (await page.$('#hl-scorecard')) throw new Error('un proyecto privado muestra la sección de Scorecard');
+    if (asked.length) throw new Error(`el nombre de un proyecto privado salió a Scorecard: ${JSON.stringify(asked)}`);
+
+    await open('g/abierto');
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(8000) });
+    if (!/^Puntaje: 4,6 de 10, analizado el /.test(await score.textContent())) throw new Error(`el puntaje dice ${await score.textContent()}`);
+    const checks = await page.$$eval('#hl-scorecard .hl-checks li', (ls) => ls.map((l) => l.textContent.replace(/[⁨⁩]/g, '')));
+    if (JSON.stringify(checks) !== JSON.stringify(['Code-Review: 2 de 10 — Found 4/20 approved changesets -- score normalized to 2'])) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(checks)}`);
+    if (asked.length !== 1 || asked[0].path !== '/projects/gitlab.com/g/abierto') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+    if (asked[0].auth || asked[0].cookie || asked[0].referer) throw new Error(`la consulta a Scorecard llevó credenciales o la URL de la página: ${JSON.stringify(asked[0])}`);
+    if (!gl.auths.some((a) => a.path.includes('g%2Fabierto') && a.auth === `Bearer ${GITLAB_TOKEN}`)) throw new Error('GitLab no recibió el token de la prueba: la prueba no prueba nada');
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+
+    await open('g/nuevo');
+    const none = await page.waitForSelector('#health[open] #hl-scorecard-none', { timeout: T(8000) });
+    const noneText = await none.textContent();
+    if (!/todavía no analizó este proyecto\. En gitlab\.com/.test(noneText) || /GitHub/.test(noneText)) throw new Error(`sin análisis dice ${noneText}`);
+    if (asked.length !== 2 || asked[1].path !== '/projects/gitlab.com/g/nuevo') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+
+    await page.keyboard.press('Escape');
+    await page.locator('.rt', { hasText: 'g/sub/p' }).locator('.rt-main').click();
+    await page.waitForFunction(() => document.querySelector('#repo-link')?.textContent === 'g/sub/p', null, { timeout: T(10000) });
+    await page.click('#health-btn');
+    const sub = await page.waitForSelector('#health[open] #hl-scorecard-subgroup', { timeout: T(8000) });
+    if (!/subgrupo de GitLab/.test(await sub.textContent())) throw new Error(`de un subgrupo dice ${await sub.textContent()}`);
+    await page.waitForTimeout(500);
+    if (asked.length !== 2) throw new Error(`el proyecto de un subgrupo se consultó en Scorecard: ${JSON.stringify(asked.slice(2))}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /40[14]/ });
+
   await step(page, 'cada token va solo a su servicio', async () => {
     await page.fill('#repo-input', 'o/r');
     await page.press('#repo-input', 'Enter');
@@ -3115,7 +4539,7 @@ function fakeCodeberg() {
   };
 }
 
-console.log('Codeberg');
+if (seccion('Codeberg'))
 {
   const cb = fakeCodeberg();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3144,6 +4568,17 @@ console.log('Codeberg');
     const names = await page.$$eval('#graph .head', (hs) => hs.map((h) => h.getAttribute('aria-label')).join(' | '));
     if (!names.includes('feature/x') || !names.includes('main')) throw new Error(`ramas: ${names}`);
   });
+
+  // ítem 217: Codeberg no da las revisiones de sus PRs, así que la salud no parte el tiempo de ciclo en etapas y lo dice
+  // (los 404 son los forks y las líneas por semana, que el GitHub simulado de Codeberg no sirve)
+  await step(page, 'la salud dice que Codeberg no da revisiones para partir el tiempo de ciclo', async () => {
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-cycle', { timeout: T(5000) });
+    const cycle = await page.evaluate(() => ({ text: document.querySelector('#hl-cycle-noreviews')?.textContent || '', stages: document.querySelectorAll('#hl-cycle .hl-line').length }));
+    if (!/^Esta fuente no da las revisiones de sus pull requests/.test(cycle.text) || cycle.stages) throw new Error(`el tiempo de ciclo de Codeberg: ${JSON.stringify(cycle)}`);
+    await page.click('#health-close');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+  }, { allow: /404/ });
 
   await step(page, 'un repo que no existe lo dice con el texto de Codeberg', async () => {
     await page.fill('#repo-input', 'https://codeberg.org/ana/nada');
@@ -3224,7 +4659,7 @@ function fakeBitbucket() {
   };
 }
 
-console.log('Bitbucket');
+if (seccion('Bitbucket'))
 {
   const bb = fakeBitbucket();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3343,7 +4778,7 @@ function fakeAzure() {
   return az;
 }
 
-console.log('Azure DevOps');
+if (seccion('Azure DevOps'))
 {
   const az = fakeAzure();
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
@@ -3448,7 +4883,7 @@ console.log('Azure DevOps');
   await page.context().close();
 }
 
-console.log('Bitbucket propio con token');
+if (seccion('Bitbucket propio con token'))
 {
   // el CSP de la web no nombra hosts propios (eso lo hace la app de escritorio con --bitbucket-url=): aquí se salta para ver qué sale
   const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
@@ -3502,7 +4937,58 @@ console.log('Bitbucket propio con token');
   await page.context().close();
 }
 
-console.log('Segunda cuenta de GitHub');
+if (seccion('Forgejo propio con token'))
+{
+  // como el de arriba: el CSP de la web no nombra hosts propios, aquí se salta para ver qué sale
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, bypassCSP: true });
+  const auths = [];
+  await page.route(/^https:\/\/(fg|otro)\.example\.com\//, (route) => {
+    auths.push([new URL(route.request().url()).host, route.request().headers().authorization || '']);
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"no existe"}' });
+  });
+
+  await step(page, 'sin ?forge= no hay campo de token propio; con él, nombra su host y el token va solo ahí, atado a esa dirección', async () => {
+    await page.goto(`${base}/index.html?lang=es`);
+    await loaded(page);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (await page.isVisible('#forge-token-field')) throw new Error('el campo se ve sin un servidor elegido');
+    await page.goto(`${base}/index.html?lang=es&forge=https://fg.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    if (auths.some(([, a]) => a)) throw new Error('sin token, una consulta llevó credenciales');
+    await page.click('#overlay [data-ov=settings]');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if (!(await page.evaluate(() => document.activeElement?.id === 'forge-token-input'))) throw new Error('«Abrir Ajustes» no lleva al campo del token propio');
+    const where = await page.textContent('#forge-token-where');
+    if (!where.includes('fg.example.com')) throw new Error(`el aviso dice ${where}`);
+    await page.fill('#forge-token-input', 'fg-smoke0123');
+    const from = auths.length;
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('#overlay:not([hidden])')?.textContent.includes('el token no puede leerlo'), null, { timeout: T(15000) });
+    await page.waitForTimeout(500);
+    const sent = auths.slice(from);
+    if (!sent.length) throw new Error('al guardar el token no se reconectó el repo');
+    if (sent.some(([h, a]) => h !== 'fg.example.com' || a !== 'token fg-smoke0123')) throw new Error(`salió ${JSON.stringify(sent)}`);
+    const saved = await page.evaluate(() => [JSON.parse(JSON.parse(localStorage.getItem('graphbranch:forgeToken'))), localStorage.getItem('graphbranch:codebergToken')]);
+    if (saved[0].base !== 'https://fg.example.com' || saved[0].token !== 'fg-smoke0123' || saved[1] !== null) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+  }, { allow: /404/ });
+
+  await step(page, 'con otro ?forge= el token guardado no se usa ni se muestra', async () => {
+    const from = auths.length;
+    await page.evaluate(() => localStorage.removeItem('graphbranch:repos'));
+    await page.goto(`${base}/index.html?lang=es&forge=https://otro.example.com&repo=forgejo:ana/api`);
+    await page.waitForSelector('#overlay[data-kind=error]:not([hidden])', { timeout: T(15000) });
+    const sent = auths.slice(from);
+    if (!sent.length || sent.some(([h, a]) => h !== 'otro.example.com' || a)) throw new Error(`salió ${JSON.stringify(sent)}`);
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    if ((await page.inputValue('#forge-token-input')) !== '') throw new Error('el campo muestra el token de otro servidor');
+    if (!(await page.textContent('#forge-token-where')).includes('otro.example.com')) throw new Error('el aviso no nombra el servidor elegido');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Otras cuentas de GitHub'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   const auths = [];
@@ -3512,29 +4998,351 @@ console.log('Segunda cuenta de GitHub');
     auths.push([u.pathname, route.request().headers().authorization || '']);
     return route.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"Not Found"}' });
   });
-  await step(page, 'el token de la segunda cuenta va solo a los repos de su dueño y el principal a los demás', async () => {
+  await step(page, 'tres cuentas más: cada token va solo a los repos de su dueño y el principal a los demás', async () => {
     await page.goto(`${base}/index.html?lang=es`);
     await loaded(page);
     await page.click('#settings-btn');
     await page.waitForSelector('#settings[open]', { timeout: T(3000) });
     await page.fill('#token-input', 'tok-principal0123');
-    await page.fill('#token2-owner', 'Acme');
-    await page.fill('#token2-input', 'tok-segunda0123');
+    const focused = () => page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+    await page.fill('#account-owner-1', 'Acme');
+    await page.fill('#account-token-1', 'tok-acme0123');
+    // «Agregar una cuenta» suma una fila y deja el foco en su dueño
+    for (const [n, owner] of [[2, 'beta'], [3, 'Gamma']]) {
+      await page.click('#account-add');
+      if ((await focused()) !== `account-owner-${n}`) throw new Error(`al agregar la cuenta ${n}, el foco quedó en ${await focused()}`);
+      await page.keyboard.type(owner);
+      await page.fill(`#account-token-${n}`, `tok-${owner.toLowerCase()}0123`);
+    }
+    // hasta cinco: con la quinta, el botón se va; «Quitar» la saca y deja el foco en una fila
+    await page.click('#account-add');
+    await page.click('#account-add');
+    if (await page.isVisible('#account-add')) throw new Error('con cinco cuentas todavía se puede agregar otra');
+    await page.getByRole('button', { name: 'Quitar Cuenta 5' }).click();
+    if (!/^account-owner-[1-4]$/.test(await focused())) throw new Error(`al quitar, el foco quedó en ${await focused()}`);
+    await page.click('#account-remove-4');
+    if ((await page.locator('#accounts-list .account').count()) !== 3) throw new Error('no quedaron tres cuentas');
+    if (!(await page.isVisible('#account-add'))) throw new Error('con tres cuentas no se puede agregar otra');
+    if ((await page.inputValue('#account-owner-3')) !== 'Gamma') throw new Error('quitar una fila movió lo escrito en otra');
     await page.click('#settings-form button[type=submit]');
     await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
     const saved = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('graphbranch:account2'))));
-    if (saved.owner !== 'Acme' || saved.token !== 'tok-segunda0123') throw new Error(`se guardó ${JSON.stringify(saved)}`);
-    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=otro/api`);
+    const want = [['Acme', 'tok-acme0123'], ['beta', 'tok-beta0123'], ['Gamma', 'tok-gamma0123']];
+    if (JSON.stringify(saved) !== JSON.stringify(want.map(([owner, token]) => ({ owner, token })))) throw new Error(`se guardó ${JSON.stringify(saved)}`);
+    await page.goto(`${base}/index.html?lang=es&repo=acme/web&repo=beta/api&repo=gamma/app&repo=otro/api`);
     await page.waitForTimeout(3000);
     const of = (owner) => auths.filter(([path]) => path.startsWith(`/repos/${owner}/`));
-    if (!of('acme').length || !of('otro').length) throw new Error(`no se consultaron los dos repos: ${JSON.stringify(auths)}`);
-    if (of('acme').some(([, a]) => a !== 'Bearer tok-segunda0123')) throw new Error(`acme salió con ${JSON.stringify(of('acme'))}`);
-    if (of('otro').some(([, a]) => a !== 'Bearer tok-principal0123')) throw new Error(`otro salió con ${JSON.stringify(of('otro'))}`);
+    for (const [owner, tok] of [['acme', 'tok-acme0123'], ['beta', 'tok-beta0123'], ['gamma', 'tok-gamma0123'], ['otro', 'tok-principal0123']]) {
+      if (!of(owner).length) throw new Error(`no se consultó ${owner}: ${JSON.stringify(auths)}`);
+      if (of(owner).some(([, a]) => a !== `Bearer ${tok}`)) throw new Error(`${owner} salió con ${JSON.stringify(of(owner))}`);
+    }
+    // al volver a Ajustes, las tres están en su orden
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+    const owners = await page.$$eval('#accounts-list .account-owner', (els) => els.map((e) => e.value));
+    if (owners.join() !== 'Acme,beta,Gamma') throw new Error(`Ajustes muestra ${owners.join()}`);
   }, { allow: /404/ });
   await page.context().close();
 }
 
-console.log('Fijar una rama con el teclado');
+if (seccion('Informes de errores (escritorio simulado)'))
+{
+  /* El reporte de errores opcional con Sentry (ítem 224) es de la app de escritorio: aquí la página corre con un
+     GBDesktop falso que anota lo que le piden (prender, apagar, cada informe), como el puente de electron/preload.js.
+     Que el proceso principal limpie y mande el sobre lo prueban tools/sentry.test.mjs y la e2e de escritorio. */
+  const fakeDesktop = (available) => {
+    const log = (window.__errors = { sets: [], reports: [] });
+    let enabled = false;
+    const ok = (v) => Promise.resolve(v);
+    const state = () => ({ available, enabled: available && enabled });
+    window.GBDesktop = {
+      getToken: () => ok({ token: '', where: 'keychain' }),
+      setToken: () => ok('keychain'),
+      setLabels: () => {},
+      git: { pick: () => ok(null), branches: () => ok([]), log: () => ok([]), isAncestor: () => ok(false), files: () => ok([]), diff: () => ok({ text: '', truncated: false }), watch: () => ok(), unwatch: () => ok(), onChange: () => () => {} },
+      webhook: () => ok({ ok: false, status: 0 }),
+      spend: () => ok({ error: 'auth', status: 0 }),
+      show: () => {},
+      errors: {
+        state: () => ok(state()),
+        set: (on) => {
+          log.sets.push(on);
+          if (available) enabled = on === true;
+          return ok(state());
+        },
+        report: (rec, names) => {
+          log.reports.push({ rec, names });
+          return ok({ sent: true });
+        },
+      },
+    };
+  };
+  // un error que nace dentro del código de la app (U.esc, de js/util.js) y una promesa rechazada sin catch
+  const boom = (page, text) => page.evaluate((m) => setTimeout(GB.U.esc, 0, { toString: () => { throw new TypeError(m); } }), text);
+  const reports = (page) => page.evaluate(() => window.__errors.reports.filter((r) => /fallo de prueba/.test(r.rec.message)));
+  const openSettings = async (page) => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+  };
+  const save = async (page) => {
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+  };
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    const lazy = [];
+    page.on('request', (r) => /\/js\/sentry\.js(?:\?|$)/.test(r.url()) && lazy.push(r.url()));
+    await step(page, 'informes de errores: en la web sin DSN no hay interruptor ni nada que escuche', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('la web ofrece mandar informes de errores');
+      if (await page.evaluate(() => typeof window.GBDesktop !== 'undefined')) throw new Error('la web tiene un GBDesktop');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba en la web sin DSN');
+      await page.waitForTimeout(400);
+      if (lazy.length) throw new Error('sin DSN la página pidió js/sentry.js');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(fakeDesktop, false);
+    await step(page, 'informes de errores: una app sin DSN no los ofrece ni los manda', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('sin DSN se ofrece el interruptor');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba sin DSN');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length) throw new Error('sin DSN se mandó un informe');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+
+  {
+    const page = await openPage({ viewport: { width: 1280, height: 800 } });
+    await page.addInitScript(fakeDesktop, true);
+    await step(page, 'informes de errores: apagados de fábrica; prendidos en Ajustes mandan el error con los nombres a quitar, y apagados dejan de mandar', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isVisible('#errors-field'))) throw new Error('con DSN no se ofrece el interruptor');
+      if (await page.isChecked('#errors-report')) throw new Error('el interruptor viene prendido');
+      const help = await page.textContent('#errors-help');
+      if (!/Sentry/.test(help) || !/IP/.test(help)) throw new Error(`la ayuda dice ${help}`);
+      if ((await page.getAttribute('#errors-report', 'aria-describedby')) !== 'errors-help') throw new Error('la casilla no apunta a su ayuda');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba apagado');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length) throw new Error('apagado se mandó un informe');
+
+      await openSettings(page);
+      await page.check('#errors-report');
+      await save(page);
+      await page.waitForFunction(() => window.__errors.sets.join() === 'true', null, { timeout: T(3000) });
+      await boom(page, 'fallo de prueba prendido');
+      await page.waitForFunction(() => window.__errors.reports.some((r) => /fallo de prueba prendido/.test(r.rec.message)), null, { timeout: T(5000) });
+      const [r] = await reports(page);
+      if (r.rec.kind !== 'error' || r.rec.type !== 'TypeError' || !/js\/util\.js/.test(r.rec.stack)) throw new Error(`se mandó ${JSON.stringify(r.rec).slice(0, 300)}`);
+      // los nombres de lo cargado van con el informe, para que el proceso principal los quite
+      const want = ['acme/orbita', 'acme', 'orbita', 'main'];
+      const missing = want.filter((n) => !r.names.includes(n));
+      if (missing.length) throw new Error(`faltan nombres: ${missing.join(', ')} (llegaron ${r.names.length})`);
+      if (!['vrojas', 'msoto', 'cfuentes', 'dmunoz', 'jperez'].some((n) => r.names.includes(n))) throw new Error('no va ningún autor de la demo');
+      await page.evaluate(() => void Promise.reject(new Error('fallo de prueba en una promesa')));
+      await page.waitForFunction(() => window.__errors.reports.some((x) => x.rec.kind === 'rejection' && /fallo de prueba en una promesa/.test(x.rec.message)), null, { timeout: T(5000) });
+
+      // al volver a Ajustes sigue prendido; apagarlo corta
+      await openSettings(page);
+      if (!(await page.isChecked('#errors-report'))) throw new Error('al volver, el interruptor está apagado');
+      await page.uncheck('#errors-report');
+      await save(page);
+      await page.waitForFunction(() => window.__errors.sets.join() === 'true,false', null, { timeout: T(3000) });
+      const before = (await reports(page)).length;
+      await boom(page, 'fallo de prueba apagado otra vez');
+      await page.waitForTimeout(400);
+      if ((await reports(page)).length !== before) throw new Error('apagado de nuevo, se mandó un informe');
+      // guardar sin tocarlo no lo vuelve a pedir
+      await openSettings(page);
+      await save(page);
+      await page.waitForTimeout(200);
+      if ((await page.evaluate(() => window.__errors.sets.length)) !== 2) throw new Error('guardar sin cambios volvió a guardarlo');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+}
+
+if (seccion('Diagrama Mermaid'))
+{
+  /* El grafo como diagrama Mermaid (ítem 228): el botón copia el gitGraph de lo que se ve, en un bloque de Markdown, y
+     lo dice; sin permiso del portapapeles lo guarda como .md. El portapapeles se reemplaza por uno que anota (en
+     Chromium sin pantalla, escribir en el de verdad pide permiso), y la paleta de comandos tiene la misma acción. */
+  const page = await openPage({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+  await page.addInitScript(() => {
+    window.__copied = [];
+    window.__clipOk = true;
+    const clip = { writeText: async (t) => { if (!window.__clipOk) throw new DOMException('denied', 'NotAllowedError'); window.__copied.push(String(t)); } };
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => clip });
+  });
+  await page.goto(`${base}/index.html?lang=es&view=2d`);
+  await loaded(page);
+  await step(page, 'diagrama Mermaid: el botón copia el gitGraph de la demo en un bloque de Markdown y lo dice', () => quieta(page, async () => {
+    if ((await page.getAttribute('#mermaid-btn', 'aria-label')) !== 'Copiar como diagrama Mermaid') throw new Error('el botón no tiene su nombre en español');
+    await page.click('#mermaid-btn');
+    await page.waitForFunction(() => window.__copied.length === 1, null, { timeout: T(3000) });
+    const text = await page.evaluate(() => window.__copied[0]);
+    if (!/^```mermaid\ngitGraph\n[\s\S]*\n```\n$/.test(text)) throw new Error('no es un bloque de Mermaid: ' + text.slice(0, 120));
+    const lines = text.split('\n').slice(2, -2);
+    const bad = lines.filter((l) => !/^ {2}(?:%% |commit id: "[0-9a-f]{7,}"|branch "|checkout "|merge ")/.test(l));
+    if (bad.length) throw new Error('órdenes que no son de gitGraph: ' + bad.slice(0, 3).join(' | '));
+    if (!lines.some((l) => /^ {2}merge "/.test(l)) || !lines.some((l) => /^ {2}branch "feature\//.test(l))) throw new Error('sin merges o sin ramas de trabajo: ' + lines.slice(0, 8).join(' | '));
+    // lo mismo que dice el grafo: tantas ramas como etiquetas de rama, y el aviso con las cifras
+    const note = await page.textContent('#snap-note');
+    const m = /^Diagrama Mermaid copiado \(commits: (\d+), ramas: (\d+)\)$/.exec(note || '');
+    if (!m || Number(m[2]) !== lines.filter((l) => /^ {2}branch "/.test(l)).length + 1) throw new Error(`el aviso dice «${note}»`);
+  }));
+  await step(page, 'diagrama Mermaid: sin permiso del portapapeles se guarda como .md, y la paleta de comandos tiene la acción', async () => {
+    await page.evaluate(() => (window.__clipOk = false));
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: T(5000) }), page.click('#mermaid-btn')]);
+    const name = dl.suggestedFilename();
+    if (!/^graphbranch-demo-mermaid-\d{4}-\d\d-\d\d-\d{4}\.md$/.test(name)) throw new Error(`nombre inesperado: ${name}`);
+    const body = (await readFile(await dl.path(), 'utf8')).toString();
+    if (!body.startsWith('```mermaid\ngitGraph\n')) throw new Error('el .md no trae el diagrama');
+    await page.waitForFunction((n) => document.querySelector('#snap-note').textContent === `Diagrama Mermaid guardado: ${n}`, name, { timeout: T(3000) });
+    await page.evaluate(() => (window.__clipOk = true));
+    await page.keyboard.press('Control+k');
+    await page.waitForSelector('#cmdk[open]', { timeout: T(3000) });
+    await page.fill('#cmdk-input', 'mermaid');
+    const first = await page.textContent('#cmdk .ck-opt');
+    if (!/Copiar como diagrama Mermaid/.test(first || '')) throw new Error(`la paleta ofrece «${first}»`);
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__copied.length === 2, null, { timeout: T(3000) });
+  });
+  await page.context().close();
+}
+
+if (seccion('Informes de errores (web con DSN)'))
+{
+  /* En la web (ítem 226), con el DSN que pone tools/sentry-web.mjs en index.html: aquí la página se sirve pasada por
+     esa misma herramienta, con un DSN de un host que no existe (.invalid), y la consulta a Sentry se intercepta y se
+     anota. Sin service worker en el contexto, así cada visita pasa por la ruta. Que el sobre vaya limpio de tokens y
+     nombres lo prueba también tools/sentry-web.test.mjs, con un transporte falso. */
+  const KEY = 'fedcba9876543210fedcba9876543210';
+  const HOST = 'https://sentry.graphbranch.invalid';
+  const DSN = `${HOST.replace('https://', `https://${KEY}@`)}/7`;
+  const TOKEN = 'ghp_FAKE0123456789abcdefABCDEF0123456789';
+  const source = readFileSync(join(root, 'index.html'), 'utf8');
+  const withDsn = withSentryDsn(source, { dsn: DSN, release: 'graphbranch@0.1.0', environment: 'production' });
+  // el error que haría quien publica a mano: el DSN sin su host en el CSP
+  const dsnOnly = withDsn.replace(` ${HOST};`, ';');
+  const boom = (page, text) => page.evaluate((m) => setTimeout(GB.U.esc, 0, { toString: () => { throw new TypeError(m); } }), text);
+  const openSettings = async (page) => {
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings[open]', { timeout: T(3000) });
+  };
+  const save = async (page) => {
+    await page.click('#settings-form button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('#settings').open, null, { timeout: T(3000) });
+  };
+  async function webPage(html) {
+    const page = await openPage({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
+    page.sentry = [];
+    page.lazy = [];
+    await page.route(/\/index\.html(?:\?.*)?$/, (r) => r.fulfill({ contentType: 'text/html; charset=utf-8', body: html }));
+    await page.route(`${HOST}/**`, (r) => {
+      const q = r.request();
+      page.sentry.push({ url: q.url(), method: q.method(), headers: q.headers(), body: q.postData() || '' });
+      return r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '{}' });
+    });
+    page.on('request', (r) => /\/js\/sentry\.js(?:\?|$)/.test(r.url()) && page.lazy.push(r.url()));
+    return page;
+  }
+  const events = (page) => page.sentry.map((x) => JSON.parse(x.body.split('\n')[2] || '{}'));
+
+  {
+    const page = await webPage(dsnOnly);
+    await step(page, 'informes de errores en la web: un DSN sin su host en el CSP no se ofrece ni carga nada', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (await page.isVisible('#errors-field')) throw new Error('se ofrece el interruptor con un DSN que el CSP no deja salir');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba sin el host');
+      await page.waitForTimeout(400);
+      if (page.lazy.length || page.sentry.length) throw new Error(`se pidió ${[...page.lazy, ...page.sentry.map((x) => x.url)].join(', ')}`);
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+
+  {
+    const page = await webPage(withDsn);
+    await step(page, 'informes de errores en la web: con el DSN de la página, apagados de fábrica y sin cargar nada; prendidos mandan el error limpio a su host, siguen al volver y apagados dejan de mandar', async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isVisible('#errors-field'))) throw new Error('con el DSN en la página no se ofrece el interruptor');
+      if (await page.isChecked('#errors-report')) throw new Error('el interruptor viene prendido');
+      if ((await page.getAttribute('#errors-report', 'aria-describedby')) !== 'errors-help') throw new Error('la casilla no apunta a su ayuda');
+      await page.keyboard.press('Escape');
+      await boom(page, 'fallo de prueba apagado');
+      await page.waitForTimeout(400);
+      if (page.sentry.length) throw new Error('apagado se mandó un informe');
+      if (page.lazy.length) throw new Error('apagado se pidió js/sentry.js');
+
+      await openSettings(page);
+      await page.check('#errors-report');
+      await save(page);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:errorReports'))) !== 'true') throw new Error('prendido no quedó guardado');
+      if (page.lazy.length) throw new Error('prenderlo pidió js/sentry.js antes de que hubiera un error');
+      // un error con un token, la URL de la página, el repo de la demo, una de sus ramas y una URL de la API
+      const message = await page.evaluate((tok) => `fallo de prueba prendido con ${tok} en ${location.href} de acme/orbita (rama main) por https://api.github.com/repos/acme/orbita`, TOKEN);
+      await boom(page, message);
+      for (let i = 0; i < T(50) && !page.sentry.length; i++) await page.waitForTimeout(100);
+      if (page.sentry.length !== 1) throw new Error(`prendido llegaron ${page.sentry.length} informes`);
+      if (page.lazy.length !== 1) throw new Error(`js/sentry.js se pidió ${page.lazy.length} veces`);
+      const [sent] = page.sentry;
+      const u = new URL(sent.url);
+      if (u.origin + u.pathname !== `${HOST}/api/7/envelope/`) throw new Error(`fue a ${u.origin}${u.pathname}`);
+      if (u.searchParams.get('sentry_key') !== KEY || u.searchParams.get('sentry_version') !== '7') throw new Error(`la URL lleva ${u.search}`);
+      if (sent.method !== 'POST') throw new Error(`el método fue ${sent.method}`);
+      const h = sent.headers;
+      if (h['x-sentry-auth'] || h.cookie || h.referer || h.authorization) throw new Error(`cabeceras de más: ${Object.keys(h).join(', ')}`);
+      if (!/^text\/plain/.test(h['content-type'] || '')) throw new Error(`content-type ${h['content-type']}: una consulta previa de CORS`);
+      for (const bad of [TOKEN, 'acme/orbita', 'orbita', '127.0.0.1', 'lang=es', 'api.github.com']) if (sent.body.includes(bad)) throw new Error(`el sobre lleva ${bad}`);
+      const [ev] = events(page);
+      const ex = ev.exception?.values?.[0];
+      if (ex?.type !== 'TypeError' || ex.mechanism?.type !== 'onerror' || !/^fallo de prueba prendido/.test(ex.value)) throw new Error(`el evento dice ${JSON.stringify(ex).slice(0, 300)}`);
+      if (!ex.stacktrace?.frames?.some((f) => f.filename === 'app:///js/util.js')) throw new Error(`la pila no tiene app:///js/util.js: ${JSON.stringify(ex.stacktrace).slice(0, 300)}`);
+      if (ev.tags?.process !== 'web' || ev.release !== 'graphbranch@0.1.0' || ev.sdk?.settings?.infer_ip !== 'never') throw new Error(`el evento lleva ${JSON.stringify({ tags: ev.tags, release: ev.release, sdk: ev.sdk })}`);
+      if (Object.keys(ev.contexts || {}).join() !== 'os') throw new Error(`contextos de más: ${Object.keys(ev.contexts || {}).join(', ')}`);
+      for (const k of ['user', 'request', 'breadcrumbs', 'server_name', 'extra']) if (k in ev) throw new Error(`el evento lleva ${k}`);
+      // una promesa rechazada sin catch, también
+      await page.evaluate(() => void Promise.reject(new Error('fallo de prueba en una promesa')));
+      for (let i = 0; i < T(50) && page.sentry.length < 2; i++) await page.waitForTimeout(100);
+      if (events(page)[1]?.exception?.values?.[0]?.mechanism?.type !== 'onunhandledrejection') throw new Error('la promesa rechazada no llegó como tal');
+
+      // al volver a la página sigue prendido; apagarlo corta
+      await page.reload();
+      await loaded(page);
+      await openSettings(page);
+      if (!(await page.isChecked('#errors-report'))) throw new Error('al volver, el interruptor está apagado');
+      await page.uncheck('#errors-report');
+      await save(page);
+      if ((await page.evaluate(() => localStorage.getItem('graphbranch:errorReports'))) !== null) throw new Error('apagado sigue guardado');
+      const before = page.sentry.length;
+      await boom(page, 'fallo de prueba apagado otra vez');
+      await page.waitForTimeout(600);
+      if (page.sentry.length !== before) throw new Error('apagado de nuevo, se mandó un informe');
+    }, { allow: /fallo de prueba/ });
+    await page.context().close();
+  }
+}
+
+if (seccion('Fijar una rama con el teclado'))
 {
   const gh = fakeGitHub();
   gh.repo('o/f');
@@ -3635,7 +5443,7 @@ console.log('Fijar una rama con el teclado');
   await page.context().close();
 }
 
-console.log('Celular angosto: etiquetas 3D pisadas');
+if (seccion('Celular angosto: etiquetas 3D pisadas'))
 {
   const page = await openPage({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true });
   await step(page, 'a 320 px, una etiqueta 3D tapada por otra no recibe el toque (sigue accesible con Tab)', async () => {
@@ -3682,7 +5490,7 @@ console.log('Celular angosto: etiquetas 3D pisadas');
   await page.context().close();
 }
 
-console.log('Galaxias: cortar un salto hiperespacial');
+if (seccion('Galaxias: cortar un salto hiperespacial'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
@@ -3786,7 +5594,7 @@ console.log('Galaxias: cortar un salto hiperespacial');
   await page.context().close();
 }
 
-console.log('Efectos 3D con la vista 2D');
+if (seccion('Efectos 3D con la vista 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await page.addInitScript(() => {
@@ -3818,7 +5626,7 @@ console.log('Efectos 3D con la vista 2D');
   await page.context().close();
 }
 
-console.log('Zumbido del espacio');
+if (seccion('Zumbido del espacio'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   // el último volumen que se le pidió al zumbido del espacio
@@ -3913,7 +5721,7 @@ console.log('Zumbido del espacio');
   await page.context().close();
 }
 
-console.log('Movimiento reducido');
+if (seccion('Movimiento reducido'))
 {
   // lo que solo se ve mientras dura su animación (el combo, la ayuda del vuelo y sus avisos) tiene que
   // verse igual, quieto y el mismo tiempo: si la animación se acorta, salta al final, que es invisible
@@ -3952,7 +5760,7 @@ console.log('Movimiento reducido');
   await page.context().close();
 }
 
-console.log('Contraste del texto (WCAG AA)');
+if (seccion('Contraste del texto (WCAG AA)'))
 for (const colorScheme of ['light', 'dark']) {
   const page = await openPage({ viewport: { width: 1280, height: 900 }, colorScheme });
   await step(page, `tema ${colorScheme === 'light' ? 'claro' : 'oscuro'}: todo el texto visible se lee`, async () => {
@@ -3965,7 +5773,68 @@ for (const colorScheme of ['light', 'dark']) {
   await page.context().close();
 }
 
-console.log('Widget embebido (?embed=1)');
+if (seccion('Foco de los campos de texto y colores forzados (Contraste alto)'))
+{
+  /** El fondo que de verdad se ve detrás de un elemento: el suyo o el del primer ancestro que tenga uno. */
+  const fondos = (page, pares) =>
+    page.evaluate((pares) => {
+      const eff = (el) => {
+        for (let n = el; n; n = n.parentElement) {
+          const c = getComputedStyle(n).backgroundColor;
+          const a = (c.match(/rgba?\(([^)]+)\)/)?.[1].split(/[ ,/]+/) || [])[3];
+          if (a === undefined || Number(a) > 0) return c;
+        }
+        return 'lienzo';
+      };
+      return pares.map(([on, off]) => {
+        const visible = (sel) => [...document.querySelectorAll(sel)].find((el) => el.offsetParent);
+        const [a, b] = [visible(on), visible(off)];
+        return { on, off, hay: !!a && !!b, fondoOn: a && eff(a), fondoOff: b && eff(b) };
+      });
+    }, pares);
+  /** El contorno de la caja de un campo cuando su <input> tiene el foco. */
+  const anillo = (page, input, caja) =>
+    page.evaluate(([input, caja]) => {
+      const el = document.querySelector(input);
+      el.focus();
+      const c = getComputedStyle(el.closest(caja));
+      const r = { estilo: c.outlineStyle, ancho: parseFloat(c.outlineWidth) };
+      el.blur();
+      return r;
+    }, [input, caja]);
+  for (const forcedColors of ['none', 'active']) {
+    const page = await openPage({ viewport: { width: 1280, height: 900 }, forcedColors });
+    await step(page, `${forcedColors === 'active' ? 'con colores forzados' : 'sin colores forzados'}: el campo del repo y el filtro de ramas muestran el foco con un contorno`, async () => {
+      await page.goto(`${base}/index.html?lang=es`);
+      await loaded(page);
+      for (const [input, caja] of [['#repo-input', '.repo-field'], ['#branch-filter', '.filter-field']]) {
+        const r = await anillo(page, input, caja);
+        if (r.estilo !== 'solid' || r.ancho < 2) throw new Error(`${input} con el foco: su caja queda con contorno «${r.estilo} ${r.ancho}px»`);
+      }
+    });
+    if (forcedColors === 'active')
+      await step(page, 'con colores forzados: la vista elegida y un botón pulsado se distinguen de los de al lado', async () => {
+        await page.evaluate(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') !== 'true' && document.querySelector('#pause-btn').click());
+        await page.waitForFunction(() => document.querySelector('#pause-btn').getAttribute('aria-pressed') === 'true', null, { timeout: T(3000) });
+        // el fondo del botón cambia con una transición de 0,15 s, y a mitad todavía es transparente: con el equipo cargado,
+        // 600 ms de espera no alcanzaron (en la puerta, el 2026-11-12). Las transiciones se terminan antes de medir.
+        await page.evaluate(() => {
+          for (const a of document.getAnimations()) if (a instanceof CSSTransition) a.finish();
+        });
+        const pares = await fondos(page, [
+          ['.view-switch button[aria-pressed="true"]', '.view-switch button[aria-pressed="false"]'],
+          ['#pause-btn[aria-pressed="true"]', '#settings-btn'],
+        ]);
+        for (const p of pares) {
+          if (!p.hay) throw new Error(`no están a la vista ${p.on} y ${p.off}`);
+          if (p.fondoOn === p.fondoOff) throw new Error(`${p.on} se ve igual que ${p.off}: los dos sobre ${p.fondoOn}`);
+        }
+      });
+    await page.context().close();
+  }
+}
+
+if (seccion('Widget embebido (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, 'solo el grafo y los avisos, sin barras ni desborde', async () => {
@@ -3988,7 +5857,7 @@ console.log('Widget embebido (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
+if (seccion('Capa para streaming: color de fondo y &hide= (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&bg=00ff00 pinta el fondo de verde y &hide=notices,combo esconde los avisos', async () => {
@@ -4027,7 +5896,7 @@ console.log('Capa para streaming: color de fondo y &hide= (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
+if (seccion('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)'))
 {
   const gh = fakeGitHub();
   for (const r of ['o/a', 'o/b']) gh.repo(r);
@@ -4049,7 +5918,7 @@ console.log('Capa para streaming: &rotate= pasa de un repo a otro (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
+if (seccion('Capa para streaming: &theme= fija el tema (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 }, colorScheme: 'light' });
   await step(page, '&theme=dark pinta la capa oscura aunque el sistema sea claro; sin &theme= sigue al sistema', async () => {
@@ -4066,7 +5935,7 @@ console.log('Capa para streaming: &theme= fija el tema (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
+if (seccion('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&spin=0 deja la vista 3D quieta sin guardarlo; sin &spin= gira como siempre', async () => {
@@ -4082,7 +5951,7 @@ console.log('Capa para streaming: &spin=0 apaga la rotación 3D (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &view= fija la vista (?embed=1)');
+if (seccion('Capa para streaming: &view= fija la vista (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&view=2d y &view=3d fijan la vista sin guardarla; sin &view= manda la guardada', async () => {
@@ -4102,7 +5971,7 @@ console.log('Capa para streaming: &view= fija la vista (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
+if (seccion('Capa para streaming: &title= pone un rótulo propio (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&title= muestra el texto escapado sobre la capa; sin &title= no hay rótulo', async () => {
@@ -4120,7 +5989,7 @@ console.log('Capa para streaming: &title= pone un rótulo propio (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
+if (seccion('Capa para streaming: &max= limita las ramas (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&max=2 deja 2 ramas en la capa; sin &max= las de la demo; valores inválidos, todas', async () => {
@@ -4137,7 +6006,7 @@ console.log('Capa para streaming: &max= limita las ramas (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
+if (seccion('Capa para streaming: &branch= deja una rama (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&branch=develop deja 2 ramas (develop y la por defecto); una que no existe, solo la por defecto; sin &branch= ninguna marca', async () => {
@@ -4155,7 +6024,7 @@ console.log('Capa para streaming: &branch= deja una rama (?embed=1)');
   await page.context().close();
 }
 
-console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)');
+if (seccion('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed=1)'))
 {
   const page = await openPage({ viewport: { width: 640, height: 400 } });
   await step(page, '&pr=1 deja la rama por defecto y solo las ramas con PR abierto (2D y 3D); se combina con &max= y &branch=; &pr=0 no filtra', async () => {
@@ -4186,7 +6055,7 @@ console.log('Capa para streaming: &pr=1 deja las ramas con un PR abierto (?embed
   await page.context().close();
 }
 
-console.log('Filtro por ruta desde la URL (?path=)');
+if (seccion('Filtro por ruta desde la URL (?path=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado, atenúa el grafo, mantiene la ruta en la URL y al quitarlo la suelta', async () => {
@@ -4222,7 +6091,7 @@ console.log('Filtro por ruta desde la URL (?path=)');
   await page.context().close();
 }
 
-console.log('Vista de un PR desde la URL (?pr=N)');
+if (seccion('Vista de un PR desde la URL (?pr=N)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?pr=N abre la vista del PR con su descripción y comentarios, y Esc la cierra', async () => {
@@ -4248,7 +6117,7 @@ console.log('Vista de un PR desde la URL (?pr=N)');
   await page.context().close();
 }
 
-console.log('Vista de texto desde la URL (?vista=texto)');
+if (seccion('Vista de texto desde la URL (?vista=texto)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la vista de texto con el filtro por ruta y el ?q= aplicados, y lo anuncia en la región viva', async () => {
@@ -4289,7 +6158,7 @@ console.log('Vista de texto desde la URL (?vista=texto)');
   await page.context().close();
 }
 
-console.log('Vista de texto: ramas quietas (GitHub simulado)');
+if (seccion('Vista de texto: ramas quietas (GitHub simulado)'))
 {
   const gh = fakeGitHub();
   gh.repo('o/q');
@@ -4317,7 +6186,7 @@ console.log('Vista de texto: ramas quietas (GitHub simulado)');
   await page.context().close();
 }
 
-console.log('Búsqueda desde la URL (?q=)');
+if (seccion('Búsqueda desde la URL (?q=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la búsqueda ya escrita, con resultados, y mantiene el texto en la URL', async () => {
@@ -4351,7 +6220,7 @@ console.log('Búsqueda desde la URL (?q=)');
   await page.context().close();
 }
 
-console.log('Choques entre ramas desde la URL (?conflicts=1)');
+if (seccion('Choques entre ramas desde la URL (?conflicts=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la salud con los choques ya buscados, los mantiene en la URL y al cerrar los suelta', async () => {
@@ -4385,7 +6254,7 @@ console.log('Choques entre ramas desde la URL (?conflicts=1)');
   await page.context().close();
 }
 
-console.log('Filtro por autor desde la URL (?author=)');
+if (seccion('Filtro por autor desde la URL (?author=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre ya filtrado por esa persona, lo mantiene en la URL y al quitarlo la suelta', async () => {
@@ -4414,7 +6283,7 @@ console.log('Filtro por autor desde la URL (?author=)');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre (?firstparent=1)');
+if (seccion('Grafo de primer padre (?firstparent=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'deja menos commits que el grafo entero, queda en la URL y el interruptor lo apaga', async () => {
@@ -4440,7 +6309,7 @@ console.log('Grafo de primer padre (?firstparent=1)');
   await page.context().close();
 }
 
-console.log('Columnas de SHA, autor y fecha en el 2D');
+if (seccion('Columnas de SHA, autor y fecha en el 2D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de columnas pone «SHA · autor · fecha» junto a los commits del 2D, se recuerda y al apagarlo se quitan', async () => {
@@ -4473,7 +6342,77 @@ console.log('Columnas de SHA, autor y fecha en el 2D');
   await page.context().close();
 }
 
-console.log('Grafo de primer padre en el 3D');
+if (seccion('Columnas de SHA, autor y fecha en el 3D'))
+{
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  // la vista 3D no se expone: se toma la instancia del primer cuadro que dibuja
+  await page.addInitScript(() => {
+    const hook = () => {
+      const G3 = window.GB?.Graph3D?.prototype;
+      if (!G3) return setTimeout(hook, 5);
+      const step = G3.stepCamera;
+      G3.stepCamera = function (...args) {
+        window.__g3 = this;
+        return step.apply(this, args);
+      };
+    };
+    hook();
+  });
+  await step(page, 'el interruptor de columnas también pone «SHA · autor · fecha» bajo el mensaje de los commits cercanos del 3D, se recuerda y al apagarlo se quitan', async () => {
+    await page.goto(`${base}/index.html?lang=es&view=3d`);
+    await loaded(page);
+    if (!(await page.locator('#graph3d canvas').count())) return console.log('    (sin WebGL: se salta)');
+    // los rótulos de commit a la vista: su mensaje y, si lo lleva, su columna
+    const notes = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('#graph3d .g3-note')]
+          .filter((n) => getComputedStyle(n).display !== 'none')
+          .map((n) => ({ meta: n.querySelector('.g3-meta:not([hidden])')?.textContent || '', h: Math.round(n.getBoundingClientRect().height) }))
+      );
+    // de cerca: los mensajes (y las columnas) solo salen junto a los commits cercanos a la cámara
+    const near = async () => {
+      await page.waitForFunction(() => window.__g3?.nodes.size > 0, null, { timeout: T(15000) });
+      await page.evaluate(() => {
+        const g = window.__g3;
+        g.setSpin?.(false);
+        g.focusSha([...g.nodes.values()].find((it) => it.data.heads.length)?.sha || [...g.nodes.keys()][0], 9);
+      });
+      await page.waitForTimeout(1500); // la cámara llega a su lugar antes de mirar los rótulos
+      await page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none'), null, { timeout: T(10000) });
+    };
+    const withMeta = () => page.waitForFunction(() => [...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    await near();
+    const off = await notes();
+    if (!off.length) throw new Error('de cerca no hay ningún rótulo de commit en el 3D');
+    if (off.some((n) => n.meta)) throw new Error('las columnas salen en el 3D sin encender el interruptor');
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.check('#graph-columns');
+    await withMeta();
+    const on = (await notes()).filter((n) => n.meta);
+    if (!on.length) throw new Error('las columnas del 3D se fueron apenas salieron');
+    const bad = on.find((n) => !/^[0-9a-f]{7} · .+ · /.test(n.meta));
+    if (bad) throw new Error('una columna del 3D no es «SHA · autor · fecha»: ' + JSON.stringify(bad.meta));
+    // el SHA corto es el comienzo del SHA de un commit del grafo 3D
+    const sha = on[0].meta.slice(0, 7);
+    if (!(await page.evaluate((p) => [...window.__g3.nodes.keys()].some((k) => k.startsWith(p)), sha))) throw new Error(`ningún commit del 3D empieza por el SHA de una columna (${sha})`);
+    // la columna va en su propio renglón, debajo del mensaje: el rótulo crece
+    const tall = Math.max(...on.map((n) => n.h)), flat = Math.max(...off.map((n) => n.h));
+    if (!(tall > flat + 6)) throw new Error(`la columna no suma un renglón al rótulo del commit (${flat} px sin ella, ${tall} px con ella)`);
+    await page.reload();
+    await loaded(page);
+    await near();
+    await withMeta();
+    await page.click('#search-btn');
+    await page.waitForSelector('#search[open]', { timeout: T(3000) });
+    await page.uncheck('#graph-columns');
+    await page.waitForFunction(() => ![...document.querySelectorAll('#graph3d .g3-note')].some((n) => getComputedStyle(n).display !== 'none' && n.querySelector('.g3-meta:not([hidden])')), null, { timeout: T(5000) });
+    if (!(await notes()).length) throw new Error('al apagar las columnas también se fueron los mensajes de los commits');
+  });
+  await page.context().close();
+}
+
+if (seccion('Grafo de primer padre en el 3D'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'el interruptor de primer padre también deja menos commits en el grafo 3D, y al apagarlo vuelven', async () => {
@@ -4504,7 +6443,7 @@ console.log('Grafo de primer padre en el 3D');
   await page.context().close();
 }
 
-console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
+if (seccion('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, '?ocultar= y ?solo= abren el grafo con menos ramas, la URL las sigue y «Ver todas» las limpia', async () => {
@@ -4524,18 +6463,66 @@ console.log('Ramas ocultas o solas desde la URL (?solo=, ?ocultar=)');
     await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length < n, hid, { timeout: T(5000) });
     const solo = await count();
     if (solo !== 2) throw new Error(`?solo= dejó ${solo} ramas, no 2 (la elegida y la por defecto)`);
-    await page.click('#search-btn');
-    await page.waitForSelector('#search[open]', { timeout: T(3000) });
-    if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
-    await page.click('#branch-view-reset');
-    await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, all, { timeout: T(5000) });
+    // «Ver todas» se compara con las ramas que tiene esta página ahora, con la demo quieta, y no con las de la primera
+    // carga: la demo viva crea y fusiona ramas (de 6 a 5, 7 u 8 en los primeros 6 s), y con la máquina cargada el clic
+    // llegaba con una rama más y la espera de «=== 6» vencía (pendiente 1: `Timeout 15000ms exceeded`, 1 de 10 con
+    // carga 8 en 2 CPU, iteración 307)
+    await quieta(page, async () => {
+      await page.click('#search-btn');
+      await page.waitForSelector('#search[open]', { timeout: T(3000) });
+      if (!(await page.evaluate(() => document.querySelector('#search-btn').classList.contains('filtered')))) throw new Error('?solo= no marca el filtro');
+      const status = await page.textContent('#branch-view-status');
+      const total = Number((/^\d+ de (\d+) ramas a la vista$/.exec(status) || [])[1]);
+      if (!(total > solo)) throw new Error(`?solo= no dice cuántas ramas hay: «${status}»`);
+      await page.click('#branch-view-reset');
+      await page.waitForFunction((n) => document.querySelectorAll('#graph svg .head').length === n, total, { timeout: T(5000) }).catch(async () => {
+        throw new Error(`«Ver todas» deja ${await count()} ramas a la vista y no las ${total} que había (${status})`);
+      });
+    });
     const after = await page.evaluate(() => location.search);
     if (/solo=|ocultar=/.test(after)) throw new Error('«Ver todas» deja la rama en la URL: ' + after);
   });
   await page.context().close();
 }
 
-console.log('Modo TV directo (?tv=1)');
+if (seccion('Título de la pestaña'))
+{
+  // lo que indexa un buscador después de ejecutar la página, y lo que ve quien tiene la pestaña entre otras veinte
+  const gh = fakeGitHub();
+  gh.repo('o/t');
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  const titulo = (code) => page.evaluate((c) => GB.i18n.t('meta.title') && document.documentElement.lang === c && document.title, code);
+  await step(page, 'con la demo, el título dice qué es la página, en el idioma activo, y no «acme/orbita»', async () => {
+    await page.goto(`${base}/index.html?lang=en`);
+    await loaded(page);
+    const en = await titulo('en');
+    if (en !== "Live graph of a GitHub repository's branches · GraphBranch") throw new Error(`en inglés el título es «${en}»`);
+    await page.selectOption('#lang-select', 'es');
+    await page.waitForFunction(() => document.documentElement.lang === 'es', null, { timeout: T(5000) });
+    await loaded(page);
+    const es = await titulo('es');
+    if (es !== 'Grafo en vivo de las ramas de un repositorio de GitHub · GraphBranch') throw new Error(`en español el título es «${es}»`);
+    const ld = await page.evaluate(() => JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent).url);
+    if (ld !== (await page.getAttribute('link[rel=canonical]', 'href'))) throw new Error(`el JSON-LD (${ld}) y la canónica no dicen la misma dirección`);
+  });
+  await step(page, 'con un repo, el título es el del repo, también después de cambiar de idioma', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/t`);
+    await loaded(page);
+    await page.waitForFunction(() => document.title === 'o/t · GraphBranch', null, { timeout: T(5000) }).catch(async () => {
+      throw new Error(`el título es «${await page.title()}»`);
+    });
+    await page.selectOption('#lang-select', 'en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en', null, { timeout: T(5000) });
+    await loaded(page);
+    await page.waitForTimeout(300);
+    if ((await page.title()) !== 'o/t · GraphBranch') throw new Error(`tras cambiar de idioma el título es «${await page.title()}»`);
+  });
+  await page.context().close();
+}
+
+if (seccion('Modo TV directo (?tv=1)'))
 {
   const page = await openPage({ viewport: { width: 1920, height: 1080 } });
   await step(page, 'abre en modo TV y el director toma la cámara', async () => {
@@ -4548,7 +6535,31 @@ console.log('Modo TV directo (?tv=1)');
   await page.context().close();
 }
 
-console.log('Salud del repo directa (?health=1)');
+if (seccion('Modo TV de un repo sin actividad (GitHub simulado)'))
+{
+  // un repo sin actividad reciente: el panel de actividad, que en la pantalla compartida ocupa un tercio, se quedaba
+  // con el texto de index.html en inglés hasta la primera novedad, en los 39 idiomas que no son el inglés (iteración 315)
+  const gh = fakeGitHub();
+  gh.repo('o/quieto');
+  const page = await openPage({ viewport: { width: 1920, height: 1080 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  await step(page, 'el panel de actividad vacío lo dice en el idioma de la página, también en árabe', async () => {
+    for (const lang of ['es', 'ar']) {
+      await page.goto(`${base}/index.html?lang=${lang}&repo=o/quieto&tv=1`);
+      await loaded(page);
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv') && document.querySelector('#status')?.dataset.state === 'live', null, { timeout: T(15000) });
+      const got = await page.evaluate(() => ({ text: document.querySelector('#feed-empty').textContent, visible: !!document.querySelector('#feed-empty').getClientRects().length, want: GB.i18n.t('feed.empty'), items: document.querySelectorAll('#feed .act').length }));
+      if (got.items) throw new Error(`${lang}: el repo simulado trajo ${got.items} actividades y el panel no está vacío`);
+      if (!got.visible) throw new Error(`${lang}: el panel de actividad vacío no dice nada`);
+      if (got.text !== got.want) throw new Error(`${lang}: el panel de actividad vacío dice «${got.text}» y no «${got.want}»`);
+    }
+    if (page.errors.length) throw new Error(page.errors.join(' | '));
+  });
+  await page.context().close();
+}
+
+if (seccion('Salud del repo directa (?health=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la demo con el panel de salud ya desplegado y con sus secciones', async () => {
@@ -4578,6 +6589,23 @@ console.log('Salud del repo directa (?health=1)');
     }
     await page.setViewportSize({ width: 1280, height: 800 });
   });
+  await step(page, 'las series por semana de la salud se leen con su semana y comas, sin «punto medio» (pendiente 21, WCAG 1.3.1)', async () => {
+    for (const [lang, now, old] of [['es', 'esta semana', 'hace 7 semanas'], ['ar', 'هذا الأسبوع', '7']]) {
+      await page.goto(`${base}/index.html?lang=${lang}&health=1`);
+      await loaded(page);
+      await page.waitForSelector('#health[open] #hl-commitweeks', { timeout: T(5000) });
+      for (const id of ['hl-commitweeks', 'hl-weeks']) {
+        // lo que lee un lector de pantalla: el árbol de accesibilidad de la línea, no su texto
+        const said = await page.locator(`#${id}`).ariaSnapshot();
+        if (said.includes('·')) throw new Error(`[${lang}] #${id} se lee con «·»: ${said}`);
+        if (!said.includes(now) || !said.includes(old)) throw new Error(`[${lang}] #${id} no dice a qué semana va cada cifra: ${said}`);
+        if ((said.match(/\d \(/g) || []).length !== 8) throw new Error(`[${lang}] #${id} no dice las 8 semanas: ${said}`);
+        // y se ve como antes: las 8 cifras con «·»
+        const seen = await page.$eval(`#${id} .hl-vals`, (e) => [getComputedStyle(e).display, e.textContent]).catch(() => ['', '']);
+        if (seen[0] === 'none' || !/^(\d+ · ){7}\d+$/.test(seen[1])) throw new Error(`[${lang}] #${id} se ve ${JSON.stringify(seen)}`);
+      }
+    }
+  });
   await step(page, 'sin el parámetro (o con health=0) el panel no se abre solo', async () => {
     await page.goto(`${base}/index.html?lang=es&health=0`);
     await loaded(page);
@@ -4587,7 +6615,263 @@ console.log('Salud del repo directa (?health=1)');
   await page.context().close();
 }
 
-console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)');
+if (seccion('OpenSSF Scorecard en la salud'))
+{
+  // ítem 218: el puntaje ya calculado de un repo público de github.com, de api.scorecard.dev, al abrir la salud
+  const gh = fakeGitHub();
+  gh.repo('o/s');
+  gh.repo('o/n');
+  gh.repo('o/p', { private: true });
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const ghAuth = new Set(); // con qué token salieron las consultas a GitHub: el de la prueba tiene que estar puesto
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => (ghAuth.add(r.request().headers().authorization || ''), gh.handle(r)));
+  const asked = [];
+  const SC = {
+    date: '2026-11-12T01:38:24Z',
+    score: 5.2,
+    checks: [
+      { name: 'Maintained', score: 10, reason: '30 commit(s) and 18 issue activity found in the last 90 days -- score normalized to 10' },
+      { name: 'Vulnerabilities', score: 3, reason: '<img src=x onerror="document.body.dataset.pwned=1"> 7 existing vulnerabilities detected' },
+      { name: 'Code-Review', score: 1, reason: 'Found 3/16 approved changesets -- score normalized to 1' },
+      { name: 'Signed-Releases', score: -1, reason: 'no releases found' },
+      { name: 'Pinned-Dependencies', score: 3, reason: 'https://github.com/ossf/scorecard/blob/main/docs/checks.md#pinned-dependencies' + 'x'.repeat(300) },
+    ],
+  };
+  await page.unroute('https://api.scorecard.dev/**');
+  await page.route('https://api.scorecard.dev/**', (r) => {
+    const u = new URL(r.request().url());
+    asked.push({ path: u.pathname, auth: r.request().headers().authorization || '', referer: r.request().headers().referer || '', cookie: r.request().headers().cookie || '' });
+    const headers = { 'access-control-allow-origin': '*' };
+    if (u.pathname === '/projects/github.com/o/s') return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify(SC) });
+    return r.fulfill({ status: 404, headers, body: '' }); // sin análisis: como la API, 404 sin cuerpo
+  });
+  const lines = () => page.$$eval('#hl-scorecard .hl-checks li', (ls) => ls.map((l) => l.textContent.replace(/[⁨⁩]/g, '')));
+  await step(page, 'la demo muestra el puntaje de OpenSSF Scorecard y sus tres comprobaciones más bajas, sin consultarlo', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) }).catch(() => {
+      throw new Error('la salud de la demo no muestra el puntaje de Scorecard');
+    });
+    const text = await score.textContent();
+    if (!/^Puntaje: 6,2 de 10, analizado el .+\d{4}$/.test(text)) throw new Error(`el puntaje dice ${JSON.stringify(text)}`);
+    const got = await lines();
+    const want = ['Security-Policy: 0 de 10 — security policy file not detected', 'Branch-Protection: 3 de 10 — branch protection is not maximal on development and all release branches', 'Code-Review: 4 de 10 — Found 6/15 approved changesets -- score normalized to 4'];
+    if (JSON.stringify(got) !== JSON.stringify(want)) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(got)}`);
+    if (page.scorecard.length || asked.length) throw new Error(`la demo consultó Scorecard: ${JSON.stringify([...page.scorecard, ...asked])}`);
+    await page.keyboard.press('Escape');
+  });
+  await step(page, 'un repo público de GitHub: una consulta al abrir la salud y una sola por pestaña, sin el token ni el referer, con el puntaje y los motivos como texto', async () => {
+    await page.evaluate(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_scorecard0123')));
+    await page.goto(`${base}/index.html?lang=es&repo=o/s`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.waitForTimeout(1500);
+    if (asked.length) throw new Error(`se consultó Scorecard sin abrir la salud: ${JSON.stringify(asked)}`);
+    if (!gh.calls.some((c) => c === '/repos/o/s')) throw new Error('no se cargó el repo simulado');
+    await page.click('#health-btn');
+    const score = await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(8000) });
+    if (!/^Puntaje: 5,2 de 10, analizado el /.test(await score.textContent())) throw new Error(`el puntaje dice ${await score.textContent()}`);
+    const got = await lines();
+    if (got.length !== 3 || !got[0].startsWith('Code-Review: 1 de 10 — Found 3/16') || !got[1].startsWith('Pinned-Dependencies: 3 de 10 — https://github.com/') || !got[2].startsWith('Vulnerabilities: 3 de 10 — <img src=x onerror=')) throw new Error(`las comprobaciones más bajas: ${JSON.stringify(got)}`);
+    if (got.some((l) => l.includes('Signed-Releases'))) throw new Error('una comprobación no concluyente (-1) salió entre las más bajas');
+    if (await page.$('#hl-scorecard img')) throw new Error('el motivo de la API entró como HTML');
+    if (await page.evaluate(() => document.body.dataset.pwned)) throw new Error('el motivo de la API corrió código');
+    if (asked.length !== 1 || asked[0].path !== '/projects/github.com/o/s') throw new Error(`consultas a Scorecard: ${JSON.stringify(asked)}`);
+    if (asked[0].auth || asked[0].cookie) throw new Error(`la consulta a Scorecard llevó credenciales: ${JSON.stringify(asked[0])}`);
+    if (asked[0].referer) throw new Error(`la consulta a Scorecard llevó la URL de la página: ${asked[0].referer}`);
+    if (!ghAuth.has('Bearer ghp_scorecard0123')) throw new Error(`GitHub no recibió el token de la prueba (${[...ghAuth].join(', ')}): la prueba no prueba nada`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /404/ });
+  await step(page, 'a 320 px y en árabe, la sección de Scorecard no desborda el panel', async () => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/s&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-scorecard-score', { timeout: T(10000) });
+    const m = await page.evaluate(() => {
+      const w = document.querySelector('#health .tr-wrap');
+      return { sw: w.scrollWidth, cw: w.clientWidth, dir: getComputedStyle(document.querySelector('#hl-scorecard')).direction };
+    });
+    if (m.sw > m.cw) throw new Error(`la sección desborda el panel: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
+    if (m.dir !== 'rtl') throw new Error(`la sección no va de derecha a izquierda en árabe: ${m.dir}`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press('Escape');
+  }, { allow: /404/ });
+  await step(page, 'un repo sin análisis lo dice, y uno privado no consulta Scorecard ni muestra la sección', async () => {
+    const before = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/n&health=1`);
+    await loaded(page);
+    const none = await page.waitForSelector('#health[open] #hl-scorecard-none', { timeout: T(10000) });
+    if (!/todavía no analizó este repositorio/.test(await none.textContent())) throw new Error(`sin análisis dice ${await none.textContent()}`);
+    if (asked.length !== before + 1 || asked.at(-1).path !== '/projects/github.com/o/n') throw new Error(`consultas: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    const mid = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/p&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dora', { timeout: T(10000) });
+    await page.waitForTimeout(1500);
+    if (await page.$('#hl-scorecard')) throw new Error('un repo privado muestra la sección de Scorecard');
+    if (asked.length !== mid) throw new Error(`el nombre de un repo privado salió a Scorecard: ${JSON.stringify(asked.slice(mid))}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Alertas de Dependabot en la salud'))
+{
+  // ítem 232: con token, al abrir la salud, una consulta de las alertas abiertas del repo y solo sus cifras
+  const gh = fakeGitHub();
+  gh.repo('o/d'); // con alertas
+  gh.repo('o/x'); // el token no puede leerlas: 403
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const asked = [];
+  const alerta = (n, severity, state = 'open') => ({
+    number: n,
+    state,
+    html_url: `https://github.com/o/d/security/dependabot/${n}`,
+    dependency: { package: { ecosystem: 'npm', name: 'paquete-secreto' }, manifest_path: 'package-lock.json' },
+    security_advisory: { ghsa_id: 'GHSA-xxxx-yyyy-zzzz', summary: '<img src=x onerror="document.body.dataset.pwned=1">', severity },
+    security_vulnerability: { package: { ecosystem: 'npm', name: 'paquete-secreto' }, severity },
+  });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => {
+    const u = new URL(r.request().url());
+    if (!u.pathname.endsWith('/dependabot/alerts')) return gh.handle(r);
+    asked.push({ path: u.pathname + u.search, auth: r.request().headers().authorization || '' });
+    const headers = { 'access-control-allow-origin': '*' };
+    if (u.pathname === '/repos/o/d/dependabot/alerts') return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify([alerta(1, 'critical'), alerta(2, 'high'), alerta(3, 'high'), alerta(4, 'medium'), alerta(5, 'low'), alerta(6, 'critical', 'fixed')]) });
+    return r.fulfill({ status: 403, contentType: 'application/json', headers, body: JSON.stringify({ message: 'Resource not accessible by personal access token' }) });
+  });
+  const text = (sel) => page.$eval(sel, (e) => e.textContent).catch(() => null);
+  await step(page, 'la demo muestra sus alertas de Dependabot abiertas por gravedad, sin consultarlas ni enlace', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(5000) }).catch(() => {
+      throw new Error('la salud de la demo no muestra las alertas de Dependabot');
+    });
+    const got = [await text('#hl-dependabot h3'), await text('#hl-dependabot-count')];
+    if (JSON.stringify(got) !== JSON.stringify(['Seguridad: alertas de Dependabot', 'Abiertas: 10 — críticas: 1, altas: 2, medias: 4, bajas: 3'])) throw new Error(`la sección dice ${JSON.stringify(got)}`);
+    if (await page.$('#hl-dependabot-link')) throw new Error('la demo, que no es un repo de GitHub, lleva un enlace');
+    if (asked.length) throw new Error(`la demo consultó las alertas: ${JSON.stringify(asked)}`);
+    await page.keyboard.press('Escape');
+  });
+  await step(page, 'con token, una consulta al abrir la salud (y no otra al volver a abrirla), las cifras como texto y el enlace a la pestaña de seguridad', async () => {
+    await page.evaluate(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_dependabot0123')));
+    await page.goto(`${base}/index.html?lang=es&repo=o/d`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.waitForTimeout(1500);
+    if (asked.length) throw new Error(`se consultaron las alertas sin abrir la salud: ${JSON.stringify(asked)}`);
+    if (!gh.calls.some((c) => c === '/repos/o/d')) throw new Error('no se cargó el repo simulado');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(8000) });
+    const count = await text('#hl-dependabot-count');
+    if (count !== 'Abiertas: 5 — críticas: 1, altas: 2, medias: 1, bajas: 1') throw new Error(`la cuenta dice ${JSON.stringify(count)} (la arreglada no cuenta)`);
+    const link = await page.$eval('#hl-dependabot-link', (a) => ({ href: a.getAttribute('href'), target: a.target, rel: a.rel, text: a.textContent }));
+    if (link.href !== 'https://github.com/o/d/security/dependabot' || link.target !== '_blank' || !/noopener/.test(link.rel) || !/noreferrer/.test(link.rel) || link.text !== 'Ver las alertas en GitHub') throw new Error(`el enlace: ${JSON.stringify(link)}`);
+    if (asked.length !== 1 || asked[0].path !== '/repos/o/d/dependabot/alerts?state=open&per_page=100' || asked[0].auth !== 'Bearer ghp_dependabot0123') throw new Error(`consultas: ${JSON.stringify(asked)}`);
+    const html = await page.$eval('#health', (e) => e.innerHTML);
+    if (/paquete-secreto|GHSA|security\/dependabot\/\d|<img/.test(html)) throw new Error('el paquete o el aviso entraron a la página');
+    if (await page.evaluate(() => document.body.dataset.pwned)) throw new Error('el aviso corrió código');
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /40[34]/ });
+  await step(page, 'a 320 px y en árabe, la sección de Dependabot no desborda el panel y va de derecha a izquierda', async () => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/d&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dependabot-link', { timeout: T(10000) });
+    const m = await page.evaluate(() => {
+      const w = document.querySelector('#health .tr-wrap');
+      const a = document.querySelector('#hl-dependabot-link').getBoundingClientRect();
+      return { sw: w.scrollWidth, cw: w.clientWidth, dir: getComputedStyle(document.querySelector('#hl-dependabot')).direction, link: [Math.round(a.width), Math.round(a.height)] };
+    });
+    if (m.sw > m.cw) throw new Error(`la sección desborda el panel: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
+    if (m.dir !== 'rtl') throw new Error(`la sección no va de derecha a izquierda en árabe: ${m.dir}`);
+    if (m.link[0] < 24 || m.link[1] < 24) throw new Error(`el enlace es chico para pulsarlo: ${m.link.join('×')} px`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press('Escape');
+  }, { allow: /40[34]/ });
+  await step(page, 'sin permiso (403) lo dice y no vuelve a preguntar en esa visita; sin token no consulta y dice cómo verlas', async () => {
+    const before = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/x&health=1`);
+    await loaded(page);
+    const denied = await page.waitForSelector('#health[open] #hl-dependabot-denied', { timeout: T(10000) });
+    if (!/no puede leer las alertas de Dependabot.+«Dependabot alerts»/.test(await denied.textContent())) throw new Error(`sin permiso dice ${await denied.textContent()}`);
+    if (asked.length !== before + 1 || asked.at(-1).path !== '/repos/o/x/dependabot/alerts?state=open&per_page=100') throw new Error(`consultas: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-denied', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== before + 1) throw new Error(`sin permiso volvió a preguntar: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => localStorage.removeItem('graphbranch:token'));
+    await page.goto(`${base}/index.html?lang=es&repo=o/d&health=1`);
+    await loaded(page);
+    const hint = await page.waitForSelector('#health[open] #hl-dependabot-notoken', { timeout: T(10000) });
+    if (!/^Con un token que pueda leer las alertas de Dependabot/.test(await hint.textContent())) throw new Error(`sin token dice ${await hint.textContent()}`);
+    await page.waitForTimeout(500);
+    if (asked.length !== before + 1) throw new Error(`sin token se consultaron las alertas: ${JSON.stringify(asked.slice(before + 1))}`);
+  }, { allow: /40[34]/ });
+  await page.context().close();
+}
+
+if (seccion('Tiempo de ciclo: las revisiones que el feed no trajo'))
+{
+  // ítem 223: un PR fusionado que se abrió antes de la actividad cargada entra en las etapas con sus revisiones, que se
+  // consultan al abrir la salud; el que la actividad ya trae entero no se consulta
+  const now = Date.now();
+  const iso = (d) => new Date(now - d * 864e5).toISOString();
+  const gh = fakeGitHub();
+  gh.repo('o/c', { prReviews: new Map([[7, [{ state: 'APPROVED', submitted_at: iso(4) }]], [8, [{ state: 'APPROVED', submitted_at: iso(1.5) }]]]) });
+  const merged = (n, opened) => ({ action: 'closed', number: n, pull_request: { number: n, title: `Cambio ${n}`, merged: true, created_at: iso(opened), base: { ref: 'main' }, head: { ref: `b${n}` }, user: { login: 'ana' } } });
+  // del más viejo al más nuevo (repoEvent pone cada uno primero, como la API)
+  gh.repoEvent('o/c', { type: 'WatchEvent', created_at: iso(3), payload: { action: 'started' } }); // lo más viejo cargado: hace 3 días
+  gh.repoEvent('o/c', { type: 'PullRequestEvent', created_at: iso(2.5), payload: merged(7, 10) }); // abierto hace 10 días: antes
+  gh.repoEvent('o/c', { type: 'PullRequestReviewEvent', created_at: iso(1.5), payload: { action: 'created', number: 8, review: { state: 'approved', body: 'ok' }, pull_request: { number: 8, title: 'Cambio 8' } } });
+  gh.repoEvent('o/c', { type: 'PullRequestEvent', created_at: iso(1), payload: merged(8, 2) }); // abierto hace 2 días: con su aprobación en el feed
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', gh.handle);
+  const reviews = () => gh.calls.filter((c) => /\/pulls\/\d+\/reviews$/.test(c));
+  await step(page, 'un PR abierto antes de la actividad cargada entra en las etapas con sus revisiones, consultadas al abrir la salud y una sola vez; el que la actividad trae entero no se consulta', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/c`);
+    await loaded(page);
+    await page.waitForFunction(() => ['#7 ', '#8 '].every((n) => [...document.querySelectorAll('#feed .act')].some((a) => a.textContent.includes('PR ' + n))), null, { timeout: T(20000) }).catch(() => {
+      throw new Error('no llegaron al panel los dos PRs fusionados');
+    });
+    await page.waitForTimeout(1000);
+    if (reviews().length) throw new Error(`se consultaron revisiones sin abrir la salud: ${reviews().join(', ')}`);
+    await page.click('#health-btn');
+    const line = await page.waitForSelector('#health[open] #hl-cycle-fetched', { timeout: T(8000) }).catch(() => {
+      throw new Error('la salud no dice cuántos PRs entraron con sus revisiones consultadas');
+    });
+    const text = await line.textContent();
+    if (text !== 'Abiertos antes de la actividad cargada, medidos con sus revisiones consultadas a GitHub: 1') throw new Error(`la línea dice «${text}»`);
+    const open = await page.$eval('#hl-cycle-open', (e) => e.textContent);
+    if (!/ · PRs medidos: 2$/.test(open)) throw new Error(`el PR consultado no entró en las etapas: «${open}»`);
+    if (await page.$('#hl-cycle-early')) throw new Error('el PR consultado sigue contado fuera de las etapas');
+    if (JSON.stringify(reviews()) !== '["/repos/o/c/pulls/7/reviews"]') throw new Error(`consultas de revisiones: ${JSON.stringify(reviews())}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#health:not([open])', { state: 'attached', timeout: T(3000) });
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-cycle-fetched', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (reviews().length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${reviews().length}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)'))
 {
   const page = await openPage({ viewport: { width: 1280, height: 800 } });
   await step(page, 'abre la demo en la vista de agentes: la red, la línea de tiempo, lo último, quién con quién y el gasto de ejemplo', async () => {
@@ -4765,6 +7049,57 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
       await page.waitForSelector('#agents:not([hidden]) .ag-net', { timeout: T(5000) });
     }
   });
+  await step(page, 'en modo TV el tablero de agentes entra entero en la pantalla: entrar desde la vista lo conserva, el robot de la barra y la A pasan al grafo y vuelven, y al salir queda la vista de antes sin guardar nada', async () => {
+    const st = () =>
+      page.evaluate(() => ({
+        tv: document.documentElement.classList.contains('tv'),
+        agents: !document.querySelector('#agents').hidden,
+        bar: document.querySelector('#tv-bar').parentNode.classList.contains('ab-head') ? 'tablero' : document.querySelector('#tv-bar').parentNode.classList.contains('graph-stage') ? 'grafo' : 'otro',
+        pressed: document.querySelector('#tv-agents').getAttribute('aria-pressed'),
+        focus: document.activeElement?.id || document.activeElement?.tagName,
+        stored: localStorage.getItem('graphbranch:agentsView'),
+      }));
+    // cada cambio de pantalla es inmediato (el clic o la tecla lo hacen en el momento)
+    const want = async (what, ok) => {
+      const s = await st();
+      if (!ok(s)) throw new Error(`${what}: ${JSON.stringify(s)}`);
+    };
+    const before = await st();
+    if (!before.agents) throw new Error('la vista de agentes no estaba abierta');
+    try {
+      await page.click('#tv-btn'); // el botón TV se ve también en la vista de agentes
+      await page.waitForFunction(() => document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al entrar desde la vista de agentes', (s) => s.agents && s.bar === 'tablero' && s.pressed === 'true' && s.focus === 'graph-panel');
+      const fit = await page.evaluate(() => {
+        const shown = (sel) => !!document.querySelector(sel)?.getClientRects().length;
+        const b = document.querySelector('#agents');
+        const stage = document.querySelector('#sw-cortex .sw-stage')?.getBoundingClientRect();
+        const card = document.querySelector('#sw-cortex-card')?.getBoundingClientRect();
+        return {
+          over: b.scrollHeight - b.clientHeight,
+          page: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+          shown: ['#sw-kpis', '#sw-cortex-card', '#ag-recent', '#sw-log', '#tv-agents'].filter((x) => !shown(x)),
+          hidden: ['.ab-switches', '.ab-help', '#ag-net', '#ag-time', '#ag-spend', '#sw-thread'].filter(shown),
+          cortex: stage && card ? Math.round(card.bottom - stage.bottom) : null,
+        };
+      });
+      if (fit.over > 1 || fit.page > 1) throw new Error(`el tablero no entra en la pantalla: se desplaza ${fit.over}px (la página, ${fit.page}px)`);
+      if (fit.shown.length || fit.hidden.length) throw new Error(`en TV faltan ${fit.shown.join(', ') || 'nada'} y sobran ${fit.hidden.join(', ') || 'nada'}`);
+      if (fit.cortex == null || fit.cortex < 0) throw new Error(`la corteza se sale de su tarjeta (${fit.cortex}px)`);
+      await page.click('#tv-agents');
+      await want('el robot de la barra vuelve al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo' && s.pressed === 'false' && s.focus === 'graph3d');
+      await page.keyboard.press('a');
+      await want('la A vuelve al tablero', (s) => s.tv && s.agents && s.bar === 'tablero' && s.pressed === 'true');
+      await page.keyboard.press('a');
+      await want('la A pasa otra vez al grafo', (s) => s.tv && !s.agents && s.bar === 'grafo');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.documentElement.classList.contains('tv'), null, { timeout: T(5000) });
+      await want('al salir queda la vista de agentes, como antes de entrar', (s) => s.agents && s.bar === 'tablero' && s.focus === 'tv-btn' && s.stored === before.stored);
+      if (new URL(page.url()).searchParams.has('tv')) throw new Error('la URL sigue con ?tv');
+    } finally {
+      if (await page.evaluate(() => document.documentElement.classList.contains('tv'))) await page.keyboard.press('Escape');
+    }
+  });
   await step(page, 'el gasto: el diálogo de claves rechaza una dirección de OmniRoute que no es http(s) y se cierra sin guardar', async () => {
     await page.click('#spend-connect');
     await page.waitForSelector('#spend-keys[open]', { timeout: T(3000) });
@@ -4788,21 +7123,37 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
     if (!(await page.evaluate(() => document.querySelector('#agents').hidden))) throw new Error('el botón de arriba no volvió al grafo');
   });
   await step(page, 'la ficha de un commit de agente dice cuál es, con su modelo y su sesión (2D)', async () => {
-    await page.click('#pause-btn'); // la demo quieta: las cabezas no cambian mientras se recorren
+    await page.click('#pause-btn'); // la demo quieta: el commit elegido no se mueve mientras se lo busca
     await page.click('#view-2d');
-    await page.focus('#graph');
-    await page.keyboard.press('End');
-    await page.waitForTimeout(800);
-    let tip = '';
-    for (const h of await page.$$('#graph svg .head[role=button]:not(.exit)')) {
-      if (!(await h.isVisible())) continue;
-      await h.focus();
-      await page.keyboard.press('Enter');
-      tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(800) }).then((x) => x.textContent(), () => '');
-      await page.keyboard.press('Escape');
-      if (tip) break;
+    // el commit sale de la lista de agentes (el último de una sesión de Claude Code), no de las etiquetas de rama: con la
+    // demo viva, la rama de las sesiones se fusiona y se borra, y en 3 de 8 corridas ninguna etiqueta a la vista quedaba
+    // en un commit de agente (iteración 291)
+    const openAgents = async () => (await page.evaluate(() => document.querySelector('#agents').hidden)) && page.click('#agents-btn');
+    await openAgents();
+    const rows = page.locator('#ag-list button.hl-row[data-sha]', { hasText: 'Claude Code' });
+    await rows.first().waitFor({ timeout: T(5000) });
+    const shas = await rows.evaluateAll((bs) => bs.map((b) => b.dataset.sha));
+    // el último commit de una sesión puede haber quedado fuera de toda rama (la demo también hace force push) y el grafo
+    // no lo dibuja: se prueba con la sesión siguiente
+    let sha = '';
+    let node = null;
+    for (const s of shas) {
+      await openAgents();
+      await page.locator(`#ag-list button.hl-row[data-sha="${s}"]`).first().click(); // vuelve al grafo 2D y lo lleva a ese commit
+      node = await page
+        .waitForFunction((x) => [...document.querySelectorAll('#graph svg .node:not(.exit)')].find((n) => n.__sha === x && n.getClientRects().length), s, { timeout: T(3000) })
+        .catch(() => null);
+      if (node) {
+        sha = s;
+        break;
+      }
     }
-    if (!/^Agente: (Claude Code · Opus 5\.5 · sesión \w{6}|GitHub Copilot|Dependabot)$/.test(tip)) throw new Error('ninguna ficha de rama dice su agente: ' + JSON.stringify(tip));
+    if (!node) throw new Error(`el grafo 2D no dibuja ningún commit de Claude Code de la lista de agentes (${shas.map((s) => s.slice(0, 7)).join(', ')})`);
+    await node.evaluate((n) => n.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    const tip = await page.waitForSelector('#graph .tip:not([hidden]) .tip-agent', { timeout: T(3000) }).then((x) => x.textContent(), () => '');
+    await page.focus('#graph');
+    await page.keyboard.press('Escape');
+    if (!/^Agente: Claude Code · Opus 5\.5 · sesión \w{6}$/.test(tip)) throw new Error(`la ficha del commit ${sha.slice(0, 7)} de Claude Code no dice su agente: ${JSON.stringify(tip)}`);
     await page.click('#pause-btn');
   });
   await step(page, 'interacciones en el grafo (?interactions=1): en 2D, el marco de cada commit de agente, los arcos y las insignias, con su leyenda', async () => {
@@ -4903,7 +7254,7 @@ console.log('Agentes e interacciones, en vivo, en el lugar del grafo (?agents=1)
   await page.context().close();
 }
 
-console.log(`Celular (390×844), ${langs.length} idiomas`);
+if (seccion(`Celular (390×844), ${langs.length} idiomas`))
 {
   const page = await openPage(phone);
   for (const lang of langs) {
@@ -4917,11 +7268,21 @@ console.log(`Celular (390×844), ${langs.length} idiomas`);
   await page.context().close();
 }
 
-await browser.close();
+sinContextos();
+await browser?.close();
 server.close();
 
+if (!corridas.length) {
+  console.log(`\nNinguna sección coincide con ${[...solo, ...exactas].join(', ')} (node tools/smoke.mjs --secciones las lista).`);
+  process.exit(2);
+}
+if (listar) process.exit(0);
 if (failures) {
   console.log(`\n${failures} fallo(s).`);
+  for (const [titulo, pasos] of conFallos) {
+    console.log(`§ ${titulo}`);
+    for (const paso of pasos) console.log(`· ${paso}`);
+  }
   process.exit(1);
 }
-console.log('\nTodo bien.');
+console.log(pedidas ? `\nTodo bien (${corridas.length} de las secciones: ${corridas.join(' · ')}).` : '\nTodo bien.');

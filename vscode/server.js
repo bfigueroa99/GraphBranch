@@ -1,7 +1,8 @@
 /* El servidor local de la extensión de VS Code: sirve la app de GraphBranch (la misma carpeta que
    publica la web) en 127.0.0.1, solo bajo una ruta secreta (/<clave>/), y le entrega el token de
    la sesión de GitHub de VS Code en un archivo propio (vscode-session.js) que index.html no trae:
-   se agrega al servir la página. Sin dependencias y sin `vscode`, para probarlo con `node --test`
+   se agrega al servir la página. El token queda en el sessionStorage de la página, nunca en su
+   localStorage (ver sessionScript). Sin dependencias y sin `vscode`, para probarlo con `node --test`
    (tools/vscode.test.mjs).
 
    - Solo escucha en 127.0.0.1 y todo cuelga de la clave: otra página o proceso local que no la
@@ -67,12 +68,15 @@ function repoFromGitConfig(text) {
   return host === 'github.com' ? rest.split('/').slice(0, 2).join('/') : `https://${host}/${rest}`;
 }
 
-/** El archivo con el que se arranca la sesión: guarda el token donde la página lo lee (js/util.js, U.store). */
+/** El archivo con el que se arranca la sesión: deja el token donde la página lo lee (js/util.js, U.secret).
+    Con GBSessionSecrets los secretos de la página (este token y los que la persona pegue en Ajustes) viven en
+    sessionStorage y no en localStorage: el puerto, y con él el origen, cambia en cada sesión del panel, y lo que
+    quedara en localStorage se quedaría en el disco, sin cifrar, en un origen que nadie vuelve a abrir. */
 function sessionScript(token, hadToken = false, state = {}) {
-  let js = '\n';
-  if (token) js = `try{localStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`;
+  let js = 'globalThis.GBSessionSecrets=true;\n';
+  if (token) js += `try{sessionStorage.setItem('graphbranch:token',${JSON.stringify(JSON.stringify(token))})}catch(e){}\n`;
   // la sesión se cerró: el token que dejó este servidor no se queda en el almacenamiento de la página
-  else if (hadToken) js = `try{localStorage.removeItem('graphbranch:token')}catch(e){}\n`;
+  else if (hadToken) js += `try{sessionStorage.removeItem('graphbranch:token');localStorage.removeItem('graphbranch:token')}catch(e){}\n`;
   return js + stateScript(state);
 }
 

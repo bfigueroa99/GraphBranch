@@ -1,0 +1,5 @@
+{
+  "description": {
+    "message": "Botón «Abrir en GraphBranch» en las páginas de un repo de GitHub, GitLab, Codeberg o Bitbucket: abre su grafo de ramas en vivo."
+  }
+}

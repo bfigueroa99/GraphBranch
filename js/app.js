@@ -40,12 +40,22 @@
     fullscreenBtn: $('#fullscreen-btn'),
     replayBtn: $('#replay-btn'),
     snapBtn: $('#snap-btn'),
+    mermaidBtn: $('#mermaid-btn'),
     snapNote: $('#snap-note'),
     flyBtn: $('#fly-btn'),
     galaxyBtn: $('#galaxy-btn'),
     directorBtn: $('#director-btn'),
     tvBtn: $('#tv-btn'),
     tvClock: $('#tv-clock'),
+    tvAgents: $('#tv-agents'),
+    tvAll: $('#tv-all'),
+    tvAll3d: $('#tv-all3d'),
+    all3d: $('#all-3d'),
+    all2d: $('#all-2d'),
+    allSpace: $('#all-space'),
+    allSpaceHint: $('#all-space-hint'),
+    allHint: $('#all-hint'),
+    allTvBtn: $('#all-tv-btn'),
     tvPause: $('#tv-pause'),
     tvSound: $('#tv-sound'),
     tvFs: $('#tv-fs'),
@@ -59,6 +69,9 @@
     agents: $('#agents'),
     agentsBody: $('#agents-body'),
     agentsOnly: $('#agents-only'),
+    agentsAll: $('#agents-all'),
+    agentsAllWrap: $('#agents-all-wrap'),
+    graphAll: $('#graph-all'),
     agentsGraph: $('#agents-graph'),
     agentsClock: $('#agents-clock'),
     agKey: $('#ag-key'),
@@ -160,11 +173,16 @@
     bbdcTokenInput: $('#bbdc-token-input'),
     bbdcTokenToggle: $('#bbdc-token-toggle'),
     bbdcTokenWhere: $('#bbdc-token-where'),
-    token2Owner: $('#token2-owner'),
-    token2Input: $('#token2-input'),
-    token2Toggle: $('#token2-toggle'),
+    forgeTokenField: $('#forge-token-field'),
+    forgeTokenInput: $('#forge-token-input'),
+    forgeTokenToggle: $('#forge-token-toggle'),
+    forgeTokenWhere: $('#forge-token-where'),
+    accountsList: $('#accounts-list'),
+    accountAdd: $('#account-add'),
     hooksBox: $('#hooks-box'),
     hooksList: $('#hooks-list'),
+    errorsField: $('#errors-field'),
+    errorsReport: $('#errors-report'),
     depth: $('#depth'),
     marks: $('#marks'),
     settingsCancel: $('#settings-cancel'),
@@ -228,8 +246,11 @@
     azureToken: desktop ? '' : U.secret.get('azureToken', ''),
     // el de un Bitbucket propio, aparte y atado a su dirección: si ?bitbucket= es otro, no se usa (ni se pisa hasta guardar Ajustes)
     bbdcToken: desktop ? '' : GB.BitbucketServerSource.unpack(U.secret.get('bbdcToken', ''), BITBUCKET_URL),
-    // la segunda cuenta de GitHub: un token atado a un dueño u organización, solo para sus repos
-    account2: desktop ? { owner: '', token: '' } : GB.GitHubSource.unpack2(U.secret.get('account2', '')),
+    // el de un Forgejo/Gitea propio, igual: aparte y atado a su dirección (?forge=)
+    forgeToken: desktop ? '' : GB.CodebergSource.unpack(U.secret.get('forgeToken', ''), FORGE_URL),
+    // las otras cuentas de GitHub: cada token atado a un dueño u organización, solo para sus repos ('account2' es
+    // donde se guardaba la segunda cuenta de antes, que pasa a ser la primera de la lista)
+    accounts: desktop ? [] : GB.GitHubSource.unpackAccounts(U.secret.get('account2', '')),
     depth: U.store.get('depth', 40),
     marks: U.store.get('marks', true) !== false, // tags y entornos de despliegue (2 consultas más por repo de GitHub)
   };
@@ -260,6 +281,7 @@
     onFollowChange: (v) => graph === graph2d && followUI(v),
     onTogglePin: (name) => togglePin(name),
     onBranchView: (name, how) => onBranchView(name, how),
+    onMore: (name) => loadMore(name),
     onDiff: (sha) => openDiff(sha),
     onPrView: (n) => active.source.prDetail(n),
     diffing: () => diffView.isOpen,
@@ -271,6 +293,7 @@
         onFollowChange: (v) => graph === graph3d && followUI(v),
         onTogglePin: (name) => togglePin(name),
         onBranchView: (name, how) => onBranchView(name, how),
+        onMore: (name) => loadMore(name),
         onDiff: (sha) => openDiff(sha),
         onPrView: (n) => active.source.prDetail(n),
         diffing: () => diffView.isOpen,
@@ -367,7 +390,7 @@
     count: $('#feed-count'),
     onSelect: (a) => {
       // en la vista conjunta, a la tarjeta de su repo y a su commit o su rama, sin salir de ella
-      if (allOn && a.repo != null) return overview.focus(a.repo, { sha: a.sha, branch: a.branch });
+      if (allOn && a.repo != null) return spaceOn() ? allSpace.show(a.repo) : overview.focus(a.repo, { sha: a.sha, branch: a.branch }); // en 3D, a su torre
       // la actividad de otro repo seguido lleva a su pestaña (la de uno que ya no se sigue, a ninguna parte)
       if (a.repo != null) {
         const tab = tabs.find((x) => x.key === a.repo);
@@ -379,7 +402,106 @@
     },
     // con la vista 3D, cada sonido sale del lado de la pantalla donde está su rama (si es del repo a la vista)
     panOf: (a) => (graph === graph3d && (a.repo == null || a.repo === active?.key) ? graph3d.panOf(a.branch) : 0),
+    onLive: (n) => feedPanel.arrived(n),
   });
+
+  /* ---------- el panel de actividad: su borde se arrastra (o se mueve con las flechas) y se pliega a una franja ----------
+     Los dos se recuerdan en este navegador. Solo en pantallas anchas: en una columna el panel va debajo del grafo. */
+  const feedPanel = (() => {
+    const grip = $('#feed-resize');
+    const fold = $('#feed-fold');
+    const unseenEl = $('#feed-unseen');
+    const MIN = 280;
+    const MAX = 720;
+    const DEF = 370;
+    const GRAPH_MIN = 420; // lo que el grafo conserva siempre a su lado
+    let unseen = 0;
+    const rtl = () => document.documentElement.dir === 'rtl';
+    const maxNow = () => Math.max(MIN, Math.min(MAX, el.main.clientWidth - 12 - GRAPH_MIN));
+    const shownWidth = () => Math.round($('#feed-panel').getBoundingClientRect().width);
+    const folded = () => el.main.classList.contains('feed-folded');
+    /** Ancho pedido, dentro de lo que cabe; `save` lo recuerda (el de siempre no se guarda). */
+    function setWidth(w, save) {
+      const v = Math.round(Math.min(maxNow(), Math.max(MIN, w)));
+      el.main.style.setProperty('--feed-w', v + 'px');
+      grip.setAttribute('aria-valuemax', String(maxNow()));
+      grip.setAttribute('aria-valuenow', String(v));
+      if (save) U.store.set('feedWidth', v === DEF ? null : v);
+    }
+    function setFolded(on, save) {
+      el.main.classList.toggle('feed-folded', on);
+      fold.setAttribute('aria-expanded', String(!on));
+      if (!on) {
+        unseen = 0;
+        unseenEl.hidden = true;
+      }
+      if (save) U.store.set('feedFolded', on || null);
+    }
+    const saved = Number(U.store.get('feedWidth', 0));
+    if (saved >= MIN && saved <= MAX) {
+      el.main.style.setProperty('--feed-w', saved + 'px'); // sin recortar todavía: el CSS ya lo deja en la mitad como mucho
+      grip.setAttribute('aria-valuenow', String(saved));
+    }
+    if (U.store.get('feedFolded', false) === true) setFolded(true, false);
+
+    fold.addEventListener('click', () => setFolded(!folded(), true));
+    grip.addEventListener('dblclick', () => setWidth(DEF, true));
+    grip.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      const x0 = ev.clientX;
+      const w0 = shownWidth();
+      let want = w0;
+      let frame = 0;
+      grip.setPointerCapture?.(ev.pointerId);
+      grip.classList.add('dragging');
+      document.documentElement.classList.add('resizing-feed');
+      // un cambio por cuadro: el grafo se redibuja con cada ancho nuevo
+      const move = (e) => {
+        want = w0 + (x0 - e.clientX) * (rtl() ? -1 : 1);
+        frame ||= requestAnimationFrame(() => ((frame = 0), setWidth(want, false)));
+      };
+      const up = () => {
+        cancelAnimationFrame(frame);
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        grip.classList.remove('dragging');
+        document.documentElement.classList.remove('resizing-feed');
+        setWidth(want, false);
+        setWidth(shownWidth(), true); // lo que de verdad quedó (el CSS lo topa en la mitad)
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    // teclado (patrón de separador de WAI-ARIA): flechas de a 24 px (con Mayús, de a 96), Inicio y Fin a los topes,
+    // Enter pliega el panel
+    grip.addEventListener('keydown', (ev) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const step = ev.shiftKey ? 96 : 24;
+      const wider = rtl() ? 'ArrowRight' : 'ArrowLeft';
+      const narrower = rtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (ev.key === wider) setWidth(shownWidth() + step, true);
+      else if (ev.key === narrower) setWidth(shownWidth() - step, true);
+      else if (ev.key === 'Home') setWidth(MIN, true);
+      else if (ev.key === 'End') setWidth(maxNow(), true);
+      else if (ev.key === 'Enter') {
+        setFolded(true, true);
+        fold.focus();
+      } else return;
+      ev.preventDefault();
+    });
+    return {
+      /** Llegó actividad en vivo: con el panel plegado, la franja la cuenta. */
+      arrived(n) {
+        if (!folded() || !n) return;
+        unseen += n;
+        unseenEl.textContent = '+' + U.fmtNum(Math.min(unseen, 999));
+        unseenEl.hidden = false;
+      },
+    };
+  })();
 
   /* ---------- los cambios de cada commit (ver diff.js): un panel junto al grafo para pasar de un commit a otro ---------- */
   const diffView = GB.diff.mount(el.diffPanel, {
@@ -407,6 +529,8 @@
     canBlame: () => typeof diffSrc()?.fileLog === 'function',
     fileLog: (path, sha) => diffSrc().fileLog(path, sha),
     fileBlame: (path, sha) => (typeof diffSrc()?.fileBlame === 'function' ? diffSrc().fileBlame(path, sha) : null),
+    // los dueños de cada archivo: el CODEOWNERS de la rama por defecto, si la fuente lo sabe leer (GitHub y la demo)
+    codeOwners: () => (typeof diffSrc()?.codeOwners === 'function' ? diffSrc().codeOwners() : null),
     onClose: () => {
       el.main.classList.remove('diffing', 'diff-wide');
       selectCommit(null);
@@ -496,11 +620,20 @@
   const OWNER_REFRESH = 30 * 60 * 1000; // cada cuánto se renueva la lista de una organización seguida
   const OWNER_SEEN_MAX = 300;
   const followedOwners = (() => {
-    const v = U.store.get('owners', null); // organización -> nombres de repos ya vistos en su lista
+    // organización (o tarea, «curso/tarea-1-*», U.ownerKey) -> nombres de repos ya vistos en su lista. Una versión
+    // anterior a las tareas no reconoce esas claves y las salta: sigue leyendo las de las organizaciones
+    const v = U.store.get('owners', null);
     const out = {};
-    if (v && typeof v === 'object') for (const [k, names] of Object.entries(v)) if (U.parseOwner('@' + k) && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
+    if (v && typeof v === 'object')
+      for (const [k, names] of Object.entries(v)) {
+        const who = U.parseOwner('@' + k);
+        if (who && U.ownerKey(who) === k && Array.isArray(names)) out[k] = names.filter((n) => typeof n === 'string');
+      }
     return out;
   })();
+  /* La última lista de cada organización seguida, con el último push de cada repo: la constelación dibuja los que no
+     tienen pestaña como galaxias tenues. Solo en memoria: llega al seguirla y en cada renovación (OWNER_REFRESH). */
+  const ownerLists = {};
   const STAGGER = 700; // los repos que arrancan juntos, escalonados: GitHub no recibe todo a la vez
   /** Clave de un repo (de su fuente o de { owner, name }): con ella se guarda lo suyo (fijadas, filtro, logros). */
   /** Los proyectos de GitLab llevan "gitlab:" delante (en la clave, en lo que se guarda y en la URL). */
@@ -529,9 +662,9 @@
     if (host === 'bitbucketdc') return new GB.BitbucketServerSource({ owner, name, webUrl: BITBUCKET_URL, serverToken: settings.bbdcToken, ...remembered });
     if (host === 'bitbucket') return new GB.BitbucketSource({ owner, name, token: settings.bitbucketToken, ...remembered });
     if (host === 'codeberg') return new GB.CodebergSource({ owner, name, token: settings.codebergToken, ...remembered });
-    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, ...remembered });
+    if (host === 'forgejo') return new GB.CodebergSource({ owner, name, webUrl: FORGE_URL, avatars: desktop, serverToken: settings.forgeToken, ...remembered });
     if (host === 'gitlab') return new GB.GitLabSource({ path: `${owner}/${name}`, token: settings.gitlabToken, webUrl: GITLAB_URL, avatars: desktop, ...remembered });
-    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL, ...remembered });
+    return new GB.GitHubSource({ owner, name, token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL, ...remembered });
   }
 
   /** Suma una pestaña al final, con su fuente, sin mostrarla ni arrancarla. */
@@ -706,7 +839,7 @@
       const grp = U.parseGroup(input);
       if (grp) return connectGroup(grp.group);
       const who = U.parseOwner(input);
-      if (who) return connectOwner(who.owner);
+      if (who) return connectOwner(who);
       return repoNote(t('repo.invalid'));
     }
     let tab = tabs.find((x) => x.key === keyOf(parsed));
@@ -727,25 +860,34 @@
    * org:nombre o @usuario: sigue sus repos de push más reciente (sin forks ni archivados), cada uno en
    * su pestaña, hasta el tope, y muestra el más reciente. La lista se arma al conectar (una o dos
    * consultas a GitHub); lo que se guarda y comparte son los repos, como si se hubieran escrito uno a uno.
+   * `who` es lo que da U.parseOwner: con `prefix` (org:curso/tarea-1-*, una tarea de GitHub Classroom), solo
+   * los de esa lista cuyo nombre empieza así, seguidos aparte de la organización entera (con la clave de
+   * U.ownerKey): su renovación, sus eventos y sus galaxias sin pestaña son solo los de la tarea.
    */
-  async function connectOwner(owner, { refresh = false } = {}) {
+  async function connectOwner(who, { refresh = false } = {}) {
+    const { owner, prefix = '' } = who;
+    const key = U.ownerKey(who);
+    // en los avisos, la tarea aislada (FSI…PDI): en árabe, el «-*» del final saltaba al otro lado («*-curso/tarea-1»)
+    const iso = (x) => '\u2068' + x + '\u2069';
+    const label = prefix ? iso(key) : owner;
     if (realTabs().length >= MAX_REPOS) return refresh ? undefined : repoNote(t('repo.limit'));
     if (!refresh) el.repoForm.setAttribute('aria-busy', 'true');
     let list;
     try {
-      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.account2), apiUrl: API_URL });
+      list = await GB.GitHubSource.ownerRepos(owner, { token: GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts), apiUrl: API_URL, prefix });
     } catch (err) {
       return refresh ? undefined : repoNote(i18n.text(err.msg || err.message));
     } finally {
       if (!refresh) el.repoForm.removeAttribute('aria-busy');
     }
-    if (!list.length) return refresh ? undefined : repoNote(t('owner.empty', { owner }));
+    if (!list.length) return refresh ? undefined : repoNote(prefix ? t('owner.emptyPrefix', { owner, prefix: iso(prefix) }) : t('owner.empty', { owner }));
     // se dejó de seguir mientras llegaba la lista (se cerró su último repo): no se guarda de nuevo ni reabre nada
-    if (refresh && !followedOwners[owner]) return;
+    if (refresh && !followedOwners[key]) return;
     // la organización queda seguida: lo que ya se vio de su lista no vuelve a avisar como nuevo
-    const seen = new Set(followedOwners[owner]);
-    followedOwners[owner] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
+    const seen = new Set(followedOwners[key]);
+    followedOwners[key] = list.map((p) => p.name).concat([...seen]).filter((n, i, a) => a.indexOf(n) === i).slice(0, OWNER_SEEN_MAX);
     U.store.set('owners', followedOwners);
+    ownerLists[key] = list.slice(0, GB.constellation.ORG_MAX);
     const fresh = list.filter((p) => !tabs.some((x) => x.key === keyOf(p)) && (!refresh || !seen.has(p.name)));
     if (refresh) {
       const room = fresh.slice(0, Math.max(0, MAX_REPOS - realTabs().length));
@@ -754,7 +896,7 @@
       room.forEach((p, i) => startTab(addTab(sourceFor(p)), i * STAGGER));
       saveTabs();
       renderTabs();
-      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
+      feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: label }), detail: room.map((p) => p.name).join(', '), time: Date.now() });
       return;
     }
     // el tope se mira otra vez: mientras llegaba la lista pudieron sumarse otros repos
@@ -766,9 +908,13 @@
     // a la vista, el de push más reciente (ya seguido o recién sumado)
     showTab(list.map((p) => tabs.find((x) => x.key === keyOf(p))).find(Boolean));
     if (!add.length) return; // ya se seguían todos
-    const more = fresh.length > add.length ? t('owner.limited', { owner, max: MAX_REPOS }) : '';
+    // si ese ya estaba a la vista, showTab no hizo nada: las pestañas nuevas se dibujan y se guardan aquí (pasaba al
+    // seguir la organización entera con una tarea suya ya abierta, o al volver a escribir org:nombre)
+    saveTabs();
+    renderTabs();
+    const more = fresh.length > add.length ? t('owner.limited', { owner: label, max: MAX_REPOS }) : '';
     const detail = [add.map((p) => p.name).join(', '), more].filter(Boolean).join(' · ');
-    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner }), detail, time: Date.now() });
+    feed.toast({ kind: 'other', title: i18n.msg('owner.followed', { owner: label }), detail, time: Date.now() });
   }
 
   /**
@@ -805,22 +951,34 @@
   /** Vuelve a mirar la lista de cada organización seguida: los repos nuevos se suman solos. */
   function refreshOwners() {
     if (paused || document.hidden) return;
-    Object.keys(followedOwners).forEach((owner, i) => setTimeout(() => connectOwner(owner, { refresh: true }), i * STAGGER));
+    Object.keys(followedOwners).forEach((key, i) => setTimeout(() => connectOwner(U.parseOwner('@' + key), { refresh: true }), i * STAGGER));
+  }
+
+  /** Lo seguido, por dueño (en minúsculas): org:curso y org:curso/tarea-1-* son del mismo, que tiene un solo feed de eventos. */
+  function ownerFollows() {
+    const by = new Map();
+    for (const key of Object.keys(followedOwners)) {
+      const who = U.parseOwner('@' + key);
+      const low = who.owner.toLowerCase();
+      by.set(low, (by.get(low) || []).concat(who));
+    }
+    return by;
   }
 
   /* Los eventos de cada organización seguida: una consulta (con ETag) para todos sus repos. Solo se
-     muestran los de repos sin pestaña propia (los demás ya los trae su pestaña); si la organización no
-     existe como tal (un usuario) o no hay eventos visibles, no se muestra nada. */
+     muestran los de repos sin pestaña propia (los demás ya los trae su pestaña) y, de una tarea, los de sus
+     repos; si la organización no existe como tal (un usuario) o no hay eventos visibles, no se muestra nada. */
   const ORG_EVENTS_EVERY = 5 * 60 * 1000;
-  const orgFeeds = new Map(); // organización -> { token, feed }
+  const orgFeeds = new Map(); // organización (en minúsculas) -> { token, feed }
   async function pollOrgEvents() {
     if (paused || document.hidden || EMBED) return;
-    for (const owner of Object.keys(followedOwners)) {
-      let entry = orgFeeds.get(owner);
-      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.account2);
+    for (const [low, follows] of ownerFollows()) {
+      const owner = follows[0].owner;
+      let entry = orgFeeds.get(low);
+      const tk = GB.GitHubSource.tokenFor(owner, settings.token, settings.accounts);
       if (!entry || entry.token !== tk) {
         entry = { token: tk, feed: GB.GitHubSource.orgFeed(owner, { token: tk, apiUrl: API_URL }), first: true };
-        orgFeeds.set(owner, entry);
+        orgFeeds.set(low, entry);
       }
       let acts;
       try {
@@ -828,9 +986,9 @@
       } catch {
         continue; // sin red o sin cuota: se intenta en el próximo ciclo
       }
-      const key = 'org:' + owner.toLowerCase();
+      const key = 'org:' + low;
       const open = new Set(realTabs().map((x) => x.key));
-      acts = acts.filter((a) => !open.has(a.repoFull.toLowerCase()));
+      acts = acts.filter((a) => !open.has(a.repoFull.toLowerCase()) && follows.some((who) => U.ownerMatch(who, a.repoFull.split('/')[1])));
       for (const a of acts) {
         a.repo = key;
         a.repoName = a.repoFull;
@@ -840,15 +998,21 @@
     }
   }
 
-  /** Una organización deja de seguirse cuando se cierra el último de sus repos. */
+  /** Una organización (o una tarea) deja de seguirse cuando se cierra el último de sus repos. */
   function pruneOwners() {
     let changed = false;
-    for (const owner of Object.keys(followedOwners)) {
-      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === owner.toLowerCase());
+    for (const key of Object.keys(followedOwners)) {
+      const who = U.parseOwner('@' + key);
+      const low = who.owner.toLowerCase();
+      const has = realTabs().some((x) => !['gitlab', 'codeberg', 'forgejo', 'bitbucket', 'bitbucketdc', 'azure', 'local'].includes(x.source.host) && String(x.source.owner).toLowerCase() === low && U.ownerMatch(who, x.source.name));
       if (!has) {
-        delete followedOwners[owner];
-        orgFeeds.delete(owner);
-        feed.drop('org:' + owner.toLowerCase());
+        delete followedOwners[key];
+        delete ownerLists[key];
+        // sus eventos, solo si no queda nada más seguido de ese dueño: el feed es uno por organización
+        if (!ownerFollows().has(low)) {
+          orgFeeds.delete(low);
+          feed.drop('org:' + low);
+        }
         changed = true;
       }
     }
@@ -958,18 +1122,22 @@
     });
     if (allOn && tabs.length < 2) setAll(false); // con un solo repo no hay nada que juntar
     else if (allOn) syncAll();
-    else if (wantAll && tabs.length > 1 && !tv.on) {
+    else if (wantAll && tabs.length > 1) {
       // ?all=1 (o lo recordado) con repos que llegan después, como los de org:nombre
       wantAll = false;
       setAll(true, { save: false });
     }
     renderAllTab();
+    paintAgentsScope();
   }
 
   /** Un clic en la pestaña de un repo: lo muestra (y deja la vista conjunta, si estaba). */
   function openTab(tab) {
-    if (allOn) setAll(false);
+    if (allOn) setAll(false, { save: !tv.on });
+    const was = agentsOn && agentsCombined();
+    if (was) setAgentsAll(false, { save: !tv.on, render: false }); // el tablero pasa a ser el de ese repo
     showTab(tab);
+    if (was) renderAgents();
   }
 
   function makeTabEl(tab) {
@@ -1047,7 +1215,7 @@
     const n = tab.unread;
     node.dataset.state = st;
     // con la vista conjunta ninguna pestaña es «la que se ve»: se ven todas
-    const shown = tab === active && !allOn;
+    const shown = tab === active && !allOn && !(agentsOn && agentsCombined());
     node.classList.toggle('on', shown);
     node.classList.toggle('demo', tab.demo);
     const main = node.firstElementChild;
@@ -1095,23 +1263,58 @@
   /* ---------- vista conjunta: todos los repos seguidos a la vez, cada uno en su tarjeta (ver overview.js) ---------- */
 
   let wantAll = false; // ?all=1 o lo recordado: se aplica en cuanto hay más de un repo
+  let initialBy = ''; // ?by=login: la persona con que abre el Launchpad
+  try {
+    initialBy = EMBED ? '' : GB.overview.personParam(new URLSearchParams(location.search));
+  } catch {
+    /* sin query string */
+  }
+  /** Pospone un PR del Launchpad un día (o deja de posponerlo); se guarda por repo y número, sin el título, y lo vencido se
+      limpia al guardar. */
+  function setPrSnooze(id, on) {
+    const m = GB.overview.liveSnoozes(U.store.get('prsnooze', {}));
+    if (on) m[id] = Date.now() + GB.overview.SNOOZE_MS;
+    else delete m[id];
+    U.store.set('prsnooze', Object.keys(m).length ? m : null);
+  }
+
   const overview = GB.overview.mount($('#all-grid'), {
     text: (k, p) => t(k, p),
     num: (n) => U.fmtNum(n),
     ago: (ms) => U.timeAgo(ms),
     dateTime: (ms) => U.fmtDateTime(ms),
-    onOpen: (key) => {
-      const tab = tabs.find((x) => x.key === key);
-      if (!tab) return;
-      openTab(tab);
-      // la tarjeta ya no se ve: el foco queda en la pestaña del repo, que es donde se está ahora
-      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
-    },
+    onOpen: (key) => openFromAll(key), // la tarjeta ya no se ve: el foco queda en la pestaña del repo
     onDiff: (key, sha) => openDiff(sha, tabs.find((x) => x.key === key)),
     canDiff: (key) => canDiffTab(tabs.find((x) => x.key === key)),
     diffing: () => diffView.isOpen,
     onStats: (list) => renderAllSum(list),
     prsRoot: $('#all-prs'),
+    person: initialBy,
+    onPerson: (login) => setUrlParam('by', login),
+    getPins: () => U.store.get('prpins', []),
+    onPin: (id, on) => {
+      const set = new Set(U.store.get('prpins', []));
+      if (on) set.add(id);
+      else set.delete(id);
+      U.store.set('prpins', set.size ? [...set] : null);
+      if (on) setPrSnooze(id, false); // fijar gana a posponer
+    },
+    getSnoozes: () => GB.overview.liveSnoozes(U.store.get('prsnooze', {})),
+    onSnooze: (id, on) => {
+      setPrSnooze(id, on);
+      if (on) {
+        // posponer suelta el PR si estaba fijado: no puede ir arriba y abajo a la vez
+        const set = new Set(U.store.get('prpins', []));
+        if (set.delete(id)) U.store.set('prpins', set.size ? [...set] : null);
+      }
+    },
+    onOpenIssue: (key) => {
+      // un issue sin enlace (la demo): se abre su repo, donde el panel de actividad lo tiene
+      const tab = tabs.find((x) => x.key === key);
+      if (!tab) return;
+      openTab(tab);
+      tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+    },
     onOpenPr: (key, head) => {
       const tab = tabs.find((x) => x.key === key);
       if (!tab) return;
@@ -1139,15 +1342,83 @@
   /** Las tarjetas al día con las pestañas; las de repos nuevos se dibujan con lo que ya cargaron. */
   function syncAll() {
     overview.sync(allItems());
+    if (spaceOn()) allSpace.sync(allItems());
     for (const x of tabs) if (!overview.layoutOf(x.key)) drawCard(x, { initial: true });
   }
+
+  /* ---------- la vista conjunta en 3D (js/allspace.js): todos los repos como torres de una misma escena ----------
+     Las tarjetas siguen calculando el layout de cada repo (es lo que dibuja la escena), pero no sus grafos 2D. Se
+     recuerda (y viaja en la URL: ?all=3d); sin WebGL no hay. */
+  let allView = U.store.get('allView', '2d') === '3d' ? '3d' : '2d';
+  let allSpace = null; // se crea la primera vez que se pide: un contexto WebGL cuesta
+  const spaceOn = () => allOn && allView === '3d' && !!graph3d && !!allSpace;
+
+  /** Cambia entre las tarjetas y el 3D. En el modo TV no se guarda. */
+  function setAllView(v, { save = true } = {}) {
+    v = v === '3d' && graph3d ? '3d' : '2d';
+    const was = allView;
+    allView = v;
+    if (allOn && v === '3d') diffView.close(); // eran los cambios de un commit de una tarjeta, que deja de verse
+    if (save && !tv.on) U.store.set('allView', v === '3d' ? '3d' : null);
+    paintAllView();
+    // de vuelta a las tarjetas: sus grafos no se dibujaban mientras se veía el 3D
+    if (allOn && was === '3d' && v === '2d') for (const x of tabs) drawCard(x, { initial: true });
+    if (allOn && tv.on) fitTvGrid();
+  }
+
+  /** La vista conjunta como se eligió: las tarjetas o la escena (que se crea, se llena y se anima solo mientras se ve). */
+  function paintAllView() {
+    const on3d = allOn && allView === '3d' && !!graph3d;
+    setPressed(el.all3d, allView === '3d' && !!graph3d);
+    setPressed(el.all2d, !(allView === '3d' && graph3d));
+    setPressed(el.tvAll3d, on3d);
+    el.all3d.disabled = !graph3d;
+    el.tvAll3d.hidden = !allOn || !graph3d;
+    $('#all-grid').hidden = on3d;
+    el.allSpace.hidden = !on3d;
+    el.allSpaceHint.hidden = !on3d;
+    el.allHint.hidden = on3d;
+    el.allPanel.classList.toggle('as-on', on3d);
+    overview.setGraphs(!on3d);
+    if (on3d) {
+      if (!allSpace) {
+        allSpace = GB.allspace.create(el.allSpace, { onOpen: openFromAll, text: (k, p) => t(k, p), num: (n) => U.fmtNum(n) });
+        allSpace.setHold(paused);
+        U.onThemeChange(() => allSpace.retheme());
+      }
+      allSpace.sync(allItems());
+      for (const x of tabs) {
+        const L = overview.layoutOf(x.key);
+        if (L) allSpace.update(x.key, L, overview.statsOf(x.key));
+      }
+    }
+    allSpace?.setActive(on3d);
+    if (allOn) setUrlParam('all', on3d ? '3d' : '1');
+  }
+
+  /** El nombre de un repo (en su tarjeta o en su torre) lo abre en su pestaña; el foco queda en ella. */
+  function openFromAll(key) {
+    const tab = tabs.find((x) => x.key === key);
+    if (!tab) return;
+    openTab(tab);
+    tab.el?.querySelector('.rt-main')?.focus({ preventScroll: true });
+  }
+  el.all3d.addEventListener('click', () => setAllView('3d'));
+  el.all2d.addEventListener('click', () => setAllView('2d'));
+  el.tvAll3d.addEventListener('click', () => setAllView(allView === '3d' ? '2d' : '3d', { save: false }));
 
   /** Dibuja la tarjeta de un repo con lo suyo, y los efectos de lo que acaba de llegar. Solo con la vista conjunta. */
   function drawCard(tab, { initial = false, calm = false, activities = [] } = {}) {
     if (!allOn || !tab.source?.data.loaded) return;
     const data = tab.source.view ? tab.source.view() : tab.source.data;
-    if (!overview.draw(tab.key, data, liveCtx(data, initial, calm, tab))) return;
-    if (!initial && activities.length) overview.celebrate(tab.key, activities);
+    // un issue que se abre o se cierra no cambia el grafo: el Launchpad se pone al día igual
+    if (activities.some((a) => a.kind === 'issue-open' || a.kind === 'issue-close')) renderAllPrs();
+    const L = overview.draw(tab.key, data, liveCtx(data, initial, calm, tab));
+    if (!L) return;
+    if (spaceOn()) allSpace.update(tab.key, L, overview.statsOf(tab.key));
+    if (initial || !activities.length) return;
+    overview.celebrate(tab.key, activities);
+    if (spaceOn()) allSpace.celebrate(tab.key);
   }
 
   /** «Todos»: la pestaña de la vista conjunta, con las novedades sin ver de todos los repos. */
@@ -1155,6 +1426,7 @@
     const n = tabs.reduce((sum, x) => sum + (x.unread || 0), 0);
     setText(el.allN, n ? (n > 99 ? '99+' : U.fmtNum(n)) : '');
     setPressed(el.allTab, allOn);
+    el.tvAll.hidden = tabs.length < 2; // en la barra del modo TV: con un solo repo no hay nada que juntar
     const label = [t('all.tabLabel', { n: tabs.length }), n ? t('tabs.unread', { n }) : ''].filter(Boolean).join(', ');
     if (el.allTab.getAttribute('aria-label') !== label) el.allTab.setAttribute('aria-label', label);
   }
@@ -1167,19 +1439,24 @@
     renderAllPrs();
   }
 
-  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado. */
+  /** El Launchpad de la vista conjunta: los PRs abiertos de lo ya cargado en cada pestaña, por estado, y los issues
+      abiertos que vio su actividad. */
   function renderAllPrs() {
-    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values() })));
+    overview.setPulls(tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), pulls: x.source.data.pulls.values(), issues: GB.overview.openIssues(feed.itemsOf(x.key)) })));
   }
 
-  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. */
+  /** Entra o sale de la vista conjunta (se recuerda y viaja en la URL, ?all=1). Con un solo repo no hay. En modo TV
+      también (la pantalla compartida con todos los repos a la vez), sin guardarse. */
   function setAll(on, { save = true } = {}) {
-    on = !!on && tabs.length > 1 && !EMBED && !tv.on;
+    on = !!on && tabs.length > 1 && !EMBED;
     if (on === allOn) return renderAllTab();
+    if (tv.on) save = false; // lo que se cambia en TV no se guarda: al salir queda la vista de antes
+    if (on && tv.on && agentsOn) setAgentsView(false, { save: false }); // en TV, una pantalla por vez
     diffView.close(); // los cambios abiertos eran del grafo que se deja de ver
     allOn = on;
     el.app.classList.toggle('all-on', on);
     el.allPanel.hidden = !on;
+    paintAllView(); // antes de dibujar las tarjetas: en 3D no dibujan sus grafos
     if (on) {
       if (replay.active) replay.stop(true);
       graph.unpin?.();
@@ -1190,16 +1467,23 @@
       renderAllSum();
     }
     graph3d?.setActive(view === '3d' && !on && !agentsOn);
+    cortex?.setActive(cortexLive());
+    if (!on && agentsOn) renderAgents(); // el tablero que quedó detrás vuelve al día
     renderTabs();
     if (save) U.store.set('all', on || null);
-    setUrlParam('all', on ? '1' : null);
+    setUrlParam('all', on ? (allView === '3d' && graph3d ? '3d' : '1') : null);
+    setPressed(el.tvAll, on);
+    if (tv.on) {
+      placeTvBar();
+      fitTvGrid();
+    }
   }
   el.allTab.addEventListener('click', () => setAll(!allOn));
   /** El grafo del repo a la vista, a la vista: ir a una rama o a un commit desde la salud, la búsqueda o la vista de
       texto deja la vista conjunta. */
   const shownGraph = () => {
     if (allOn) setAll(false);
-    if (agentsOn) setAgentsView(false);
+    if (agentsOn) setAgentsView(false, { save: !document.documentElement.classList.contains('tv') }); // en TV no se guarda
     return graph;
   };
 
@@ -1258,6 +1542,25 @@
     setBranchView({ hidden, solo: '' });
   }
 
+  /** ¿La historia cargada de la rama `name` se corta antes de su raíz y se puede traer más? (la ficha ofrece «Cargar
+      más»; la demo dice si aún guarda esa historia) */
+  const historyCut = (src, name) => (src.hasMore ? src.hasMore(name) : !!U.historyCut(src.data.commits, src.data.branches.get(name)?.sha));
+  const loadingMore = new WeakMap(); // fuente -> rama -> la carga en curso: volver a abrir la ficha y pulsar otra vez no pide dos veces
+  /** «Cargar más» de la ficha de una rama: otra tanda de su historia, solo de esa rama (ver loadMore de la fuente);
+      el grafo la dibuja con el `update` que avisa la fuente. Da cuántos commits sumó y si queda más por traer. */
+  function loadMore(name) {
+    const src = active.source;
+    let byName = loadingMore.get(src);
+    if (!byName) loadingMore.set(src, (byName = new Map()));
+    if (byName.has(name)) return byName.get(name);
+    const p = src
+      .loadMore(name)
+      .then((n) => ({ n, more: historyCut(src, name) }))
+      .finally(() => byName.delete(name));
+    byName.set(name, p);
+    return p;
+  }
+
   /* `calm`: llegan ramas que esperaban su historia (la carga de a poco de un repo grande): se
      suman sin efectos de llegada, que son para lo nuevo */
   const liveCtx = (data, initial, calm = false, tab = active) => ({
@@ -1272,6 +1575,8 @@
     canHide: tab === active && !allOn, // y ocultarla o dejarla sola, también en la demo
     canDiff: canDiffTab(tab),
     canPrView: !!tab.source.prDetail && !EMBED && tab === active && !allOn, // la vista del PR pide su descripción al pulsarla
+    // «Cargar más» en la ficha de una rama cuya historia quedó cortada (una consulta, solo al pulsarlo)
+    hasMore: tab.source.loadMore && tab === active && !allOn ? (name) => historyCut(tab.source, name) : null,
   });
 
   /** Lo que miran los logros: el estado del repo de ahora (`L`, su layout, si está a la vista). */
@@ -1375,6 +1680,7 @@
   function onBackground(tab, activities, initial) {
     feed.add(activities, { live: !initial });
     drawCard(tab, { initial, activities });
+    if (agentsOn && agentsCombined()) scheduleAgents();
     if (diffTab === tab) diffView.refresh();
     if (initial || !activities.length) return renderTab(tab);
     if (!allOn) tab.unread += activities.length;
@@ -1382,7 +1688,8 @@
     tab.game.observe(activities, gameCtx(activities, data, null));
     renderTab(tab);
     const now = Date.now();
-    if (!tv.on || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
+    // con todos los repos a la vista (las tarjetas o el tablero de agentes de todos) no hay a dónde saltar
+    if (!tv.on || allOn || (agentsOn && agentsCombined()) || paused || now - tv.lastNews < TV_FOLLOW || now - tv.lastSwitch < TV_FOLLOW) return;
     tv.lastNews = now;
     showTab(tab);
     graph3d?.celebrate(activities);
@@ -1456,6 +1763,28 @@
     } finally {
       snapping = false;
       el.snapBtn.removeAttribute('aria-busy');
+    }
+  }
+
+  /** El grafo como diagrama Mermaid (js/mermaid.js): lo que se dibuja (con los filtros por autor y por rama), en un
+      bloque de Markdown que se copia; sin permiso del portapapeles, se guarda como .md. No hace consultas. */
+  async function copyMermaid() {
+    if (!active || !source) return;
+    const data = source.view ? source.view() : source.data;
+    const graph = GB.mermaid.gitGraph(viewOf(data).data);
+    const text = GB.mermaid.markdown(graph);
+    try {
+      await navigator.clipboard.writeText(text);
+      snapNote(t('mermaid.copied', { commits: graph.commits, branches: graph.branches }));
+    } catch (err) {
+      // la app de escritorio solo deja bajar imágenes y videos (electron/main.js): ahí no hay .md que guardar
+      if (desktop) {
+        console.error(err);
+        return snapNote(t('mermaid.failed'));
+      }
+      const file = GB.snapshot.fileName(active.demo ? 'demo' : nameOf(active), { ext: 'md', kind: 'mermaid' });
+      GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), file);
+      snapNote(t('mermaid.saved', { file }));
     }
   }
 
@@ -1705,13 +2034,23 @@
   // Las series por semana del panel de salud: el periodo («últimas 8 semanas, de la más vieja a la actual») va una sola
   // vez, como encabezado del grupo, y cada línea dice solo qué cuenta y sus cifras (pendiente 12: un lector de pantalla
   // leía la frase larga en cada una). Las que dan cero todas las semanas no salen; sin ninguna, tampoco el encabezado.
-  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks']];
-  function weeklyLines(pace) {
-    const shown = WEEKLY_SERIES.filter(([, k]) => pace[k].some(Boolean));
+  const WEEKLY_SERIES = [['merge', 'mergeWeeks'], ['opened', 'openedWeeks'], ['closed', 'closedWeeks'], ['branch', 'branchWeeks'], ['commit', 'commitWeeks'], ['author', 'authorWeeks'], ['newauthor', 'newAuthorWeeks'], ['tag', 'tagWeeks'], ['issue', 'issueWeeks'], ['prclose', 'prCloseWeeks'], ['fork', 'forkWeeks'], ['added', 'addedWeeks'], ['deleted', 'deletedWeeks']];
+  const BIG_SERIES = new Set(['addedWeeks', 'deletedWeeks']); // cifras que pueden pasar de mil: con el separador del idioma
+  /* Una serie por semana en su línea: se ven las cifras con «·» (corto, de un vistazo), y un lector de pantalla lee
+     cada una con su semana y el separador del idioma («3 (hace 7 semanas), 0 (hace 6 semanas), …, 5 (esta semana)»)
+     en vez de «punto medio» entre cifras sueltas (pendiente 21, WCAG 1.3.1). `key` es el texto con {list}. */
+  function seriesLine(id, key, params, values) {
+    const vals = values.map(String);
+    const said = i18n.fmtList(vals.map((v, i) => `${v} (${i18n.fmtWeeksAgo(vals.length - 1 - i)})`));
+    const [before, after = ''] = t(key, { ...params, list: '\u0001' }).split('\u0001');
+    return `<p class="hl-line" id="${id}">${U.esc(before)}<span class="hl-vals" aria-hidden="true">${U.esc(vals.join(' · '))}</span><span class="sr-only">${U.esc(said)}</span>${U.esc(after)}</p>`;
+  }
+  function weeklyLines(pace, withForks = true) {
+    const shown = WEEKLY_SERIES.filter(([, k]) => (withForks || k !== 'forkWeeks') && pace[k].some(Boolean)); // ?forks=0 también calla los forks nuevos por semana
     if (!shown.length) return '';
     const n = pace[shown[0][1]].length;
     return `<div class="hl-weekly" id="hl-weekly" role="group" aria-labelledby="hl-weekly-head"><p class="hl-line hl-weekly-head" id="hl-weekly-head">${U.esc(t('health.weeksHead', { n }))}</p>${shown
-      .map(([id, k]) => `<p class="hl-line" id="hl-${id}weeks">${U.esc(t('health.' + k, { list: pace[k].join(' · ') }))}</p>`)
+      .map(([id, k]) => seriesLine(`hl-${id}weeks`, 'health.' + k, {}, BIG_SERIES.has(k) ? pace[k].map(U.fmtNum) : pace[k]))
       .join('')}</div>`;
   }
 
@@ -1722,48 +2061,159 @@
         const [main, aside] = rowOf(r);
         const go = r.name || r.head;
         const body = `<span class="hl-main">${U.esc(main)}</span><span class="hl-aside">${U.esc(aside)}</span>`;
-        return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
+        return `<li>${go ? `<button type="button" class="hl-row" data-go="${i}" data-key="${U.esc(go)}" title="${U.esc(t('feed.locate'))}">${body}</button>` : `<span class="hl-row">${body}</span>`}</li>`;
       })
       .join('');
     const [box, head] = sub ? ['div class="hl-sub"', 'h4'] : ['section class="hl-sec"', 'h3'];
     return `<${box}><${head}>${U.esc(title)} <span class="hl-n">${U.fmtNum(block.total)}</span></${head}>${rows ? `<ul class="hl-list" data-list="${id}">${rows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</${sub ? 'div' : 'section'}>`;
   }
 
+  /** Cómo volver a encontrar el control enfocado del panel después de rehacerlo: su id o, si es una fila, su lista y su
+      número. Sin esto, lo que llega después de abrir (forks, líneas por semana, despliegues) tiraba el foco a `<body>`. */
+  function healthFocusKey() {
+    const a = document.activeElement;
+    if (!a || a === el.healthBody || !el.healthBody.contains(a)) return null;
+    if (a.id) return '#' + CSS.escape(a.id);
+    const ul = a.closest('.hl-list[data-list]');
+    // la fila por su rama, PR o fork y no por su lugar: si la lista se reordena, el foco no cae en otra
+    if (ul && a.dataset.key != null) return `.hl-list[data-list="${CSS.escape(ul.dataset.list)}"] [data-key="${CSS.escape(a.dataset.key)}"]`;
+    return '#health-close'; // un control sin forma de volver a encontrarlo: el foco queda en el panel, no en <body>
+  }
+
+  /** El tiempo de ciclo por etapas (ítem 217): la mediana de cada etapa de los PRs fusionados de las últimas 4 semanas,
+      con cuántos la midieron, y aparte los fusionados sin revisión o sin aprobación, los abiertos antes de la actividad
+      cargada que entraron con sus revisiones consultadas (ítem 223) y los que siguen fuera. Una fuente que no da
+      revisiones lo dice; sin PRs fusionados, nada que mostrar. */
+  function cycleHtml(c, span) {
+    const line = (id, text) => `<p class="hl-line" id="${id}">${U.esc(text)}</p>`;
+    const body = !c
+      ? `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      : !c.reviews
+        ? `<p class="hl-none" id="hl-cycle-noreviews">${U.esc(t('health.cycleNoReviews'))}</p>`
+        : [['open', 'health.cycleOpen'], ['review', 'health.cycleReview'], ['merge', 'health.cycleMerge']].map(([k, key]) => line('hl-cycle-' + k, t(key, { median: c[k].median != null ? span(c[k].median) : '—', count: U.fmtNum(c[k].n) }))).join('') +
+          (c.noReview || c.noApproval ? line('hl-cycle-skipped', t('health.cycleSkipped', { none: U.fmtNum(c.noReview), unapproved: U.fmtNum(c.noApproval) })) : '') +
+          (c.fetched ? line('hl-cycle-fetched', t('health.cycleFetched', { count: U.fmtNum(c.fetched) })) : '') +
+          (c.early ? line('hl-cycle-early', t('health.cycleEarly', { count: U.fmtNum(c.early) })) : '');
+    return `<section class="hl-sec" id="hl-cycle"><h3>${U.esc(t('health.cycle', { weeks: GB.health.CYCLE_DAYS / 7 }))}</h3>${body}</section>`;
+  }
+
+  /** El puntaje de OpenSSF Scorecard (ítem 218): de 0 a 10, la fecha del análisis y las tres comprobaciones más bajas con
+      su motivo, como texto (el nombre y el motivo vienen de api.scorecard.dev: van escapados, nunca como HTML). Sin
+      análisis o con un fallo, lo dice (sin análisis, cómo se consigue uno, que en gitlab.com no es la acción de GitHub:
+      ítem 225), y de un proyecto de un subgrupo de GitLab, que Scorecard no da, también; sin consulta (otra fuente, un
+      repo privado o de GitHub Enterprise, un GitLab propio), no sale. */
+  function scorecardHtml(sc, host) {
+    if (!sc) return '';
+    const body =
+      sc.state === 'none'
+        ? `<p class="hl-none" id="hl-scorecard-none">${U.esc(t(host === 'gitlab' ? 'health.scorecardNoneGitlab' : 'health.scorecardNone'))}</p>`
+        : sc.state === 'subgroup'
+          ? `<p class="hl-none" id="hl-scorecard-subgroup">${U.esc(t('health.scorecardSubgroup'))}</p>`
+          : sc.state !== 'ok'
+            ? `<p class="hl-none" id="hl-scorecard-error">${U.esc(t('health.scorecardError'))}</p>`
+            : `<p class="hl-line" id="hl-scorecard-score">${U.esc(t('health.scorecardScore', { score: U.fmtNum(sc.score), date: sc.date ? GB.i18n.fmtDate(sc.date) : '—' }))}</p>` +
+              (sc.lowest.length
+                ? `<div class="hl-sub"><h4 id="hl-scorecard-low">${U.esc(t('health.scorecardLowest'))}</h4><ul class="hl-list hl-checks" aria-labelledby="hl-scorecard-low">${sc.lowest
+                    // el nombre y el motivo van aislados (FSI…PDI): son texto en inglés de la API y, en árabe o hebreo, sin
+                    // aislarlos la puntuación del motivo saltaba al otro lado de la frase
+                    .map((c) => `<li class="hl-line">${U.esc(t('health.scorecardCheck', { name: '\u2068' + c.name + '\u2069', score: U.fmtNum(c.score), reason: '\u2068' + (c.reason || '—') + '\u2069' }))}</li>`)
+                    .join('')}</ul></div>`
+                : '');
+    return `<section class="hl-sec" id="hl-scorecard"><h3>${U.esc(t('health.scorecard'))}</h3>${body}</section>`;
+  }
+
+  /** Las alertas de Dependabot abiertas (ítem 232): cuántas de cada gravedad, de la más grave a la más leve, y el enlace a
+      la pestaña de seguridad del repo, donde están el paquete y el aviso, que la página no trae. Sin token, sin permiso
+      para leerlas o con un fallo, lo dice; sin consulta (otra fuente, un repo local), no sale. */
+  function dependabotHtml(d) {
+    if (!d) return '';
+    const note = (id, key, p) => `<p class="hl-none" id="hl-dependabot-${id}">${U.esc(t(key, p))}</p>`;
+    const body =
+      d.state === 'notoken'
+        ? note('notoken', 'health.dependabotNoToken')
+        : d.state === 'denied'
+          ? note('denied', 'health.dependabotDenied')
+          : d.state !== 'ok'
+            ? note('error', 'health.dependabotError')
+            : (d.total
+                ? `<p class="hl-line" id="hl-dependabot-count">${U.esc(t('health.dependabotCount', { n: U.fmtNum(d.total), critical: U.fmtNum(d.critical), high: U.fmtNum(d.high), medium: U.fmtNum(d.medium), low: U.fmtNum(d.low) }))}</p>`
+                : `<p class="hl-line" id="hl-dependabot-zero">${U.esc(t('health.dependabotZero'))}</p>`) +
+              (d.more ? note('more', 'health.dependabotMore', { n: U.fmtNum(d.total) }) : '') +
+              (U.safeUrl(d.url)
+                ? `<ul class="hl-list"><li><a class="hl-row" id="hl-dependabot-link" href="${U.esc(U.safeUrl(d.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(t('health.dependabotOpen'))}</span></a></li></ul>`
+                : '');
+    return `<section class="hl-sec" id="hl-dependabot"><h3>${U.esc(t('health.dependabot'))}</h3>${body}</section>`;
+  }
+
+  /** La firma de un commit en palabras (ítem 230), para las filas de la salud: sin firma, o firmado sin verificar con el
+      motivo que da GitHub. */
+  const sigText = (r) => (r.state === 'UNSIGNED' ? t('tip.sigNone') : t('tip.sigBad', { reason: r.state }));
+
+  /** Los commits de la rama por defecto de las últimas 4 semanas sin firma verificada (ítem 230): cuántos de los que entraron
+      y los más recientes, cada uno con su motivo, que llevan a su commit en el grafo. Sin la firma (otra fuente, un repo
+      local), la sección no sale. */
+  function signedHtml(s) {
+    if (!s) return '';
+    const rows = s.rows
+      .map((r, i) => `<li><button type="button" class="hl-row" data-go="${i}" data-key="${U.esc(r.sha)}" title="${U.esc(t('feed.locate'))}"><span class="hl-main">${U.esc(`${r.sha.slice(0, 7)} ${r.message}`)}</span><span class="hl-aside">${U.esc(sigText(r))}</span></button></li>`)
+      .join('');
+    // la rama va aislada (FSI…PDI): en árabe o hebreo un nombre en caracteres latinos no desordena la frase
+    return `<section class="hl-sec" id="hl-signed"><h3>${U.esc(t('health.signed'))}</h3><p class="hl-line" id="hl-signed-count">${U.esc(t('health.signedCount', { branch: '\u2068' + s.branch + '\u2069', weeks: GB.health.SIGN_DAYS / 7, n: U.fmtNum(s.unverified), total: U.fmtNum(s.total) }))}</p>${rows ? `<ul class="hl-list" data-list="signed">${rows}</ul>` : ''}</section>`;
+  }
+
   function renderHealth() {
+    const had = healthFocusKey();
     const data = source.view ? source.view() : source.data;
     const acts = feed.items.filter((a) => a.repo === active?.key);
-    const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent');
+    const h = GB.health.compute(data, acts, Date.now(), forksByStars ? 'stars' : 'recent', { reviews: source.givesReviews?.() !== false });
     const span = (ms) => GB.i18n.fmtSpan(ms);
     const stat = (label, n) => `<div class="hl-stat"><b>${U.fmtNum(n)}</b><span>${U.esc(label)}</span></div>`;
     const forkRows = h.forks.rows
-      .map((r) => `<li><a class="hl-row" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
+      .map((r) => `<li><a class="hl-row" data-key="${U.esc(r.fullName)}" href="${U.esc(U.safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="hl-main">${U.esc(r.fullName)}</span><span class="hl-aside">${r.stars ? `★ ${U.fmtNum(r.stars)} · ` : ''}${U.esc(span(r.idle))}</span></a></li>`)
       .join('');
-    const forksBody = !showForks ? '' : forkRows ? `<ul class="hl-list">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`;
+    const delta = (w, p) => (w > p ? `+${U.fmtNum(w - p)}` : w < p ? `−${U.fmtNum(p - w)}` : '±0'); // la diferencia de esta semana frente a la anterior
+    // forks nuevos de la semana frente a la anterior, de la actividad ya cargada (sin consultas): solo si alguna de las dos tiene alguno
+    // la semana frente a la anterior; si la actividad cargada no llega entera a la anterior (prev null), solo esta semana
+    const trend = (x, full, only) => (x.prev == null ? t(only, { week: U.fmtNum(x.week) }) : t(full, { week: U.fmtNum(x.week), prev: U.fmtNum(x.prev), delta: delta(x.week, x.prev) }));
+    const forkTrend = showForks && (h.forkTrend.week || h.forkTrend.prev) ? `<p class="hl-line" id="hl-forks-trend">${U.esc(trend(h.forkTrend, 'health.forksNew', 'health.forksNewOnly'))}</p>` : '';
+    const forksBody = !showForks ? '' : forkTrend + (forkRows ? `<ul class="hl-list" data-list="forks">${forkRows}</ul>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`);
     el.healthBody.innerHTML =
       `<section class="hl-sec" id="hl-forks"><h3>${U.esc(t('health.forks'))}${showForks ? ` <span class="hl-n">${U.fmtNum(h.forks.total)}</span>` : ''}</h3><label class="hl-switch"><input type="checkbox" id="hl-forks-toggle"${showForks ? ' checked' : ''}> ${U.esc(t('health.forksShow'))}</label>${showForks ? `<label class="hl-switch"><input type="checkbox" id="hl-forks-stars"${forksByStars ? ' checked' : ''}> ${U.esc(t('health.forksByStars'))}</label>` : ''}${forksBody}</section>` +
+      `<section class="hl-sec" id="hl-stars"><h3>${U.esc(t('health.stars'))}</h3>${
+        h.stars.week || h.stars.prev
+          ? `<p class="hl-line">${U.esc(trend(h.stars, 'health.starsWeek', 'health.starsWeekOnly'))}</p>`
+          : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
+      }</section>` +
       healthList('stale', t('health.stale'), h.stale, (r) => [r.name, span(r.idle)]) +
       healthList('prs', t('health.prs'), h.prs, (r) => [`#${r.number} ${r.title}`, span(r.age)]) +
       `<section class="hl-sec" id="hl-prstates"><h3>${U.esc(t('health.prStates'))}</h3>${['draft', 'failing', 'approved', 'waiting']
         .filter((k) => h.prStates[k].total)
         .map((k) => healthList('prs-' + k, t({ draft: 'health.prState.draft', failing: 'health.prState.failing', approved: 'health.prState.approved', waiting: 'health.prState.waiting' }[k]), h.prStates[k], (r) => [`#${r.number} ${r.title}`, span(r.age)], true))
         .join('') || `<p class="hl-none">${U.esc(t('health.none'))}</p>`}</section>` +
+      `<div id="hl-unreviewed">${healthList('unreviewed', t('health.unreviewed'), h.unreviewed, (r) => [`#${r.number} ${r.title}`, span(r.age)])}</div>` +
       `<section class="hl-sec"><h3>${U.esc(t('health.merged'))}</h3>${
         h.merged ? `<p class="hl-line">${U.esc(t('health.mergedStat', { median: span(h.merged.median), max: span(h.merged.max) }))}</p>` : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
-      }${weeklyLines(h.pace)}</section>` +
+      }${weeklyLines(h.pace, showForks)}${h.code?.pending ? `<p class="hl-none" id="hl-codepending">${U.esc(t('health.codePending'))}</p>` : ''}${h.absence ? `<p class="hl-line" id="hl-absence">${U.esc(t('health.absence', { n: h.absence.n, authors: U.fmtNum(h.absence.authors), commits: U.fmtNum(h.absence.commits) }))}</p>` : ''}</section>` +
+      cycleHtml(h.cycle, span) +
       `<section class="hl-sec" id="hl-dora"><h3>${U.esc(t('health.dora'))}</h3>${
         h.dora.deploys30 || h.dora.gap != null || h.dora.lead != null || h.dora.weeks.some(Boolean)
-          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p><p class="hl-line" id="hl-weeks">${U.esc(t('health.doraWeeks', { n: h.dora.weeks.length, list: h.dora.weeks.join(' · ') }))}</p><p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
+          ? `<p class="hl-line">${U.esc(t('health.doraFreq', { n: h.dora.deploys30, gap: h.dora.gap != null ? span(h.dora.gap) : '—' }))}</p>${seriesLine('hl-weeks', 'health.doraWeeks', { n: h.dora.weeks.length }, h.dora.weeks)}<p class="hl-line">${U.esc(h.leadSource.fromCommit ? t('health.doraLeadCommit', { median: span(h.dora.lead), n: h.leadSource.fromCommit, total: h.leadSource.total }) : t('health.doraLead', { median: h.dora.lead != null ? span(h.dora.lead) : '—' }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      (data.deploys?.size ? `<div id="hl-deploys">${healthList('deploys', t('health.deploys'), h.deploys, (r) => [r.env, [r.sha.slice(0, 7), r.state === 'current' ? t('health.deployCurrent', { branch: r.head }) : r.state === 'behind' ? t('health.deployBehind', { branch: r.head, n: r.behind }) : t('health.deployUnknown'), r.status === 'ok' ? t('health.deployOk') : r.status === 'failed' ? t('health.deployFailed') : r.status === 'running' ? t('health.deployRunning') : '', r.age != null ? span(r.age) : ''].filter(Boolean).join(' · ')])}</div>` : '') +
       `<section class="hl-sec" id="hl-ci"><h3>${U.esc(t('health.ci'))}</h3>${
         h.ci.prs || h.ci.fails30
           ? (h.ci.prs ? `<p class="hl-line">${U.esc(t('health.ciPrs', { failing: h.ci.prs.failing, total: h.ci.prs.total, pct: Math.round(h.ci.prs.rate * 100) }))}</p>` : '') +
             `<p class="hl-line">${U.esc(t('health.ciFeed', { n: h.ci.fails30 }))}</p>`
           : `<p class="hl-none">${U.esc(t('health.none'))}</p>`
       }</section>` +
+      signedHtml(h.signed) +
+      dependabotHtml(h.dependabot) +
+      scorecardHtml(h.scorecard, data.repo?.host) +
       `<section class="hl-sec" id="hl-clash"><h3>${U.esc(t('health.clash'))}</h3><p class="hl-none">${U.esc(t('health.clashHelp'))}</p><button type="button" class="btn btn-ghost" id="hl-clash-go">${U.esc(t('health.clashGo'))}</button><div id="hl-clash-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-cmp"><h3>${U.esc(t('cmp.title'))}</h3><p class="hl-none">${U.esc(t('cmp.help'))}</p><div class="sr-row"><select id="cmp-a" aria-label="${U.esc(t('cmp.a'))}"></select><select id="cmp-b" aria-label="${U.esc(t('cmp.b'))}"></select></div><button type="button" class="btn btn-ghost" id="cmp-go">${U.esc(t('cmp.go'))}</button><div id="cmp-out" role="status" aria-live="polite"></div></section>` +
       `<section class="hl-sec" id="hl-digest"><h3>${U.esc(t('digest.title'))}</h3><p class="hl-none">${U.esc(t('digest.help'))}</p><pre class="hl-digest" id="digest-md" tabindex="0" aria-label="${U.esc(t('digest.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="digest-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="digest-save">${U.esc(t('digest.save'))}</button><button type="button" class="btn btn-ghost" id="digest-png">${U.esc(t('digest.png'))}</button></div><div id="digest-out" role="status" aria-live="polite"></div></section>` +
+      `<section class="hl-sec" id="hl-notes"><h3>${U.esc(t('notes.title'))}</h3><p class="hl-none">${U.esc(t('notes.help'))}</p><pre class="hl-digest" id="notes-md" tabindex="0" aria-label="${U.esc(t('notes.title'))}"></pre><div class="sr-row"><button type="button" class="btn btn-ghost" id="notes-copy">${U.esc(t('digest.copy'))}</button><button type="button" class="btn btn-ghost" id="notes-save">${U.esc(t('digest.save'))}</button></div><div id="notes-out" role="status" aria-live="polite"></div></section>` +
       orgDigestHtml() +
       `<div class="hl-stats">${stat(t('health.merges7'), h.pace.merges7)}${stat(t('health.merges30'), h.pace.merges30)}${stat(t('health.releases30'), h.pace.releases30)}</div>`;
     $('#hl-forks-toggle').addEventListener('change', (e) => {
@@ -1783,6 +2233,7 @@
     clashBtn.addEventListener('click', () => findClashes(data, clashBtn));
     setupCompare(data);
     setupDigest(data, acts);
+    setupNotes(data, acts);
     setupOrgDigest();
     el.healthBody.querySelectorAll('.hl-list').forEach((ul) =>
       ul.querySelectorAll('[data-go]').forEach((b) =>
@@ -1790,10 +2241,12 @@
           const id = ul.dataset.list;
           const r = (id.startsWith('prs-') ? h.prStates[id.slice(4)] : h[id]).rows[Number(b.dataset.go)];
           closeHealth();
-          shownGraph().focusBranch(r.name || r.head);
+          if (id === 'signed') shownGraph().focusSha?.(r.sha); // un commit sin firma verificada: a ese commit
+          else shownGraph().focusBranch(r.name || r.head);
         }),
       ),
     );
+    if (had) (el.healthBody.querySelector(had) || $('#health-close')).focus(); // la fila que ya no está: el foco queda en el panel
   }
 
   /** Comparar dos ramas: commits por delante y punto de separación con lo ya cargado; los archivos
@@ -1932,10 +2385,11 @@
   const isGitHub = (x) => !x.source.host || x.source.host === 'github';
   function orgTabs() {
     const owner = !active || active.demo || !isGitHub(active) ? '' : String(active.source.owner || '').toLowerCase();
-    const key = owner && Object.keys(followedOwners).find((k) => k.toLowerCase() === owner);
-    if (!key) return null;
+    // también con una tarea suya seguida (org:curso/tarea-1-*): el resumen es de la organización
+    const who = owner && Object.keys(followedOwners).map((k) => U.parseOwner('@' + k)).find((w) => w.owner.toLowerCase() === owner);
+    if (!who) return null;
     const mine = realTabs().filter((x) => isGitHub(x) && String(x.source.owner || '').toLowerCase() === owner);
-    return mine.length > 1 ? { owner: key, tabs: mine } : null;
+    return mine.length > 1 ? { owner: who.owner, tabs: mine } : null;
   }
 
   /** La sección del resumen de la organización (solo con 2 o más de sus repos abiertos). */
@@ -1948,7 +2402,7 @@
 
   /** Copiar y guardar un resumen como Markdown o como imagen: `id` es el prefijo de sus elementos y
       `image()` arma el canvas de la imagen. */
-  function wireDigest(id, text, name, image) {
+  function wireDigest(id, text, name, image, kind = 'semana') {
     const out = $(`#${id}-out`);
     $(`#${id}-md`).textContent = text;
     $(`#${id}-copy`).addEventListener('click', async () => {
@@ -1963,7 +2417,7 @@
         sel.addRange(range); // sin permiso del portapapeles: queda seleccionado para copiar a mano
       }
     });
-    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind: 'semana' })));
+    $(`#${id}-save`).addEventListener('click', () => GB.snapshot.download(new Blob([text], { type: 'text/markdown' }), GB.snapshot.fileName(name, { ext: 'md', kind })));
     $(`#${id}-png`)?.addEventListener('click', () => {
       image().toBlob((b) => {
         if (!b) return;
@@ -1976,7 +2430,7 @@
   const DIGEST_COLORS = { bg: '#0e1514', fg: '#e6efed', dim: '#93a5a1', accent: '#4ade80' };
   const digestLabels = () => {
     const label = (k) => t('digest.' + k);
-    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), mergers: label('mergers'), opened: label('opened'), closed: label('closed'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
+    return { head: label('head'), commits: label('commits'), perday: label('perday'), newcomers: label('newcomers'), newbranches: label('newbranches'), merged: label('merged'), mergers: label('mergers'), opened: label('opened'), openers: label('openers'), closed: label('closed'), closers: label('closers'), dropped: label('dropped'), releases: label('releases'), tags: label('tags'), people: label('people'), branch: label('branch') };
   };
 
   /** El resumen de la semana (js/digest.js): se arma con lo ya cargado, se copia o se baja como .md. */
@@ -1986,6 +2440,21 @@
     const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
     wireDigest('digest', GB.digest.toMarkdown(d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none')), repoName, () =>
       GB.digest.toCanvas(document, d, repoName, digestLabels(), GB.i18n.fmtDate, t('health.none'), DIGEST_COLORS, rtl));
+  }
+
+  /** El borrador de notas de la versión (js/digest.js): los PRs fusionados en la rama por defecto desde su último
+      tag y quienes contribuyeron, con lo ya cargado; se copia o se baja como .md, sin publicar nada. Sin la rama por
+      defecto cargada, la sección no sale. */
+  function setupNotes(data, acts) {
+    const n = GB.digest.releaseNotes(data, acts, GB.i18n.text);
+    if (!n) {
+      $('#hl-notes').hidden = true;
+      return;
+    }
+    const repoName = active?.demo ? 'demo' : active?.key || data.repo.name || '';
+    const label = (k) => t('notes.' + k);
+    const labels = { head: label('head'), since: label('since'), noTag: label('noTag'), tagsOut: label('tagsOut'), prs: label('prs'), people: label('people') };
+    wireDigest('notes', GB.digest.toMarkdownNotes(n, repoName, labels, GB.i18n.fmtDate, t('health.none')), repoName, null, 'notas');
   }
 
   /** El de toda la organización: los repos abiertos de la misma organización seguida, sin consultas nuevas. */
@@ -2015,9 +2484,18 @@
     renderHealth();
     const asked = source;
     syncHealthForks();
+    if (asked.syncCodeFrequency) asked.syncCodeFrequency().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // líneas añadidas y borradas: solo con el panel abierto
+    if (asked.syncDeployStatuses && asked.data.deploys?.size) asked.syncDeployStatuses().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    if (asked.syncScorecard) asked.syncScorecard().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // OpenSSF Scorecard: solo con el panel abierto y de un repo público de github.com o gitlab.com
+    if (asked.syncDependabot) asked.syncDependabot().then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {}); // alertas de Dependabot: solo con el panel abierto, de GitHub y con token
     if (asked.syncFirstCommits) {
       const merged = feed.items.filter((a) => a.repo === active?.key && a.kind === 'pr-merge' && a.number && a.openedAt).sort((a, b) => b.time - a.time).slice(0, 20);
       asked.syncFirstCommits(merged.map((a) => a.number)).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
+    }
+    if (asked.syncPrReviews) {
+      // tiempo de ciclo (ítem 223): las revisiones de los fusionados abiertos antes de la actividad cargada, que el feed no trajo
+      const early = GB.health.earlyMerges(feed.items.filter((a) => a.repo === active?.key), Date.now());
+      if (early.length) asked.syncPrReviews(early).then((ran) => ran && source === asked && el.health.open && renderHealth(), () => {});
     }
     if (typeof el.health.showModal === 'function') el.health.showModal();
     else el.health.setAttribute('open', '');
@@ -2054,13 +2532,24 @@
   const AG_EVENT = { continued: 'agents.ev.continued', merged: 'agents.ev.merged', reviewed: 'agents.ev.reviewed', commented: 'agents.ev.commented' };
   let initialAgents = false; // ?agents=1: el panel se abre solo en cuanto el repo a la vista tiene grafo
   let agentsOnly = U.store.get('agentsOnly', false) === true; // solo los vínculos entre dos agentes
+  // todos los repos seguidos juntos en el tablero (se entra así desde la vista conjunta), no solo el que está a la vista
+  let agentsAll = U.store.get('agentsAll', false) === true;
+  try {
+    // ?agents=all los junta y ?agents=1 no (sin guardarlo). Se lee aquí, antes de que la vista recordada reescriba la URL
+    const q = new URLSearchParams(location.search);
+    if (!EMBED && GB.agents.openParam(q)) agentsAll = GB.agents.allParam(q);
+  } catch {
+    /* sin query string */
+  }
+  const agentsCombined = () => agentsAll && tabs.length > 1;
+  let agentsRepoOf = null; // con todos juntos: sha -> repo de cada commit (ir a un commit lleva a su pestaña)
   let agentsTimer = 0;
   let agentsHtml = ''; // el último HTML: si no cambió, no se toca (ni el foco ni el desplazamiento)
   let agentsSel = null; // el participante elegido en la red: las listas y la línea de tiempo se centran en él
   let agentsSeen = null; // lo que ya se mostró ({ ev: Set, edges: Map }): lo que llega después se anima
   let agentsLit = null; // a quién se ilumina en la red (puntero o foco): sobrevive a que el tablero se rehaga
   /** El id de una interacción, el mismo en cada vuelta: para saber cuál es nueva. */
-  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? ''].join('|');
+  const agentEventId = (e) => [e.kind, e.from, e.to, e.time, e.sha || '', e.number ?? '', e.repo ?? ''].join('|');
   const agentSession = (a) => (a?.session ? t('agents.session', { id: GB.agents.shortSession(a.session) }) : '');
   /** Cómo se nombra a un participante: una persona, por su nombre; un agente, por su producto y su sesión, si la tiene.
       Va aislado (FSI…PDI): dos nombres latinos en una frase en árabe no dan vuelta la flecha ni el orden. */
@@ -2092,7 +2581,7 @@
   /** Las partes del enjambre en el tablero: los indicadores, la corteza (con la ficha de quien está elegido), el ingreso
       de tareas, el hilo de un agente, el ritmo, las barras por agente y el log. Deja en `swarmView` lo que recibe la
       corteza. `ctx`: lo que agentsMarkup ya tiene a mano. */
-  function swarmParts({ data, r, byKey, net, slot, sw, row, none }) {
+  function swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef }) {
     const S = GB.swarm;
     const now = Date.now();
     const k = S.kpis(r, data, { now });
@@ -2111,7 +2600,7 @@
       return a?.agent ? [a.agent.name, a.agent.session ? GB.agents.shortSession(a.agent.session) : ''].filter(Boolean).join(' · ') : plainName(key);
     };
     const span = t('swarm.window', { span: i18n.fmtSpan(k.win.span) });
-    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · #${U.esc(x.number)}` : '');
+    const evText = (x) => U.esc(t(AG_EVENT[x.kind], { from: name(x.from), to: name(x.to) })) + (x.number != null ? ` · ${U.esc(prRef(x))}` : '');
 
     // los indicadores: lo que es, el número en grande, una línea más y, si tiene, su curva en la ventana (decorativa)
     const tile = (id, label, value, sub, series = null, cls = '') =>
@@ -2179,7 +2668,9 @@
     const g = S.ingest(r, data, { max: SWARM_TASKS });
     const ciMark = (ci) => (CI_STATES.has(ci) ? `<span class="sw-ci sw-ci-${ci}" role="img" aria-label="${U.esc(t('ci.' + ci))}" title="${U.esc(t('ci.' + ci))}"></span>` : '');
     const taskRows = g.items.map((x) => {
-      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>` : `<span class="sw-tag">#${U.esc(x.number)}</span>`;
+      // con todos los repos juntos, cada tarea dice de qué repo es
+      const repo = x.repo ? `<span class="sw-repo" dir="ltr">${U.esc(x.repo)}</span>` : '';
+      const tag = x.kind === 'branch' ? `<span class="sw-tag" aria-hidden="true">⎇</span>${repo}` : `<span class="sw-tag" dir="ltr">${U.esc(x.repo ? `${x.repo}#${x.number}` : `#${x.number}`)}</span>`;
       const draft = x.kind === 'draft' ? `<span class="sw-chip">${U.esc(t('health.prState.draft'))}</span>` : '';
       const ask = x.waiting ? `<span class="sw-chip sw-chip-ask">${U.esc(t('swarm.waits'))}</span>` : '';
       const to = x.who && byKey.has(x.who) ? `<span class="sw-to">→ ${sw(x.who)}${U.esc(short(x.who))}</span>` : '';
@@ -2232,7 +2723,7 @@
       const what =
         x.type === 'commit'
           ? `<span class="sw-log-sha">${U.esc(x.sha.slice(0, 7))}</span> ${U.esc(x.text)}`
-          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · #${U.esc(x.number)}` : ''}`;
+          : `<span class="sw-log-kind">${U.esc(t(AG_KIND[x.kind]))}</span> → ${U.esc(short(x.to))}${x.number != null ? ` · ${U.esc(prRef(x))}` : ''}`;
       const when = x.time > now - 864e5 ? fmtClock(x.time) : U.fmtDateTime(x.time);
       const body = `<time>${U.esc(when)}</time><span class="sw-log-who ag-s${slot.get(x.key) ?? 0}">${U.esc(short(x.key))}</span><span class="sw-log-what">${what}</span>`;
       const id = x.type === 'commit' ? `log|c|${x.sha}` : `log|${agentEventId(x)}`;
@@ -2256,8 +2747,10 @@
     }
     if (cortex.host.parentNode !== slotEl) slotEl.append(cortex.host);
     cortex.update(swarmView.model, swarmView.text);
-    cortex.setActive(agentsOn);
+    cortex.setActive(cortexLive());
   }
+  /** La corteza se anima mientras se ve, salvo con el modo TV en pausa (ahí la pausa detiene todo lo que se mueve). */
+  const cortexLive = () => agentsOn && !allOn && !(paused && tv.on);
 
   /** El reloj del tablero, al segundo, mientras se mira. */
   let clockTimer = 0;
@@ -2274,10 +2767,30 @@
     clockTimer = setInterval(put, 1000);
   }
 
+  /** Lo que muestra el tablero: el repo a la vista o, con todos juntos (agentsCombined), lo de cada repo ya cargado
+      sumado en uno (GB.agents.combine). Deja en agentsRepoOf de qué repo es cada commit (null con uno solo). */
+  function agentsSource() {
+    if (!agentsCombined()) {
+      agentsRepoOf = null;
+      const data = source.view ? source.view() : source.data;
+      const acts = feed.items.filter((a) => a.repo === active?.key);
+      return { data, r: GB.agents.compute(data, acts, { max: Infinity }), all: false };
+    }
+    const parts = tabs.filter((x) => x.source?.data.loaded).map((x) => ({ key: x.key, name: nameOf(x), data: x.source.view ? x.source.view() : x.source.data, acts: feed.itemsOf(x.key) }));
+    const c = GB.agents.combine(parts, { max: Infinity });
+    agentsRepoOf = c.repoOf;
+    return { data: c.data, r: c, all: true };
+  }
+  /** El nombre de un repo seguido por su clave (o la clave, si ya no se sigue). */
+  const repoNameOf = (key) => {
+    const x = tabs.find((tab) => tab.key === key);
+    return x ? nameOf(x) : String(key || '');
+  };
+
   function agentsMarkup() {
-    const data = source.view ? source.view() : source.data;
-    const acts = feed.items.filter((a) => a.repo === active?.key);
-    const r = GB.agents.compute(data, acts, { max: Infinity });
+    const { data, r, all } = agentsSource();
+    /** El número de PR de una interacción: «#12» o, con todos los repos juntos, «o/a#12» (el #12 de un repo no es el de otro). */
+    const prRef = (x) => (x.number == null ? '' : all && x.repo ? `${repoNameOf(x.repo)}#${x.number}` : `#${x.number}`);
     const byKey = new Map(r.actors.map((a) => [a.key, a]));
     const both = (x) => !!(byKey.get(x.from)?.agent && byKey.get(x.to)?.agent);
     if (agentsSel && !byKey.has(agentsSel)) agentsSel = null; // quien estaba elegido ya no está en lo cargado
@@ -2322,7 +2835,7 @@
         `<p class="hl-line ag-hint">${U.esc(t('agents.netHint'))}</p>`
       : none;
     const tl = GB.agents.timeline(r, { onlyAgents: agentsOnly });
-    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · #${e.number}` : ''} · ${U.fmtDateTime(e.time)}`;
+    const sayEvent = (e) => `${t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) })}${e.number != null ? ` · ${prRef(e)}` : ''} · ${U.fmtDateTime(e.time)}`;
     const timeHtml = tl
       ? GB.agents.timelineSvg(
           tl,
@@ -2348,7 +2861,7 @@
     const eventRows = events.map((e) =>
       row(
         t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }),
-        U.esc([e.number != null ? `#${e.number}` : '', e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
+        U.esc([prRef(e), e.time ? U.timeAgo(e.time) : ''].filter(Boolean).join(' · ')),
         e.sha,
         '',
         `<span class="ag-chip ag-k-${e.kind} ag-chip-dot" aria-hidden="true"><span class="ag-chip-g"></span></span>${U.esc(t(AG_EVENT[e.kind], { from: actorName(byKey.get(e.from)), to: actorName(byKey.get(e.to)) }))}`,
@@ -2357,7 +2870,7 @@
     const focus = agentsSel
       ? `<p class="ag-focus" id="ag-focus">${sw(agentsSel)}<span class="ag-focus-name">${U.esc(t('agents.focus', { name: actorName(byKey.get(agentsSel)) }))}</span><button type="button" class="btn btn-ghost ag-focus-clear" id="ag-focus-clear">${U.esc(t('agents.focusClear'))}</button></p>`
       : '';
-    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none });
+    const swarm = swarmParts({ data, r, byKey, net, slot, sw, row, none, prRef });
     return (
       swarm.kpis +
       (agents.length ? '' : `<p class="hl-line" id="ag-noagents">${U.esc(t('agents.noAgents'))}</p>`) +
@@ -2383,6 +2896,7 @@
     clearTimeout(agentsTimer);
     agentsTimer = 0;
     if (!source) return;
+    if (allOn) return void (agentsHtml = ''); // detrás de la vista conjunta no se ve: se rehace al volver (setAll)
     const html = agentsMarkup();
     if (html === agentsHtml) return pushCortex(); // la corteza igual recibe lo nuevo (un pulso más, por ejemplo)
     const focusables = () => [...el.agentsBody.querySelectorAll('button, a, select, [tabindex="0"]')];
@@ -2396,7 +2910,7 @@
     const edges = [...el.agentsBody.querySelectorAll('.ag-net .ag-e')];
     const edgeKey = (g) => g.dataset.from + '>' + g.dataset.to;
     // otro repo, «solo entre agentes» o alguien elegido muestran otras cosas, pero no nuevas: no se anima nada
-    const mode = `${active?.key}|${agentsOnly}|${agentsSel}`;
+    const mode = `${agentsCombined() ? '*' : active?.key}|${agentsOnly}|${agentsSel}`;
     if (agentsSeen && agentsSeen.mode !== mode) agentsSeen = null;
     if (agentsSeen) {
       for (const n of evs) if (!agentsSeen.ev.has(n.dataset.ev)) n.classList.add('is-new');
@@ -2404,6 +2918,20 @@
     }
     agentsSeen = { mode, ev: new Set([...(agentsSeen?.ev || []), ...evs.map((n) => n.dataset.ev)]), edges: new Map(edges.map((g) => [edgeKey(g), Number(g.dataset.n)])) };
     if (agentsLit) lightAgent([...el.agentsBody.querySelectorAll('.ag-net .ag-n[data-key]')].find((n) => n.dataset.key === agentsLit) || null);
+    markCut();
+  }
+  /** En el modo TV el tablero no se desplaza: lo último y el log muestran lo que cabe y, si algo queda cortado (lo más
+      viejo: abajo en lo último, arriba en el log), lo dicen desvaneciéndose de ese lado. */
+  function markCut() {
+    if (!agentsOn || !document.documentElement.classList.contains('tv')) return; // fuera del modo TV la marca no se usa
+    for (const [sel, top] of [['#ag-recent .hl-list', false], ['#sw-log .sw-log-list', true]]) {
+      const list = el.agentsBody.querySelector(sel);
+      const edge = top ? list?.firstElementChild : list?.lastElementChild;
+      if (!edge) continue;
+      const a = list.getBoundingClientRect();
+      const b = edge.getBoundingClientRect();
+      list.classList.toggle('is-cut', top ? b.top < a.top - 1 : b.bottom > a.bottom + 1);
+    }
   }
   function scheduleAgents() {
     if (Date.now() - spendState.at > SPEND_EVERY) refreshSpend(); // con la vista abierta, el gasto se renueva solo
@@ -2423,13 +2951,15 @@
     el.agents.hidden = !on;
     setPressed(el.viewAgents, on);
     setPressed(el.agentsBtn, on);
+    setPressed(el.tvAgents, on);
+    placeTvBar();
     setPressed(el.view3d, !on && view === '3d');
     setPressed(el.view2d, !on && view === '2d');
     graph3d?.setActive(view === '3d' && !allOn && !on);
     clearTimeout(agentsTimer);
     agentsTimer = 0;
     tickClock();
-    cortex?.setActive(on);
+    cortex?.setActive(cortexLive());
     if (on) {
       graph.unpin?.(); // una ficha fijada quedaría flotando sobre el tablero
       lowerThird(null);
@@ -2443,14 +2973,61 @@
       lightAgent(null);
     }
     if (save) U.store.set('agentsView', on || null);
-    setUrlParam('agents', on ? '1' : null);
+    paintAgentsScope();
   }
-  el.viewAgents.addEventListener('click', () => setAgentsView(true));
+  /** El alcance del tablero a la vista: con todos los repos juntos, la cabecera lo dice (en lugar del nombre del repo),
+      las cifras del repo se esconden, ninguna pestaña queda marcada y la URL lleva ?agents=all. */
+  function paintAgentsScope() {
+    const all = agentsOn && agentsCombined();
+    const was = el.graphPanel.classList.contains('agents-all');
+    el.graphPanel.classList.toggle('agents-all', all);
+    el.app.classList.toggle('agents-all', all);
+    el.graphAll.hidden = !all;
+    if (all) setText(el.graphAll, t('all.tabLabel', { n: tabs.length }));
+    el.agentsAllWrap.hidden = tabs.length < 2;
+    el.agentsAll.checked = agentsCombined();
+    if (agentsOn || !initialAgents) setUrlParam('agents', agentsOn ? (all ? 'all' : '1') : null); // ?agents=… espera al repo
+    if (was === all) return;
+    for (const x of tabs) renderTab(x);
+    if (agentsOn) scheduleAgents(); // llegó (o se fue) el segundo repo: el tablero junta a todos, o deja de hacerlo
+  }
+  /** Junta (o separa) a todos los repos seguidos en el tablero de agentes. Se recuerda, salvo en el modo TV. */
+  function setAgentsAll(on, { save = true, render = true } = {}) {
+    on = !!on;
+    if (on !== agentsAll) {
+      agentsAll = on;
+      if (save) U.store.set('agentsAll', on || null);
+      agentsSel = null; // quien estaba elegido era de lo que se veía antes
+      agentsHtml = '';
+      agentsSeen = null;
+    }
+    paintAgentsScope();
+    if (render && agentsOn && source) renderAgents();
+  }
+  el.viewAgents.addEventListener('click', () => {
+    if (!agentsOn) setAgentsAll(false, { render: false }); // desde el grafo de un repo, los agentes de ese repo
+    setAgentsView(true);
+  });
+  /** El botón de los agentes (arriba y en la barra del modo TV): desde la vista conjunta abre el tablero con todos los
+      repos juntos y, desde ese tablero, vuelve a la vista conjunta; desde el grafo de un repo, el de ese repo. */
+  function toggleAgents({ save = true } = {}) {
+    if (allOn) {
+      setAgentsAll(true, { save, render: false });
+      setAll(false, { save });
+      return setAgentsView(true, { save });
+    }
+    if (agentsOn && agentsCombined()) {
+      setAgentsView(false, { save });
+      return setAll(true, { save });
+    }
+    if (!agentsOn) setAgentsAll(false, { save, render: false });
+    setAgentsView(!agentsOn, { save });
+  }
   el.agentsBtn.addEventListener('click', () => {
-    if (allOn) setAll(false);
-    setAgentsView(!agentsOn);
+    toggleAgents();
     if (agentsOn) el.graphPanel.scrollIntoView?.({ block: 'nearest' });
   });
+  el.agentsAll.addEventListener('change', () => setAgentsAll(el.agentsAll.checked, { save: !tv.on }));
   /** Elige (o suelta, si ya estaba elegido) a un participante de la red: las listas y la línea de tiempo se centran
       en él. El foco se queda en su nodo (o en el botón de soltarlo). */
   function selectAgent(key, from = null) {
@@ -2614,6 +3191,10 @@
     if (tab) return selectAgent(tab.dataset.pick, '.sw-tab[data-pick]');
     const b = e.target.closest('button[data-sha], .ag-time .ag-ev[data-sha]');
     if (!b) return;
+    // con todos los repos juntos, el commit puede ser de otro: primero su pestaña
+    const repo = agentsRepoOf?.get(b.dataset.sha);
+    const other = repo && repo !== active?.key ? tabs.find((x) => x.key === repo) : null;
+    if (other) openTab(other);
     shownGraph().focusSha?.(b.dataset.sha); // deja la vista de agentes y va al commit
   });
 
@@ -3156,15 +3737,32 @@
   const constellation = GB.constellation.mount($('#constellation-body'), {
     text: t,
     fmt: U.fmtNum,
+    ago: (ms) => U.timeAgo(ms),
     select: $('#constellation-order'),
     status: $('#constellation-status'),
+    plazo: { field: $('#constellation-due-field'), input: $('#constellation-due'), count: $('#constellation-late') },
     onGo(key) {
       const tab = tabs.find((x) => x.key === key);
+      const ghost = !tab && constellationGhosts.get(key);
       if (typeof el.constellation.close === 'function') el.constellation.close();
       else el.constellation.removeAttribute('open');
       if (tab) showTab(tab);
+      else if (ghost) openGhost(ghost);
     },
   });
+  /** Las galaxias tenues de la última vez que se abrió la constelación (clave -> repo), para abrir la elegida. */
+  let constellationGhosts = new Map();
+  /** Un repo de una organización seguida que no tenía pestaña: se abre en una, si queda lugar (como al escribirlo). */
+  function openGhost(ghost) {
+    const open = tabs.find((x) => x.key === ghost.key); // se abrió por otro lado mientras la constelación estaba abierta
+    if (open) return showTab(open);
+    if (realTabs().length >= MAX_REPOS) return repoNote(t('repo.limit'));
+    resume();
+    const tab = addTab(sourceFor({ owner: ghost.owner, name: ghost.repo }));
+    startTab(tab);
+    repoNote('');
+    showTab(tab);
+  }
   el.constellation = $('#constellation');
   try {
     // ?order=activity|prs|issues|stars|forks|new|name: la constelación abre ya ordenada (sin anunciarlo: no la pidió nadie con el selector)
@@ -3174,6 +3772,8 @@
     constellation.setFilter(GB.constellation.filterParam(new URLSearchParams(location.search)));
     // ?recent=30: solo los repos con algún commit en los últimos 30 días
     constellation.setRecent(GB.constellation.recentParam(new URLSearchParams(location.search)));
+    // ?plazo=2026-01-15: con una tarea de GitHub Classroom seguida, marca las entregas con push después de ese día
+    constellation.setDue(GB.constellation.dueParam(new URLSearchParams(location.search)) || '');
   } catch {
     /* sin query string */
   }
@@ -3184,6 +3784,13 @@
     return last;
   }
   $('#constellation-btn').addEventListener('click', () => {
+    // los repos sin pestaña de las organizaciones seguidas, de su lista ya pedida: ninguna consulta nueva
+    const ghosts = GB.constellation.ghostItems(ownerLists, tabs.filter((x) => x.source).map((x) => x.key), keyOf);
+    constellationGhosts = new Map(ghosts.map((g) => [g.key, g]));
+    // las entregas de las tareas seguidas (org:curso/tarea-1-*), con el último push de esa misma lista: el plazo las mide
+    const tasks = Object.fromEntries(Object.entries(ownerLists).filter(([k]) => U.parseOwner('@' + k)?.prefix));
+    const subs = GB.constellation.submissions(tasks, keyOf);
+    const asSub = (it) => (subs.has(it.key) ? { ...it, sub: true, pushed: subs.get(it.key) } : it);
     constellation.render(
       tabs
         .filter((x) => x.source)
@@ -3201,7 +3808,9 @@
           state: x.status?.state || 'loading',
           unread: x.unread,
           active: x === active,
-        })),
+        }))
+        .concat(ghosts)
+        .map(asSub),
     );
     if (typeof el.constellation.showModal === 'function') el.constellation.showModal();
     else el.constellation.setAttribute('open', '');
@@ -3244,6 +3853,8 @@
         text: (k, p) => t(k, p),
         available: (a) => {
           const b = cmdBtn(a);
+          // plegar el panel de actividad solo tiene sentido con el panel al lado del grafo (en una columna va debajo)
+          if (a.id === 'feedFold' && !matchMedia('(min-width: 861px)').matches) return false;
           return !!b && !b.disabled && !b.closest('[hidden]');
         },
         run: (a) => cmdBtn(a)?.click(),
@@ -3257,7 +3868,10 @@
       if ($('#cmdk').open) palette.close();
       else if (!document.querySelector('dialog[open]')) palette.open();
     });
-  }
+    // el botón de la barra: la misma paleta, para quien no sabe del atajo (que se ve a su lado: ⌘K en Mac)
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '')) $('#cmdk-kbd').textContent = '⌘K';
+    $('#cmdk-btn').addEventListener('click', () => palette.open());
+  } else $('#cmdk-btn').hidden = true;
   $('#search-input').addEventListener('input', () => {
     if (!initialQuery) setUrlParam('q', $('#search-input').value.trim().slice(0, 100)); // la búsqueda se comparte con la URL
   });
@@ -3306,11 +3920,11 @@
     graphAuthor.focus(); // el botón se esconde: el foco no se pierde
   });
   const columnsEl = $('#graph-columns');
-  columnsEl.checked = U.store.get('columns', false) === true; // autor y fecha junto a cada commit del 2D: de quien lo enciende, en todos sus repos
-  graph2d?.setColumns?.(columnsEl.checked);
+  columnsEl.checked = U.store.get('columns', false) === true; // SHA, autor y fecha junto a cada commit del 2D y del 3D: de quien lo enciende, en todos sus repos
+  for (const g of [graph2d, graph3d]) g?.setColumns?.(columnsEl.checked);
   columnsEl.addEventListener('change', () => {
     U.store.set('columns', columnsEl.checked ? true : null);
-    graph2d?.setColumns?.(columnsEl.checked);
+    for (const g of [graph2d, graph3d]) g?.setColumns?.(columnsEl.checked);
   });
   $('#graph-firstparent').addEventListener('change', (e) => {
     firstParentOn = e.target.checked;
@@ -3416,6 +4030,13 @@
 
   /* ---------- encabezado y resumen ---------- */
 
+  /** El título de la pestaña: el repo a la vista. Con la demo (lo que abre quien llega sin `?repo=`, y lo que un
+      buscador indexa después de ejecutar la página) o sin repo, lo que la página es, en el idioma activo: un
+      «acme/orbita · GraphBranch» no le dice a nadie qué encontró. La práctica y el ensayo llevan su nombre. */
+  function pageTitle(repo) {
+    return repo && !(repo.demo && !repo.practice) ? `${repo.owner}/${repo.name} · GraphBranch` : t('meta.title');
+  }
+
   function renderRepo(repo) {
     const full = `${repo.owner}/${repo.name}`;
     el.repoLink.textContent = full;
@@ -3431,7 +4052,7 @@
     el.repoBadge.className = `badge${repo.demo ? ' demo' : ''}`;
     el.repoDesc.textContent = repo.rehearsal ? t('practice.rehearseGoal', { repo: `${repo.owner}/${repo.name}` }) : repo.practice ? t('practice.desc') : repo.demo ? t('repo.demoDesc') : repo.description || '';
     el.repoDesc.hidden = !el.repoDesc.textContent;
-    feed.setBaseTitle(`${full} · GraphBranch`);
+    feed.setBaseTitle(pageTitle(repo));
     renderTokenBanner();
     updateRehearse();
   }
@@ -3519,7 +4140,9 @@
     status = s;
     if (s.state === 'error' && !source.data.loaded) {
       const fatal = s.nextAt == null;
-      showOverlay('error', s.message, fatal);
+      // un repo sin commits no es un fallo: el aviso de repo vacío, no la tarjeta de error con «Reintentar»
+      if (s.error?.kind === 'empty') showOverlay('empty');
+      else showOverlay('error', s.message, fatal);
     }
     renderStatus();
   }
@@ -3609,7 +4232,7 @@
       showOverlay('loading', i18n.msg('status.retrying'));
       source.refreshNow();
     } else if (action === 'demo') startDemo();
-    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
+    else if (action === 'settings') openSettings({ gitlab: el.gitlabTokenInput, codeberg: el.codebergTokenInput, bitbucket: el.bitbucketTokenInput, bitbucketdc: el.bbdcTokenInput, forgejo: el.forgeTokenInput, azure: el.azureTokenInput }[source?.host] || el.tokenInput);
   });
 
   /* ---------- controles ---------- */
@@ -3653,6 +4276,8 @@
     renderPause();
     for (const x of tabs) x.source.setPaused(v);
     graph3d?.setHold(v);
+    allSpace?.setHold(v);
+    cortex?.setActive(cortexLive());
     if (tv.attract && replay.active) {
       if (v) replay.pause();
       else if (replay.u >= replay.U) replay.stop();
@@ -3719,6 +4344,7 @@
   el.fullscreenBtn.addEventListener('click', toggleFullscreen);
   el.replayBtn.addEventListener('click', toggleReplay);
   el.snapBtn.addEventListener('click', saveImage);
+  el.mermaidBtn.addEventListener('click', copyMermaid);
   el.flyBtn.addEventListener('click', () => graph3d?.flight?.toggle());
   setPressed(el.galaxyBtn, !!graph3d?.galaxy);
   el.galaxyBtn.addEventListener('click', () => graph3d?.setGalaxy(!graph3d.galaxy));
@@ -3779,7 +4405,60 @@
 
   const ATTRACT_IDLE = 3 * 60e3; // sin novedades durante este tiempo…
   const ATTRACT_EVERY = 10 * 60e3; // …se reproduce la historia, como mucho una vez cada tanto
-  const tv = { on: false, prevView: null, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tv = { on: false, prevView: null, prevAgents: false, prevAll: false, lock: null, locking: false, attract: false, lastNews: 0, lastAttract: 0, lastSwitch: 0, idleTimer: 0 };
+  const tvBarHome = el.tvBar.parentNode; // sobre el grafo; con la vista de agentes va a la cabecera del tablero
+
+  /** La barra del modo TV, donde se ve: sobre el grafo o, con la vista de agentes, en la cabecera del tablero (el grafo
+      queda escondido y ella con él). Si tenía el foco, lo conserva. */
+  function placeTvBar() {
+    const host = allOn ? el.allPanel.querySelector('.panel-head') : agentsOn ? el.agents.querySelector('.ab-head') : tvBarHome;
+    if (!host || el.tvBar.parentNode === host) return;
+    const had = el.tvBar.contains(document.activeElement) ? document.activeElement : null;
+    host.append(el.tvBar);
+    had?.focus({ preventScroll: true });
+  }
+
+  /** El foco del modo TV: en lo que se ve (el grafo o, con la vista de agentes, su panel), donde están los atajos del
+      modo; no en la barra, que no se escondería mientras lo tenga. */
+  const tvFocus = () => (allOn ? el.allPanel : agentsOn ? el.graphPanel : graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) al tablero de agentes y vuelve. No cambia lo guardado:
+      al salir del modo TV queda la vista que había antes de entrar. */
+  function tvShowAgents() {
+    if (!tv.on) return;
+    const before = document.activeElement;
+    // desde la vista conjunta se abre (con todos los repos juntos), aunque el tablero hubiera quedado abierto detrás
+    const on = allOn || !agentsOn;
+    if (on && tv.attract && replay.active) replay.stop(); // el tablero es el presente: el Replay de ambiente se acaba
+    tv.attract = false;
+    toggleAgents({ save: false }); // una pantalla por vez: el tablero de todos vuelve a la vista conjunta
+    // el foco no se queda en lo que se escondió (ni en la barra): pasa a lo que ahora se ve
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
+  }
+
+  /** En modo TV, la pantalla pasa del grafo (con el director) a todos los repos seguidos a la vez, cada uno en su
+      tarjeta, y vuelve. Tampoco cambia lo guardado. */
+  function tvShowAll(on) {
+    if (!tv.on || (on && tabs.length < 2)) return;
+    const before = document.activeElement;
+    if (on && tv.attract && replay.active) replay.stop(); // con todos a la vista no hay Replay de ambiente
+    tv.attract = false;
+    setAll(on, { save: false });
+    if (!before || before === document.body || el.graphPanel.contains(before) || el.allPanel.contains(before)) tvFocus();
+  }
+
+  /** En modo TV, las tarjetas de la vista conjunta entran todas en la pantalla: tantas columnas y filas como pide
+      su cantidad en el lugar que hay (--tv-cols, --tv-rows; ver GB.overview.fitGrid). */
+  const allGrid = $('#all-grid');
+  function fitTvGrid() {
+    if (!tv.on || !allOn) return;
+    const n = allGrid.children.length;
+    const r = allGrid.getBoundingClientRect();
+    const { cols, rows } = GB.overview.fitGrid(n, r.width, r.height);
+    allGrid.style.setProperty('--tv-cols', String(cols));
+    allGrid.style.setProperty('--tv-rows', String(rows));
+  }
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitTvGrid()).observe(allGrid);
 
   /** Entra o sale del modo TV. `user`: viene de un clic (solo así se puede pedir pantalla completa). */
   function setTV(on, user = false) {
@@ -3787,25 +4466,33 @@
     tv.on = on;
     const root = document.documentElement;
     // el botón TV (en la barra que el modo esconde) o el de salir (en la barra del modo) tenía el foco
-    const lostFocus = (on ? el.tvBtn : el.tvBar).contains(document.activeElement);
+    const lostFocus = (on ? [el.tvBtn, el.allTvBtn] : [el.tvBar]).some((b) => b.contains(document.activeElement));
     root.classList.toggle('tv', on);
     setPressed(el.tvBtn, on);
+    setPressed(el.allTvBtn, on);
     if (on) {
-      setAll(false, { save: false }); // la pantalla compartida es la del grafo, con el director (pasa sola de un repo a otro)
-      diffView.close(); // la pantalla compartida es del grafo
+      // desde la vista conjunta se queda en ella (todos los repos a la vez); si no, el grafo con el director, que pasa
+      // solo de un repo a otro. La R (o su botón) cambia de una a otra
+      tv.prevAll = allOn;
+      diffView.close(); // la pantalla compartida no es la de los cambios de un commit
       tv.prevView = view;
+      tv.prevAgents = agentsOn || initialAgents; // con ?tv=1&agents=1 el tablero llega cuando el repo tiene grafo
+      tv.prevAgentsAll = agentsAll; // y con qué alcance (el de un repo o todos juntos), y la vista conjunta en 2D o 3D
+      tv.prevAllView = allView;
       tv.lastNews = tv.lastAttract = Date.now();
-      if (graph3d) setView('3d', false);
+      if (graph3d) setView('3d', false); // detrás, el grafo en 3D con el director
+      if (tv.prevAgents && !initialAgents && !allOn) setAgentsView(true, { save: false }); // desde la vista de agentes, se queda en ella
       feed.sound = false; // en un espacio compartido el sonido llega a todos: se enciende a mano
       graph3d?.flight?.exit(); // la pantalla compartida la lleva el director, no un piloto
       director?.setTV(true);
       director?.setOn(true);
       if (user && fullscreenOK && !fullscreenEl()) requestFs(root);
+      placeTvBar();
       tvScale();
       lockScreen();
-      // el foco pasa al grafo, donde están los atajos del modo (espacio, F, Esc); no a la barra, que
-      // no se escondería mientras tenga el foco
-      if (lostFocus || document.activeElement === document.body) (graph3d ? el.graph3d : el.graph).focus({ preventScroll: true });
+      // el foco pasa al grafo (o al tablero de agentes), donde están los atajos del modo (espacio, F, A, Esc); no a la
+      // barra, que no se escondería mientras tenga el foco
+      if (lostFocus || document.activeElement === document.body) tvFocus();
     } else {
       if (tv.attract && replay.active) replay.stop();
       tv.attract = false;
@@ -3814,13 +4501,21 @@
       director?.setOn(!!U.store.get('director', false));
       if (fullscreenEl() === root) exitFs();
       setView(tv.prevView || view, false);
+      setAgentsAll(tv.prevAgentsAll, { save: false, render: false });
+      if (allView !== tv.prevAllView) setAllView(tv.prevAllView, { save: false });
+      if (tv.prevAgents) setAgentsView(true, { save: false }); // se vuelve a la vista de agentes si se entró desde ella
+      setAll(tv.prevAll, { save: false }); // y a la vista conjunta, si se entró desde ella (o se sale de la que se abrió en TV)
       tv.lock?.release().catch(() => {});
       tv.lock = null;
       root.style.removeProperty('--tvz');
-      if (lostFocus) el.tvBtn.focus({ preventScroll: true });
+      // también si lo que tenía el foco se escondió (el grafo, al volver a la vista de agentes): el navegador lo suelta
+      // recién al dibujar, así que se mira si todavía se ve
+      const at = document.activeElement;
+      if (lostFocus || !at || at === document.body || !at.getClientRects().length) (allOn ? el.allTvBtn : el.tvBtn).focus({ preventScroll: true });
     }
     setPressed(el.soundBtn, feed.sound);
     setPressed(el.tvSound, feed.sound);
+    cortex?.setActive(cortexLive()); // la pausa del modo TV también detiene la corteza
     graph3d?.gx?.pokeAmbience(); // el zumbido del espacio sigue al sonido, como con sus botones
     setUrlParam('tv', on ? '1' : null);
     graph3d?.restyle();
@@ -3834,6 +4529,8 @@
     const z = Math.min(2.2, Math.max(1, Math.min(innerWidth / 1500, innerHeight / 860)));
     document.documentElement.style.setProperty('--tvz', z.toFixed(3));
     graph3d?.restyle();
+    markCut(); // con otra letra, en lo último y en el log cabe otra cantidad
+    fitTvGrid();
   }
 
   /** Pantalla siempre encendida (Screen Wake Lock); el navegador la suelta al ocultar la pestaña. */
@@ -3866,7 +4563,8 @@
     if (!tv.on) return;
     const now = Date.now();
     el.tvClock.textContent = i18n.fmtTime(now);
-    if (paused || replay.active || !lastRender || lastRender.L.nodes.length < 8) return;
+    // con el tablero de agentes a la vista no hay grafo que reproducir: el tablero ya es lo que pasa ahora
+    if (paused || replay.active || agentsOn || allOn || !lastRender || lastRender.L.nodes.length < 8) return;
     if (now - tv.lastNews < ATTRACT_IDLE || now - tv.lastAttract < ATTRACT_EVERY) return;
     tv.lastAttract = now;
     tv.attract = true;
@@ -3875,6 +4573,9 @@
   }
 
   el.tvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.allTvBtn.addEventListener('click', () => setTV(!tv.on, true));
+  el.tvAgents.addEventListener('click', () => tvShowAgents());
+  el.tvAll.addEventListener('click', () => tvShowAll(!allOn));
   el.tvExit.addEventListener('click', () => setTV(false));
   el.tvFs.addEventListener('click', toggleFullscreen);
   el.tvFs.hidden = !fullscreenOK;
@@ -3897,7 +4598,8 @@
     } else graph3d?.gx?.pokeAmbience();
   });
   for (const type of ['pointermove', 'pointerdown', 'keydown']) document.addEventListener(type, () => tv.on && wake(), { passive: true });
-  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa y Esc sale del modo
+  // en modo TV: espacio pausa todo, F pone la página entera en pantalla completa, A pasa del grafo al tablero de agentes
+  // (y vuelve), R a todos los repos a la vez (y vuelve) y Esc sale del modo
   document.addEventListener('keydown', (ev) => {
     if (!tv.on || ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     // Esc sirve también con el foco en un botón; si el grafo la usó para cerrar una ficha, ya lo marcó
@@ -3913,6 +4615,15 @@
     } else if (k === 'f' && fullscreenOK) {
       ev.preventDefault();
       toggleFullscreen();
+    } else if (k === 'a') {
+      ev.preventDefault();
+      tvShowAgents();
+    } else if (k === 'r' && tabs.length > 1) {
+      ev.preventDefault();
+      tvShowAll(!allOn);
+    } else if (k === '3' && allOn && graph3d) {
+      ev.preventDefault();
+      setAllView(allView === '3d' ? '2d' : '3d', { save: false }); // la vista conjunta: tarjetas o todos en 3D
     }
   });
 
@@ -3946,14 +4657,15 @@
     el.bitbucketTokenInput.value = settings.bitbucketToken;
     el.azureTokenInput.value = settings.azureToken;
     el.bbdcTokenInput.value = settings.bbdcToken;
-    el.token2Owner.value = settings.account2.owner;
-    el.token2Input.value = settings.account2.token;
+    el.forgeTokenInput.value = settings.forgeToken;
+    renderAccountRows(settings.accounts);
     for (const [input, toggle] of tokenFields) {
       input.type = 'password';
       toggle.textContent = t('settings.show');
     }
     el.depth.value = settings.depth;
     el.marks.checked = settings.marks;
+    errorReports.show();
     for (const f of hookFields) {
       f.input.value = hookUrls[f.service];
       f.state.textContent = '';
@@ -3969,6 +4681,68 @@
     if (typeof el.dialog.close === 'function') el.dialog.close();
     else el.dialog.removeAttribute('open');
   }
+
+  /* Las otras cuentas de GitHub en Ajustes: una fila por cuenta (y una vacía si no hay ninguna), cada una con su
+     dueño, su token, mostrar y quitar, y «Agregar una cuenta» hasta GitHubSource.MAX_ACCOUNTS. Las filas se rehacen
+     desde sus valores al agregar o quitar, así su número y sus nombres accesibles siguen el orden. */
+  /** Lo escrito en las filas, en orden ({ owner, token } de cada una, aunque esté vacía). */
+  const readAccountRows = () =>
+    [...el.accountsList.querySelectorAll('.account')].map((row) => ({ owner: row.querySelector('.account-owner').value, token: row.querySelector('.account-token').value }));
+
+  /** Dibuja las filas de `list` (al menos una) y, si se pide, deja el foco en el dueño de la fila `focusAt`. */
+  function renderAccountRows(list, focusAt = -1) {
+    const rows = (list.length ? list : [{ owner: '', token: '' }]).slice(0, GB.GitHubSource.MAX_ACCOUNTS);
+    el.accountsList.replaceChildren(
+      ...rows.map(({ owner, token }, i) => {
+        const row = document.createElement('fieldset');
+        row.className = 'account';
+        row.innerHTML = `
+          <legend id="account-legend-${i + 1}"></legend>
+          <div class="field-row">
+            <input class="account-owner" id="account-owner-${i + 1}" type="text" autocomplete="off" spellcheck="false" maxlength="39" placeholder="org">
+            <button type="button" class="btn btn-ghost account-remove" id="account-remove-${i + 1}" aria-labelledby="account-remove-${i + 1} account-legend-${i + 1}"></button>
+          </div>
+          <div class="field-row">
+            <input class="account-token" id="account-token-${i + 1}" type="password" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn btn-ghost account-toggle"></button>
+          </div>`;
+        const ownerIn = row.querySelector('.account-owner');
+        const tokenIn = row.querySelector('.account-token');
+        const toggle = row.querySelector('.account-toggle');
+        ownerIn.value = owner;
+        tokenIn.value = token;
+        toggle.addEventListener('click', () => {
+          tokenIn.type = tokenIn.type === 'password' ? 'text' : 'password';
+          showToggle(tokenIn, toggle);
+        });
+        row.querySelector('.account-remove').addEventListener('click', () => {
+          const left = readAccountRows();
+          left.splice(i, 1);
+          renderAccountRows(left, Math.min(i, Math.max(0, left.length - 1)));
+        });
+        return row;
+      }),
+    );
+    labelAccountRows();
+    if (focusAt >= 0) el.accountsList.querySelectorAll('.account-owner')[focusAt]?.focus();
+  }
+
+  /** Los textos de las filas, en el idioma activo: el número de cada cuenta, los nombres de sus campos y sus botones. */
+  function labelAccountRows() {
+    el.accountsList.querySelectorAll('.account').forEach((row, i) => {
+      row.querySelector('legend').textContent = t('settings.account', { n: i + 1 });
+      row.querySelector('.account-owner').setAttribute('aria-label', t('settings.accountOwner'));
+      row.querySelector('.account-token').setAttribute('aria-label', t('settings.accountToken'));
+      row.querySelector('.account-remove').textContent = t('settings.accountRemove');
+      showToggle(row.querySelector('.account-token'), row.querySelector('.account-toggle'));
+    });
+    el.accountAdd.hidden = el.accountsList.children.length >= GB.GitHubSource.MAX_ACCOUNTS;
+  }
+
+  el.accountAdd.addEventListener('click', () => {
+    const rows = readAccountRows();
+    renderAccountRows([...rows, { owner: '', token: '' }], rows.length);
+  });
 
   /** Los avisos de Ajustes (solo escritorio): por servicio, su URL, los eventos que recibe y una prueba. */
   const hookFields = !desktop
@@ -4007,6 +4781,140 @@
         return field;
       });
 
+  /* El reporte de errores opcional con Sentry en la web: el mismo puente que el de escritorio (state, set, report),
+     pero aquí. Solo existe si quien publica la página dejó su DSN en index.html con tools/sentry-web.mjs (un
+     <meta name="sentry-dsn">) y el host de ingestión de ese DSN está en connect-src del CSP: sin los dos, no se
+     ofrece (un DSN sin su host no podría salir). Lo prendido queda en este navegador (solo `true` cuenta), y
+     js/sentry.js (la misma limpieza y el mismo sobre que el escritorio) se carga solo al mandar el primer informe:
+     quien no lo prende no baja nada ni escucha nada. En escritorio manda el proceso principal y esto no corre. */
+  function webErrors() {
+    const meta = document.querySelector('meta[name="sentry-dsn"]');
+    const dsn = meta?.content?.trim() || '';
+    if (desktop || !dsn) return null;
+    let origin = '';
+    try {
+      const u = new URL(dsn);
+      // lo mismo que pide parseDsn de js/sentry.js (que se carga después): un DSN que no lo cumple no se ofrece
+      if (u.protocol === 'https:' && /^[\w-]{8,64}$/.test(u.username) && !u.search && !u.hash && /^\/(?:.*\/)?\d{1,20}$/.test(u.pathname)) origin = u.origin;
+    } catch {
+      /* no es una URL: no se ofrece */
+    }
+    const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content || '';
+    const connect = (/(?:^|;)\s*connect-src\s+([^;]*)/.exec(csp)?.[1] || '').trim().split(/\s+/);
+    if (!origin || !connect.includes(origin)) return null;
+    const KEY = 'errorReports';
+    const on = () => U.store.get(KEY, false) === true;
+    let client = null;
+    // js/sentry.js, una vez y solo cuando hay algo que mandar; si no carga (sin red), no se insiste en esta visita
+    const load = () =>
+      (client ||= new Promise((resolve, reject) => {
+        if (GB.sentry) return resolve(GB.sentry);
+        const s = document.createElement('script');
+        s.src = 'js/sentry.js';
+        s.onload = () => (GB.sentry ? resolve(GB.sentry) : reject(new Error('js/sentry.js no se cargó')));
+        s.onerror = () => reject(new Error('js/sentry.js no se cargó'));
+        document.head.append(s);
+      }).then((S) =>
+        S.createClient({
+          dsn,
+          isEnabled: on,
+          fetch: (url, init) => fetch(url, init),
+          auth: 'query',
+          surface: 'web',
+          fileOf: S.baseFileOf(new URL('./', location.href).href),
+          release: meta.dataset.release || '',
+          environment: meta.dataset.environment || '',
+          os: S.osName(navigator),
+        }),
+      ));
+    const state = () => ({ available: true, enabled: on() });
+    return {
+      state: async () => state(),
+      async set(value) {
+        U.store.set(KEY, value === true ? true : null);
+        return state();
+      },
+      report: (rec, names) => load().then((c) => c.report(rec, names)),
+    };
+  }
+
+  /* El reporte de errores opcional con Sentry: en la app de escritorio lo manda el proceso principal
+     (electron/sentry.js) y en la web, webErrors. Ajustes lo ofrece solo si hay un DSN, apagado mientras quien usa la
+     app no lo prenda; prendido, la página escucha sus errores sin atrapar y los pasa al puente junto con los nombres
+     que conoce (repos, alias, ramas, autores) para que se quiten antes de mandarlos. En escritorio, el DSN y el envío
+     nunca están en la página. */
+  const errorReports = (() => {
+    const bridge = desktop?.errors || webErrors();
+    let state = { available: false, enabled: false };
+    let listening = false;
+    /** Los nombres de lo cargado que no pueden salir en un informe, hasta 5000. */
+    function knownNames() {
+      const out = new Set();
+      const add = (v) => typeof v === 'string' && v.trim().length >= 3 && out.size < 5000 && out.add(v.trim());
+      try {
+        for (const tab of tabs) {
+          const data = tab.source?.data;
+          add(tab.key);
+          add(tab.alias);
+          if (!data) continue;
+          add(data.repo?.owner);
+          add(data.repo?.name);
+          if (data.repo?.owner && data.repo?.name) add(`${data.repo.owner}/${data.repo.name}`);
+          for (const name of data.branches?.keys?.() || []) add(name);
+          for (const c of data.commits?.values?.() || []) {
+            add(c.author?.login);
+            add(c.author?.name);
+            if (out.size >= 5000) break;
+          }
+          for (const p of data.pulls?.values?.() || []) add(p.user?.login);
+        }
+      } catch {
+        /* a medio cargar: se manda con lo que se juntó, y el proceso principal quita igual lo que reconoce */
+      }
+      return [...out];
+    }
+    /* Como el proceso principal, hasta 10 por sesión y cada error una vez: un error en cada cuadro de una animación
+       no junta los nombres 60 veces por segundo. Un fallo aquí no puede volver a disparar 'error'. */
+    const seen = new Set();
+    const send = (kind, err) => {
+      try {
+        const e = err && typeof err === 'object' ? err : { message: String(err ?? '') };
+        const rec = { kind, type: String(e.name || ''), message: String(e.message || ''), stack: String(e.stack || '') };
+        const key = `${kind}|${rec.type}|${rec.message}|${rec.stack.split('\n')[1] || ''}`;
+        if (seen.has(key) || seen.size >= 10) return;
+        seen.add(key);
+        bridge.report(rec, knownNames()).catch(() => {});
+      } catch {
+        /* un error raro (un getter que lanza): no se informa */
+      }
+    };
+    const onError = (ev) => send('error', ev.error || { message: ev.message });
+    const onRejection = (ev) => send('rejection', ev.reason);
+    function listen(on) {
+      if (on === listening) return;
+      listening = on;
+      const fn = on ? 'addEventListener' : 'removeEventListener';
+      window[fn]('error', onError);
+      window[fn]('unhandledrejection', onRejection);
+    }
+    function apply(s) {
+      state = { available: !!s?.available, enabled: !!s?.available && !!s?.enabled };
+      el.errorsField.hidden = !state.available;
+      el.errorsReport.checked = state.enabled;
+      listen(state.enabled);
+    }
+    if (bridge) bridge.state().then(apply, () => apply(null));
+    return {
+      /** Al abrir Ajustes: la casilla como está guardado. */
+      show: () => (el.errorsReport.checked = state.enabled),
+      /** Al guardar Ajustes: si cambió, se guarda en el proceso principal y se empieza o deja de escuchar. */
+      save() {
+        if (!bridge || !state.available || el.errorsReport.checked === state.enabled) return;
+        bridge.set(el.errorsReport.checked).then(apply, (err) => console.error('No se pudo guardar el informe de errores:', err));
+      },
+    };
+  })();
+
   /** Los campos de los tokens, cada uno con su botón de mostrar u ocultar. */
   const tokenFields = [
     [el.tokenInput, el.tokenToggle],
@@ -4015,7 +4923,7 @@
     [el.bitbucketTokenInput, el.bitbucketTokenToggle],
     [el.azureTokenInput, el.azureTokenToggle],
     [el.bbdcTokenInput, el.bbdcTokenToggle],
-    [el.token2Input, el.token2Toggle],
+    [el.forgeTokenInput, el.forgeTokenToggle],
     ...hookFields.map((f) => [f.input, f.toggle]),
   ];
   const showToggle = (input, toggle) => (toggle.textContent = input.type === 'password' ? t('settings.show') : t('settings.hide'));
@@ -4036,8 +4944,8 @@
     el.bitbucketTokenInput.value = '';
     el.azureTokenInput.value = '';
     el.bbdcTokenInput.value = '';
-    el.token2Owner.value = '';
-    el.token2Input.value = '';
+    el.forgeTokenInput.value = '';
+    renderAccountRows([]);
     for (const f of hookFields) f.input.value = '';
     el.tokenInput.focus();
   });
@@ -4050,9 +4958,11 @@
     settings.bitbucketToken = el.bitbucketTokenInput.value.trim();
     settings.azureToken = el.azureTokenInput.value.trim();
     if (BITBUCKET_URL) settings.bbdcToken = el.bbdcTokenInput.value.trim(); // sin servidor elegido, el campo no se ve y lo guardado queda como está
-    const account2Stored = GB.GitHubSource.pack2(el.token2Owner.value, el.token2Input.value); // sin dueño o sin token, no hay segunda cuenta
-    settings.account2 = GB.GitHubSource.unpack2(account2Stored);
+    if (FORGE_URL) settings.forgeToken = el.forgeTokenInput.value.trim();
+    const accountsStored = GB.GitHubSource.packAccounts(readAccountRows()); // una fila sin dueño o sin token no es una cuenta
+    settings.accounts = GB.GitHubSource.unpackAccounts(accountsStored);
     const bbdcStored = GB.BitbucketServerSource.pack(settings.bbdcToken, BITBUCKET_URL) || null;
+    const forgeStored = GB.CodebergSource.pack(settings.forgeToken, FORGE_URL) || null;
     settings.depth = Math.max(10, Math.min(100, Number(el.depth.value) || 40));
     settings.marks = el.marks.checked;
     if (desktop) {
@@ -4063,7 +4973,8 @@
       desktop.setToken(settings.bitbucketToken, 'bitbucket').catch(failed);
       desktop.setToken(settings.azureToken, 'azure').catch(failed);
       if (BITBUCKET_URL) desktop.setToken(bbdcStored || '', 'bitbucketdc').catch(failed);
-      desktop.setToken(account2Stored, 'github2').catch(failed);
+      if (FORGE_URL) desktop.setToken(forgeStored || '', 'forgejo').catch(failed);
+      desktop.setToken(accountsStored, 'github2').catch(failed);
     } else {
       U.secret.set('token', settings.token || null);
       U.secret.set('gitlabToken', settings.gitlabToken || null);
@@ -4071,7 +4982,8 @@
       U.secret.set('bitbucketToken', settings.bitbucketToken || null);
       U.secret.set('azureToken', settings.azureToken || null);
       if (BITBUCKET_URL) U.secret.set('bbdcToken', bbdcStored);
-      U.secret.set('account2', account2Stored || null);
+      if (FORGE_URL) U.secret.set('forgeToken', forgeStored);
+      U.secret.set('account2', accountsStored || null);
     }
     U.store.set('depth', settings.depth);
     U.store.set('marks', settings.marks ? null : false);
@@ -4081,11 +4993,12 @@
       desktop.setToken(hookUrls[f.service], f.service).catch((err) => console.error('No se pudo guardar el webhook:', err));
     }
     if (hookFields.length) U.store.set('hooks', hookPrefs);
+    errorReports.save();
     closeSettings();
     // se reconecta lo que cambió: un token de GitLab nuevo no gasta la cuota de GitHub. Si no cambió
     // nada, todo, como dice el botón
     const changed = (tab) =>
-      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: false, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || settings.account2.token !== before.account2.token || settings.account2.owner !== before.account2.owner));
+      settings.depth !== before.depth || settings.marks !== before.marks || ({ gitlab: settings.gitlabToken !== before.gitlabToken, codeberg: settings.codebergToken !== before.codebergToken, bitbucket: settings.bitbucketToken !== before.bitbucketToken, forgejo: settings.forgeToken !== before.forgeToken, azure: settings.azureToken !== before.azureToken, bitbucketdc: settings.bbdcToken !== before.bbdcToken }[tab.source.host] ?? (settings.token !== before.token || accountsStored !== GB.GitHubSource.packAccounts(before.accounts)));
     if (realTabs().length) reconnectAll(realTabs().some(changed) ? changed : undefined);
     else el.tokenBanner.hidden = true;
   });
@@ -4101,6 +5014,7 @@
     for (const note of [el.tokenWhere, el.gitlabTokenWhere, el.codebergTokenWhere, el.bitbucketTokenWhere, el.azureTokenWhere]) note.textContent = t(note.dataset.i18n);
     bbdcWhere = keychain ? 'settings.bbdcTokenWhereKeychain' : 'settings.bbdcTokenWherePlain';
     renderBbdcField();
+    renderForgeField();
   }
 
   /** El campo del token de un Bitbucket propio: solo con un servidor elegido (?bitbucket=, --bitbucket-url=), y su aviso nombra ese host. */
@@ -4110,6 +5024,13 @@
     el.bbdcTokenWhere.textContent = BITBUCKET_URL ? t(bbdcWhere, { host: new URL(BITBUCKET_URL).host }) : '';
   }
   renderBbdcField();
+
+  /** El campo del token de un Forgejo/Gitea propio: igual, solo con ?forge= / --forge-url=. Usa los avisos del Bitbucket propio (dicen lo mismo). */
+  function renderForgeField() {
+    el.forgeTokenField.hidden = !FORGE_URL;
+    el.forgeTokenWhere.textContent = FORGE_URL ? t(bbdcWhere, { host: new URL(FORGE_URL).host }) : '';
+  }
+  renderForgeField();
 
   /** En la app de escritorio, el ícono de la bandeja y su aviso van en el idioma de la página. */
   function sendDesktopLabels() {
@@ -4130,7 +5051,8 @@
     settings.bitbucketToken = (await desktop.getToken('bitbucket')).token;
     settings.azureToken = (await desktop.getToken('azure')).token;
     if (BITBUCKET_URL) settings.bbdcToken = GB.BitbucketServerSource.unpack((await desktop.getToken('bitbucketdc')).token, BITBUCKET_URL);
-    settings.account2 = GB.GitHubSource.unpack2((await desktop.getToken('github2')).token);
+    if (FORGE_URL) settings.forgeToken = GB.CodebergSource.unpack((await desktop.getToken('forgejo')).token, FORGE_URL);
+    settings.accounts = GB.GitHubSource.unpackAccounts((await desktop.getToken('github2')).token);
     for (const service of GB.hooks.SERVICES) hookUrls[service] = (await desktop.getToken(service)).token;
     showTokenWhere(where);
   }
@@ -4162,6 +5084,7 @@
 
   /* al cambiar de idioma se vuelve a dibujar todo lo que tiene texto (lo estático ya lo tradujo i18n.apply) */
   i18n.onChange(() => {
+    feed.setBaseTitle(pageTitle(source?.data.repo)); // i18n.apply acaba de traducir el <title>: vuelve el del repo, con su contador
     setRecUI(!!recorder);
     sendDesktopLabels();
     fillLanguages();
@@ -4169,7 +5092,9 @@
     renderPause();
     renderWebglNote();
     for (const [input, toggle] of tokenFields) showToggle(input, toggle);
+    labelAccountRows();
     renderBbdcField();
+    renderForgeField();
     el.repoInput.setCustomValidity('');
     graph2d.relocalize();
     graph3d?.relocalize();
@@ -4180,6 +5105,7 @@
     feed.relocalize();
     renderTabs();
     overview.relocalize();
+    allSpace?.relocalize();
     editor.relocalize();
     if (allOn) renderAllSum();
     diffView.relocalize();
@@ -4246,13 +5172,15 @@
     initialConflicts = !EMBED && GB.health.conflictsParam(q);
     initialTV = !EMBED && q.has('tv') && !/^(0|false|no|off)$/i.test(q.get('tv'));
     initialAll = EMBED ? false : GB.overview.allParam(q);
+    const av = EMBED ? null : GB.allspace.viewParam(q); // ?all=3d: la vista conjunta en 3D (sin guardarlo)
+    if (av) allView = av;
   } catch {
     /* sin query string */
   }
 
   /** Sigue los repos guardados y los de la URL; muestra el de la URL, el último que se miraba o el primero. */
   function start() {
-    wantAll = !EMBED && !initialTV && (initialAll ?? U.store.get('all', false) === true);
+    wantAll = !EMBED && (initialAll ?? (!initialTV && U.store.get('all', false) === true)); // con ?tv=1, solo si la URL lo pide
     const saved = U.store.get('repos', null);
     const shown = U.store.get('repo', null);
     const list = EMBED ? [] : Array.isArray(saved) ? saved : typeof shown === 'string' ? [shown] : []; // antes se seguía uno solo
@@ -4277,7 +5205,7 @@
       const grp = U.parseGroup(input);
       const who = !grp && U.parseOwner(input);
       if (grp) connectGroup(grp.group);
-      else if (who) connectOwner(who.owner);
+      else if (who) connectOwner(who);
     }
     const embedTitle = EMBED ? GB.embedOptions(location.search)?.title || '' : ''; // &title=: rótulo propio sobre la capa
     if (embedTitle) {

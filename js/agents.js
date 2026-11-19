@@ -314,6 +314,98 @@
     };
   }
 
+  /** Quién trabaja con quién en varios repos a la vez (la vista de agentes de «Todos los repositorios»): compute de cada
+      uno, juntos. `parts`: [{ key, name, data, acts }], un repo cada uno. Un participante es uno solo en todos: una
+      persona por su usuario (o su nombre), un agente por su sesión, así la misma sesión de Claude Code en dos repos
+      suma sus commits y sus vínculos. Las interacciones no cruzan de un repo a otro: cada una sale de su repo y lo
+      lleva en `repo` (su clave), porque un #12 de un repo no es el #12 de otro. Devuelve lo mismo que compute y además:
+        data:   un repo de mentira con lo de todos: los commits (Map sha -> commit; uno que esté en dos repos, como en
+                un fork, una sola vez) y las ramas, los PRs abiertos y los checks de cada uno con su nombre precedido
+                por la clave del repo (`clave:rama`, `clave#12`; la clave lleva el servicio, así un mismo owner/name en
+                GitHub y en GitLab no se pisa), así dos `main` o dos #12 no se pisan; cada rama y cada PR lleva `repo`
+                (el nombre, para mostrar) y `branch` (su rama sin la clave), y `mains` dice cuáles son la rama por
+                defecto de su repo. Lo leen los indicadores de swarm.js.
+        repoOf: Map sha -> clave del repo del commit (el primero que lo trajo). */
+  function combine(parts, { max = EVENTS } = {}) {
+    const actors = new Map();
+    const links = new Map();
+    const owners = new Map();
+    const repoOf = new Map();
+    const commits = new Map();
+    const branches = new Map();
+    const pulls = new Map();
+    const ci = new Map();
+    const mains = new Set();
+    let events = [];
+    let total = 0;
+    for (const part of parts || []) {
+      const d = part?.data;
+      if (!d) continue;
+      const key = part.key;
+      const label = String(part.name || key);
+      const r = compute(d, part.acts || [], { max: Infinity });
+      for (const a of r.actors) {
+        const m = actors.get(a.key);
+        if (!m) {
+          actors.set(a.key, { ...a, agent: a.agent ? { ...a.agent } : null });
+          continue;
+        }
+        m.commits += a.commits;
+        m.links += a.links;
+        if (a.sha && (!m.sha || a.last > m.last)) {
+          m.last = a.last;
+          m.sha = a.sha;
+        }
+        if (!m.name) m.name = a.name;
+        if (!m.login) m.login = a.login;
+        if (m.agent && a.agent?.model && !m.agent.model) m.agent.model = a.agent.model;
+      }
+      for (const l of r.links) {
+        const id = l.from + '>' + l.to;
+        const m = links.get(id);
+        if (!m) {
+          links.set(id, { ...l, kinds: { ...l.kinds } });
+          continue;
+        }
+        for (const k of Object.keys(m.kinds)) m.kinds[k] += l.kinds[k] || 0;
+        m.total += l.total;
+        if (l.last >= m.last) {
+          m.last = l.last;
+          if (l.sha) m.sha = l.sha;
+        }
+      }
+      for (const e of r.events) events.push({ ...e, repo: key });
+      total += r.total;
+      for (const [sha, who] of r.owners) if (!owners.has(sha)) owners.set(sha, who);
+      for (const [sha, c] of d.commits || []) {
+        if (repoOf.has(sha)) continue;
+        repoOf.set(sha, key);
+        commits.set(sha, c);
+      }
+      const pre = (name) => `${key}:${name}`;
+      const def = d.repo?.defaultBranch;
+      for (const [name, b] of d.branches || []) {
+        branches.set(pre(name), { ...b, repo: label, branch: name });
+        if (name === def) mains.add(pre(name));
+      }
+      for (const [name, st] of d.ci || []) ci.set(pre(name), st);
+      for (const p of d.pulls?.values?.() || []) if (p?.number != null) pulls.set(`${key}#${p.number}`, { ...p, head: p.head != null ? pre(p.head) : p.head, branch: p.head, repo: label });
+    }
+    events.sort((x, y) => y.time - x.time);
+    events = events.slice(0, max);
+    const list = [...actors.values()].sort((x, y) => y.links - x.links || y.commits - x.commits || y.last - x.last || (x.name < y.name ? -1 : 1));
+    const demo = (parts || []).length > 0 && parts.every((p) => !!p?.data?.repo?.demo);
+    return {
+      actors: list,
+      links: [...links.values()].sort((x, y) => y.total - x.total || y.last - x.last),
+      events,
+      total,
+      owners,
+      repoOf,
+      data: { repo: { owner: '', name: '', demo, defaultBranch: null }, commits, branches, pulls, ci, mains },
+    };
+  }
+
   /** El color de cada participante (Map key -> 1..8, 0 las personas): de 1 a 7 los 7 agentes más activos, 8 los demás
       agentes y 0 las personas. Sigue al participante, no a lo que se ve: sale del orden de compute (por interacciones y
       commits), así el grafo, su leyenda, la red y la línea de tiempo pintan a cada uno igual. */
@@ -583,6 +675,11 @@
     return !!q && typeof q.has === 'function' && q.has('agents') && !/^(0|false|no|off)$/i.test(String(q.get('agents')).trim());
   }
 
+  /** ?agents=all (o todos, *): el panel junta a todos los repos seguidos, no solo el que está a la vista. */
+  function allParam(q) {
+    return openParam(q) && /^(all|todos|\*)$/i.test(String(q.get('agents')).trim());
+  }
+
   /** ?interactions=1 (o solo ?interactions): las interacciones sobre el grafo; 0, false, no u off las apagan; sin el
       parámetro, null (manda lo que se guardó). */
   function graphParam(q) {
@@ -596,5 +693,5 @@
   /** Un id de sesión, corto para mostrar: los últimos 6 caracteres (los primeros suelen repetirse entre sesiones). */
   const shortSession = (s) => (s ? String(s).slice(-6) : '');
 
-  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS, KNOWN: KNOWN.map((k) => k.id) };
+  GB.agents = { detect, detectActor, of, coAuthors, sessionOf, compute, combine, network, overlay, svg, timeline, timelineSvg, slots, mono, mainKind, openParam, allParam, graphParam, prNumber, sessionUrl, shortSession, COLORS, OTHERS, KNOWN: KNOWN.map((k) => k.id) };
 })(window.GB);

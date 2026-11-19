@@ -1,6 +1,7 @@
 /* GraphBranch — intérprete de git de práctica. Un repo en memoria y los comandos de todos los días
    (commit, branch, checkout/switch, merge, rebase, reset, stash, log, status), más los ejercicios guiados.
-   El árbol de trabajo es solo la lista de archivos con cambios sin commit (`touch` los crea).
+   El árbol de trabajo es solo la lista de archivos con cambios sin commit (`touch` los crea) y de los
+   borrados a mano (`rm` sin `git`); `git rm` y `git mv` preparan el borrado o el renombre.
    Sin DOM ni red: lo usa la fuente de práctica (sources/practice.js) y lo prueba tools/gitsim.test.mjs.
    La salida de los comandos es la de git (en inglés, como en cualquier terminal); los textos de la
    interfaz van en los idiomas de la app. */
@@ -8,6 +9,7 @@
   'use strict';
 
   const AUTHOR = { name: 'You', login: 'you', avatar: null };
+  const TEAMMATE = { name: 'Ana', login: 'ana', avatar: null }; // quien sube al remoto en los ejercicios
   const MINUTE = 60e3;
 
   /** Hash determinista de 40 hex: la misma historia da los mismos shas (las pruebas y los ejercicios lo necesitan). */
@@ -22,12 +24,12 @@
     return out.slice(0, 40);
   }
 
-  /** Separa una línea en palabras, con comillas simples o dobles. */
+  /** Separa una línea en palabras, con comillas simples o dobles, como la terminal: `--message="a b"` es una palabra, `--message=a b`. */
   function tokenize(line) {
     const out = [];
-    const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+    const re = /(?:"[^"]*"|'[^']*'|[^\s"']+)+(?:["'][^\s]*)?|["'][^\s]*/g; // una comilla sin cerrar queda dentro de su palabra: it's
     let m;
-    while ((m = re.exec(line))) out.push(m[1] ?? m[2] ?? m[3]);
+    while ((m = re.exec(line))) out.push(m[0].replace(/"([^"]*)"|'([^']*)'/g, (_, d, q) => d ?? q));
     return out;
   }
 
@@ -44,15 +46,25 @@
       this.commits = new Map();
       this.branches = new Map(); // nombre -> sha
       this.tags = new Map(); // nombre -> sha
+      this.notes = new Map(); // nombre -> { message, sha }: las etiquetas anotadas (tag -a), con su mensaje y el sha de su objeto
       this.head = { branch }; // { branch } o { sha } (desprendido)
       this.work = []; // archivos con cambios sin commit y sin preparar, en orden de llegada
-      this.staged = []; // { file, isNew }: lo preparado con add, a la espera del commit
+      this.staged = []; // { file, isNew }, { file, gone } (git rm) o { file, from } (git mv): lo preparado, a la espera del commit
+      this.deleted = []; // archivos que git sigue y se borraron a mano (rm sin git), sin preparar
+      this.moved = new Map(); // nuevo -> viejo: lo que movió un mv sin git, para que add lo prepare como renombre
       this.untracked = []; // archivos nuevos que git no sigue (touch --new): clean los borra
       this.cleans = 0; // cuántas veces clean -f borró archivos sin seguir
       this.adds = 0; // cuántas veces add preparó algo
-      this.stashes = []; // { files, branch, sha }, el más nuevo primero (stash@{0})
+      this.stashes = []; // { files, removed, added, untracked, line }, el más nuevo primero (stash@{0})
+      this.stashShows = 0; // cuántas veces stash show listó lo que guarda un stash
+      this.stashSeq = 0; // id del próximo stash: el ejercicio de stash show sabe cuál se miró y cuál volvió
+      this.stashSeen = new Set(); // ids de los stash que stash show listó
+      this.stashBack = new Set(); // ids de los stash que volvieron con pop o apply
+      this.lenient = false; // las partidas de un ejercicio propio fusionan sin conflictos (los enlaces de antes siguen valiendo)
       this.merging = null; // { name, theirs } mientras una fusión (merge --no-commit) espera su commit
       this.aborts = 0; // cuántas fusiones se cancelaron con merge --abort
+      this.conflicts = []; // los archivos en conflicto de una fusión a medias («both modified»), hasta que add los marca resueltos
+      this.conflictMerges = 0; // cuántas fusiones con conflicto se cerraron con commit tras resolverlos
       this.picking = null; // { sha } mientras un cherry-pick --no-commit espera su commit
       this.pickAborts = 0; // cuántos cherry-pick se cancelaron con cherry-pick --abort
       this.revertAborts = 0; // cuántos revert --no-commit se cancelaron con revert --abort
@@ -60,6 +72,9 @@
       this.rebaseAborts = 0; // cuántos rebase se cancelaron con rebase --abort
       this.reflog = []; // { sha, msg }, el más nuevo al final (HEAD@{0}); cada vez que HEAD se mueve
       this.renamed = null; // { from, to } si el último comando renombró una rama (branch -m): el panel de actividad lo dice así
+      this.remote = null; // { name, branches: Map rama -> sha }: el remoto simulado (origin), lo que tiene «el servidor»
+      this.tracking = new Map(); // rama -> sha: las ramas de seguimiento (origin/<rama>), lo que se supo en el último fetch o push
+      this.upstream = new Map(); // rama local -> rama del remoto que sigue (push -u, o la de partida del escenario)
       this.defaultBranch = branch;
       this.branches.set(branch, null);
     }
@@ -91,6 +106,35 @@
       return this.ancestors(b).has(a);
     }
 
+    /** La rama de seguimiento que nombra `ref` (origin/main, remotes/origin/main o refs/remotes/origin/main): «main», o nulo. */
+    trackingName(ref) {
+      if (!this.remote) return null;
+      const m = /^(?:refs\/)?(?:remotes\/)?([^/]+)\/(.+)$/.exec(ref);
+      return m && m[1] === this.remote.name && this.tracking.has(m[2]) ? m[2] : null;
+    }
+
+    /** Cuántos commits tiene `a` que `b` no: el adelanto (o, al revés, el atraso) de una rama frente a su remoto. */
+    aheadOf(a, b) {
+      const theirs = this.ancestors(b);
+      return [...this.ancestors(a)].filter((s) => !theirs.has(s)).length;
+    }
+
+    /** La línea de status que compara la rama actual con la que sigue en el remoto (vacía si no sigue ninguna). */
+    trackingLines() {
+      const b = this.head.branch;
+      const up = b && this.remote && this.upstream.get(b);
+      if (!up) return [];
+      const name = `${this.remote.name}/${up}`;
+      if (!this.tracking.has(up)) return [`Your branch is based on '${name}', but the upstream is gone.`];
+      const ahead = this.aheadOf(this.headSha, this.tracking.get(up));
+      const behind = this.aheadOf(this.tracking.get(up), this.headSha);
+      const n = (k) => `${k} commit${k > 1 ? 's' : ''}`;
+      if (ahead && behind) return [`Your branch and '${name}' have diverged,`, `and have ${ahead} and ${behind} different commits each, respectively.`, '  (use "git merge" or "git rebase" to bring in the remote changes)'];
+      if (ahead) return [`Your branch is ahead of '${name}' by ${n(ahead)}.`, '  (use "git push" to publish your local commits)'];
+      if (behind) return [`Your branch is behind '${name}' by ${n(behind)}, and can be fast-forwarded.`, '  (use "git merge" to update your local branch)'];
+      return [`Your branch is up to date with '${name}'.`];
+    }
+
     /** Qué commit nombra `ref`: HEAD, rama, sha (o su principio), con ~n y ^ detrás. Nulo si no existe. */
     resolve(ref) {
       const m = /^(.*?)((?:[~^]\d*)*)$/.exec(ref);
@@ -105,6 +149,7 @@
       } else if (base === 'HEAD' || base === '@') sha = this.headSha;
       else if (this.branches.has(base)) sha = this.branches.get(base);
       else if (this.tags.has(base)) sha = this.tags.get(base);
+      else if (this.trackingName(base) != null) sha = this.tracking.get(this.trackingName(base));
       else if (/^[0-9a-f]{4,40}$/i.test(base)) {
         const hits = [...this.commits.keys()].filter((s) => s.startsWith(base.toLowerCase()));
         if (hits.length !== 1) return null;
@@ -126,9 +171,10 @@
       return sha;
     }
 
-    /** Commits de la historia de `sha`, del más nuevo al más viejo (los padres siempre después del hijo). */
+    /** Commits de la historia de `sha` (o de varios, juntos), del más nuevo al más viejo (los padres siempre después del hijo). */
     log(sha) {
-      const set = this.ancestors(sha);
+      const set = new Set();
+      for (const tip of Array.isArray(sha) ? sha : [sha]) for (const s of this.ancestors(tip)) set.add(s);
       const out = [];
       const children = new Map([...set].map((s) => [s, 0]));
       for (const s of set) for (const p of this.commits.get(s).parents) children.set(p, children.get(p) + 1);
@@ -150,6 +196,7 @@
       const names = [...this.branches].filter(([, s]) => s === sha).map(([n]) => n);
       const head = this.head.branch ? this.branches.get(this.head.branch) === sha : this.head.sha === sha;
       const list = names.map((n) => (head && this.head.branch === n ? `HEAD -> ${n}` : n));
+      if (this.remote) for (const [n, s] of this.tracking) if (s === sha) list.push(`${this.remote.name}/${n}`);
       for (const [n, s] of this.tags) if (s === sha) list.push(`tag: ${n}`);
       if (head && !this.head.branch) list.unshift('HEAD');
       return list.length ? ` (${list.join(', ')})` : '';
@@ -165,6 +212,44 @@
       return sha;
     }
 
+    /** Un commit nuevo que copia otro (rebase, cherry-pick): se lleva lo que ese cambió, borró y renombró. */
+    copy(src, parents, message) {
+      const sha = this.make(message ?? this.commits.get(src).message, parents);
+      const from = this.commits.get(src);
+      const to = this.commits.get(sha);
+      if (from.files) to.files = from.files.slice();
+      if (from.removed) to.removed = from.removed.slice();
+      if (from.renames) to.renames = from.renames;
+      if (from.added) to.added = from.added.slice();
+      return sha;
+    }
+
+    /** Cómo dejaron los commits de `sha` que `other` no tiene cada archivo que tocaron: 'A' creado, 'D' borrado, 'M' cambiado. */
+    sideStates(sha, other) {
+      const theirs = this.ancestors(other);
+      const states = new Map();
+      for (const s of this.log(sha).reverse()) {
+        if (theirs.has(s)) continue;
+        const c = this.commits.get(s);
+        for (const f of c.removed || []) states.set(f, 'D');
+        for (const f of c.files || []) states.set(f, (c.added || []).includes(f) || states.get(f) === 'A' ? 'A' : 'M');
+      }
+      return states;
+    }
+
+    /** Marca resuelto un archivo en conflicto (add): sale de la lista y queda preparado como cambiado, o como borrado si
+        se borró a mano. */
+    resolveConflict(f) {
+      this.conflicts = this.conflicts.filter((x) => x !== f);
+      if (this.deleted.includes(f)) {
+        this.stageDeletion(f);
+        return;
+      }
+      this.work = this.work.filter((w) => w !== f);
+      if (!this.staged.some((s) => s.file === f)) this.staged.push({ file: f, isNew: false });
+      this.adds++;
+    }
+
     /** Mueve la rama de HEAD (o HEAD, si está desprendido). */
     moveHead(sha) {
       if (this.head.branch) this.branches.set(this.head.branch, sha);
@@ -174,20 +259,169 @@
     commit(message) {
       const sha = this.make(message, this.headSha ? [this.headSha] : []);
       this.moveHead(sha);
-      this.work = [];
-      this.staged = [];
+      this.clearTree();
       return sha;
     }
 
     /** Lo que se lleva el próximo commit: lo preparado y, con `all` (commit -a), también lo cambiado sin preparar.
         Lo sin seguir nunca entra. Lo que se lleva sale de las listas y se suma a lo anotado en el commit (`files`). */
     take(sha, all) {
-      const files = [...new Set([...this.staged.map((s) => s.file), ...(all ? this.work : [])])];
+      const staged = this.staged.filter((s) => !(all && s.isNew && this.deleted.includes(s.file)));
+      const files = [...new Set([...staged.filter((s) => !s.gone).map((s) => s.file), ...(all ? this.work : [])])];
+      const removed = [...new Set([...staged.filter((s) => s.gone || s.from).map((s) => s.from ?? s.file), ...(all ? this.deleted.filter((f) => !this.staged.some((s) => s.isNew && s.file === f)) : [])])];
       this.staged = [];
-      if (all) this.work = [];
+      if (all) {
+        this.work = [];
+        this.deleted = [];
+      }
       const c = this.commits.get(sha);
-      if (files.length) c.files = [...new Set([...(c.files || []), ...files])];
+      // lo que este commit borra deja de contar como cambiado, y lo que crea deja de contar como borrado (commit --amend)
+      const keep = (list, drop) => (list || []).filter((f) => !drop.includes(f));
+      if (files.length || removed.length) {
+        const nextFiles = [...new Set([...keep(c.files, removed), ...files])];
+        // con --amend, borrar con git rm un archivo que este mismo commit creó lo deja como si nunca hubiera estado
+        const unmade = staged.filter((s) => s.gone && (c.added || []).includes(s.file)).map((s) => s.file);
+        const nextRemoved = [...new Set([...keep(c.removed, files), ...removed])].filter((f) => !unmade.includes(f));
+        if (nextFiles.length) c.files = nextFiles;
+        else delete c.files;
+        if (nextRemoved.length) c.removed = nextRemoved;
+        else delete c.removed;
+        // lo que entra como nuevo (show lo marca con A); lo que el commit borra deja de serlo
+        const nextAdded = [...new Set([...keep(c.added, removed), ...staged.filter((s) => s.isNew || s.from).map((s) => s.file)])].filter((f) => nextFiles.includes(f));
+        if (nextAdded.length) c.added = nextAdded;
+        else delete c.added;
+      }
+      const renames = staged.filter((s) => s.from).length;
+      if (renames) c.renames = (c.renames || 0) + renames;
       return files;
+    }
+
+    /**
+     * stash show [<stash>]: los archivos que guarda un stash, sin devolverlos ni soltarlo. Sin contenido no hay
+     * líneas que contar: la forma de siempre (--stat) lista los nombres y cuántos son; --name-only y --name-status
+     * como git (A nuevo, M cambiado, D borrado). -u suma lo sin seguir que apartó stash -u, --only-untracked solo eso.
+     */
+    stashShow(args) {
+      const opts = { stat: false, names: false, status: false, untracked: false, only: false };
+      const refs = [];
+      let ends = false;
+      for (const a of args) {
+        if (ends) refs.push(a);
+        else if (a === '--') ends = true;
+        else if (a === '--stat') opts.stat = true;
+        else if (a === '--name-only') opts.names = true;
+        else if (a === '--name-status') opts.status = true;
+        else if (a === '-u' || a === '--include-untracked') opts.untracked = true;
+        else if (a === '--only-untracked') opts.only = true;
+        else if (a === '--no-include-untracked') opts.untracked = opts.only = false;
+        else if (a === '-p' || a === '--patch') fail('fatal: stash show -p needs file contents, and the practice has none: try --name-status');
+        else if (a.length > 1 && a[0] === '-' && !/^-\d/.test(a)) fail(`error: unknown option '${a.replace(/^-+/, '')}'\nusage: stash show [-u | --include-untracked | --only-untracked] [--stat | --name-only | --name-status] [<stash>]`);
+        else refs.push(a);
+      }
+      if (refs.length > 1) fail(`error: Too many revisions specified: ${refs.map((r) => `'${r}'`).join(' ')}`);
+      if (!this.stashes.length) fail('error: No stash entries found.');
+      const ref = refs[0] ?? '0';
+      const m = /^(?:stash@\{(\d+)\}|(\d+))$/.exec(ref);
+      const i = m ? Number(m[1] ?? m[2]) : -1;
+      if (i < 0 || i >= this.stashes.length) fail(`error: ${ref} is not a valid reference`);
+      const entry = this.stashes[i];
+      const rows = [];
+      if (!opts.only) {
+        for (const f of entry.files) rows.push([(entry.added || []).includes(f) ? 'A' : 'M', f]);
+        for (const f of entry.removed || []) rows.push(['D', f]);
+      }
+      if (opts.untracked || opts.only) for (const f of entry.untracked || []) rows.push(['A', f]);
+      rows.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+      this.stashShows++;
+      this.stashSeen.add(entry.id);
+      return fileLines(rows, opts);
+    }
+
+    /** Lo que cambió un commit: [A|M|D, archivo], ordenado por nombre. A es lo que entró preparado como nuevo (add de
+        un archivo sin seguir, o el nombre nuevo de un mv): la práctica no sabe qué archivos traía el escenario. */
+    commitRows(sha) {
+      const c = this.commits.get(sha);
+      const rows = [...(c.files || []).map((f) => [(c.added || []).includes(f) ? 'A' : 'M', f]), ...(c.removed || []).map((f) => ['D', f])];
+      return rows.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+    }
+
+    /** Vacía el árbol de trabajo y lo preparado (commit, reset --hard, stash, merge --abort): lo sin seguir se queda. */
+    clearTree() {
+      this.work = [];
+      this.staged = [];
+      this.deleted = [];
+      this.moved.clear();
+    }
+
+    /** Tira lo cambiado y lo preparado (reset --hard, merge --abort): lo que sacó un rm --cached vuelve a seguirse. */
+    discardTree() {
+      this.untracked = this.untracked.filter((f) => !this.staged.some((s) => s.gone && s.cached && s.file === f));
+      this.clearTree();
+    }
+
+    /** Un borrado y un archivo nuevo preparados que salieron de un mv sin git son un renombre, como lo ve git. */
+    pairMoves() {
+      for (const [to, from] of this.moved) {
+        const a = this.staged.findIndex((s) => s.isNew && s.file === to);
+        const b = this.staged.findIndex((s) => s.gone && !s.cached && s.file === from);
+        if (a < 0 || b < 0) continue;
+        // el renombre queda donde estaba el borrado del nombre viejo
+        this.staged[b] = { file: to, from };
+        this.staged.splice(a, 1);
+        this.moved.delete(to);
+      }
+    }
+
+    /** Cuántos archivos tocó el commit: los nuevos o cambiados y los borrados (un renombre cuenta uno). */
+    changedCount(sha) {
+      const c = this.commits.get(sha);
+      if (!c.files && !c.removed) return 0;
+      return new Set([...(c.files || []), ...(c.removed || [])]).size - (c.renames || 0);
+    }
+
+    /** Los archivos que la historia de HEAD borró (git rm) y no volvió a crear: ya no existen. */
+    goneInHistory() {
+      const gone = new Set();
+      if (!this.headSha) return gone;
+      for (const s of this.log(this.headSha).reverse()) {
+        const c = this.commits.get(s);
+        for (const f of c.files || []) gone.delete(f);
+        for (const f of c.removed || []) gone.add(f);
+      }
+      return gone;
+    }
+
+    /** Los archivos que la historia de HEAD creó o cambió y no borró: existen aunque no tengan cambios. */
+    inHistory() {
+      const seen = new Set();
+      if (!this.headSha) return seen;
+      for (const s of this.log(this.headSha).reverse()) {
+        const c = this.commits.get(s);
+        for (const f of c.removed || []) seen.delete(f);
+        for (const f of c.files || []) seen.add(f);
+      }
+      return seen;
+    }
+
+    /** Si git sigue el archivo (está en el índice). Sin contenido real, todo nombre que no sea nuevo sin seguir,
+        borrado en la historia o con su borrado ya preparado se da por seguido, como hace `touch`. */
+    tracked(f) {
+      const s = this.staged.find((x) => x.file === f);
+      if (s) return !s.gone;
+      if (this.untracked.includes(f)) return false;
+      if (this.staged.some((x) => x.from === f)) return false;
+      if (this.work.includes(f) || this.deleted.includes(f)) return true;
+      return !this.goneInHistory().has(f);
+    }
+
+    /** Si el archivo existe con certeza en el árbol (para no pisarlo con un mv): sin contenido, solo lo que se nombró. */
+    exists(f) {
+      if (this.deleted.includes(f)) return false;
+      if (this.work.includes(f) || this.untracked.includes(f)) return true;
+      const s = this.staged.find((x) => x.file === f);
+      if (s) return !s.gone;
+      if (this.staged.some((x) => x.from === f)) return false;
+      return this.inHistory().has(f);
     }
 
     /** Lo que git anota en el reflog de HEAD por ese comando. */
@@ -206,19 +440,60 @@
       for (const f of files) {
         const i = this.staged.findIndex((s) => s.file === f);
         if (i < 0) continue;
-        const [gone] = this.staged.splice(i, 1);
-        const list = gone.isNew ? this.untracked : this.work;
+        const [out] = this.staged.splice(i, 1);
+        if (out.gone) {
+          // un borrado preparado vuelve a ser un borrado a mano; si fue rm --cached, el archivo sigue ahí, sin seguir: vuelve a seguirse
+          if (out.cached) this.untracked = this.untracked.filter((u) => u !== f);
+          else if (!this.deleted.includes(f)) this.deleted.push(f);
+          continue;
+        }
+        if (out.from) {
+          // un renombre preparado se deshace como lo haría git: el viejo, borrado; el nuevo, sin seguir
+          if (!this.deleted.includes(out.from)) this.deleted.push(out.from);
+          if (!this.untracked.includes(f)) this.untracked.push(f);
+          this.work = this.work.filter((w) => w !== f);
+          continue;
+        }
+        const list = out.isNew ? this.untracked : this.work;
         if (!list.includes(f)) list.push(f);
       }
     }
 
+    /** Lo cambiado y lo borrado sin preparar, como lo lista git. */
+    unstagedLines() {
+      return [...this.work.map((f) => `\tmodified:   ${f}`), ...this.deleted.map((f) => `\tdeleted:    ${f}`)];
+    }
+
     /** Los archivos con cambios sin commit, preparados o no (los sin seguir no cuentan). */
     dirty() {
-      return [...new Set([...this.staged.map((s) => s.file), ...this.work])];
+      return [...new Set([...this.staged.map((s) => s.file), ...this.work, ...this.deleted])];
+    }
+
+    /** Las tres áreas de git a la vista, en orden alfabético: `work` (el árbol de trabajo: M cambiado, D borrado a
+        mano, U sin seguir), `index` (lo preparado: M, A nuevo, D borrado, R renombrado, con `from`, y C en conflicto) y `head` (los
+        archivos del commit de HEAD: los que la historia creó o cambió y los que un cambio sin commit da por
+        existentes, porque sin contenido real solo se conoce lo que se nombró). Sin DOM: la dibuja la práctica. */
+    areas() {
+      const by = (a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0);
+      const work = [...this.work.map((file) => ({ file, state: 'M' })), ...this.deleted.map((file) => ({ file, state: 'D' })), ...this.untracked.map((file) => ({ file, state: 'U' }))].sort(by);
+      const index = this.staged.map((s) => (s.gone ? { file: s.file, state: 'D' } : s.from ? { file: s.file, state: 'R', from: s.from } : { file: s.file, state: s.isNew ? 'A' : 'M' })).sort(by);
+      // un archivo en conflicto va en el índice como C («both modified»): add lo pasa a M
+      index.push(...this.conflicts.map((file) => ({ file, state: 'C' })));
+      index.sort(by);
+      const head = new Set(this.inHistory());
+      for (const f of [...this.work, ...this.deleted, ...this.conflicts]) head.add(f);
+      for (const s of this.staged) if (!s.isNew) head.add(s.from ?? s.file);
+      return { work, index, head: [...head].sort() };
+    }
+
+    /** Falla como git si una fusión dejó archivos en conflicto sin resolver (checkout, rebase, stash…). */
+    needResolved() {
+      if (this.conflicts.length) fail(`${this.conflicts.map((f) => `${f}: needs merge`).join('\n')}\nerror: you need to resolve your current index first`);
     }
 
     /** Falla como git si hay cambios sin commit: en esta simulación, ir a otro commit siempre pisa los archivos cambiados. */
     needClean(verb) {
+      this.needResolved();
       if (this.picking) fail(`error: You have not concluded your ${this.picking.revert ? 'revert' : 'cherry-pick'} (${this.picking.revert ? 'REVERT_HEAD' : 'CHERRY_PICK_HEAD'} exists).\nPlease, commit your changes or use '${this.picking.revert ? 'revert' : 'cherry-pick'} --abort' before you ${verb === 'checkout' ? 'switch branches' : verb}.`);
       if (!this.dirty().length) return;
       fail(`error: Your local changes to the following files would be overwritten by ${verb}:\n${this.dirty().map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you ${verb === 'checkout' ? 'switch branches' : verb}.\nAborting`);
@@ -226,10 +501,17 @@
 
     /* ---------- los comandos ---------- */
 
-    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y, si cambió el repo, changed. */
+    /** Lo que mira run() para saber si un comando cambió el repo. */
+    snapshot() {
+      return JSON.stringify([[...this.branches], [...this.tags], [...this.tracking], this.remote && [...this.remote.branches], this.head, this.commits.size, this.merging, this.conflicts, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+    }
+
+    /** Corre una línea («git commit -m "x"» o «commit -m x»). Devuelve { ok, lines } y changed si cambió el repo,
+        también cuando el comando falla después de cambiar algo (el fetch de un pull que se niega). */
     run(line) {
       const words = tokenize(line.trim());
-      if (words[0] === 'git') words.shift();
+      const viaGit = words[0] === 'git';
+      if (viaGit) words.shift();
       if (!words.length) return { ok: true, lines: [], changed: false };
       const [cmd, ...args] = words;
       const headBefore = this.head.branch ?? null;
@@ -237,11 +519,13 @@
       this.renamed = null;
       // la primera línea del reflog es de dónde partió HEAD
       if (!this.reflog.length && shaBefore) this.reflog.push({ sha: shaBefore, msg: `commit: ${this.commits.get(shaBefore).message}` });
-      const before = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+      const before = this.snapshot();
       try {
-        const handler = this.commands[cmd];
+        // rm y mv sin «git» delante son los de la terminal: borran o mueven el archivo sin preparar nada
+        const handler = !viaGit && SHELL[cmd] ? SHELL[cmd] : this.commands[cmd];
         if (!handler) fail(`git: '${cmd}' is not a git command. Try 'help'.`);
-        if (this.rebasing && REBASE_BLOCKED.has(cmd) && !(cmd === 'rebase' && (args.includes('--abort') || args.includes('--continue')))) {
+        const reading = cmd === 'stash' && (args[0] === 'list' || args[0] === 'show'); // solo leen: git los deja pasar
+        if (this.rebasing && REBASE_BLOCKED.has(cmd) && !reading && !(cmd === 'rebase' && (args.includes('--abort') || args.includes('--continue')))) {
           fail(`fatal: It seems that there is already a rebase-merge directory (a rebase is in progress).\nUse 'rebase --continue' to finish it or 'rebase --abort' to cancel it before you ${cmd}.`);
         }
         const lines = handler.call(this, args) || [];
@@ -249,13 +533,25 @@
           this.reflog.push({ sha: this.headSha, msg: this.reflogMessage(cmd, args, headBefore ?? this.short(shaBefore ?? '')) });
           if (this.reflog.length > 100) this.reflog.shift();
         }
-        const after = JSON.stringify([[...this.branches], [...this.tags], this.head, this.commits.size, this.merging, this.aborts, this.picking, this.pickAborts, this.revertAborts, this.rebasing, this.rebaseAborts]);
+        const after = this.snapshot();
         return { ok: true, lines, changed: before !== after };
       } catch (e) {
         if (!(e instanceof GitError)) throw e;
-        return { ok: false, lines: e.message.split('\n'), changed: false };
+        // un comando que se niega a medias (pull trae con fetch y después se niega) deja lo hecho, como git: el grafo lo dibuja
+        return { ok: false, lines: e.message.split('\n'), changed: before !== this.snapshot() };
       }
     }
+  }
+
+  /** Los archivos de stash show y show: --name-status (A nuevo, M cambiado, D borrado), --name-only o, sin contenido
+      que contar, la forma de --stat con lo que le pasó a cada uno y cuántos son. */
+  function fileLines(rows, opts) {
+    if (opts.status) return rows.map(([k, f]) => `${k}\t${f}`);
+    if (opts.names) return rows.map(([, f]) => f);
+    if (!rows.length) return [];
+    const width = Math.max(...rows.map(([, f]) => f.length));
+    const note = { A: 'new', M: 'changed', D: 'deleted' };
+    return [...rows.map(([k, f]) => ` ${f.padEnd(width)} | ${note[k]}`), ` ${rows.length} file${rows.length > 1 ? 's' : ''} changed`];
   }
 
   /** Lo que se niega con un rebase a medias (git exige terminarlo o cancelarlo antes). */
@@ -275,7 +571,7 @@
     return { flags, rest };
   }
 
-  const validName = (n) => /^[\w][\w./-]*$/.test(n) && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
+  const validName = (n) => /^[\w][\w./-]*$/.test(n) && n !== 'HEAD' && !n.endsWith('/') && !n.includes('..') && !n.endsWith('.lock');
 
   Repo.prototype.commands = {
     help() {
@@ -284,28 +580,42 @@
         'commit --amend [-m "msg"]   redo the last commit (with what is prepared)',
         'branch [name] [-d name]     list, create or delete branches',
         'branch -m [old] <new>       rename a branch (the current one without old; -M replaces an existing one)',
+        'branch -c [old] <new>       copy a branch without moving HEAD (the current one without old; -C replaces an existing one)',
         'checkout [-b] <name|sha>    move to a branch or commit (also: switch [-c|--detach])',
         'restore <file|.>            throw away the uncommitted changes of a file (see touch)',
         'merge <branch>              bring another branch into this one (--no-ff always makes a merge commit, --ff-only, --no-commit, -m "msg")',
-        'merge --abort              cancel a merge that is waiting for its commit',
+        'merge --abort              cancel a merge that is waiting for its commit or stopped on a conflict',
         'rebase [-i] <branch>        replay this branch on top of another (-i stops after the first commit)',
         'rebase --abort|--continue  cancel a stopped rebase, or replay the rest of it',
         'reset [--soft|--mixed|--hard] <to>  move the branch back (HEAD~1, a sha, HEAD@{1}); --hard drops changes',
         'reflog                      where HEAD has been (HEAD@{n}): find a commit again after a reset --hard',
-        'stash [list|pop|apply|drop] put uncommitted changes aside and bring them back',
-        'add <file|.>                prepare changes (and new files) for the next commit',
+        'stash [-u] [list|pop|apply|drop] put uncommitted changes aside (-u also the untracked files) and bring them back',
+        'stash show [--name-only|--name-status] [-u] [stash@{n}]  list the files a stash keeps, without bringing them back',
+        'add <file|.>                prepare changes (and new files) for the next commit; after a merge conflict, mark the file resolved',
         'add -u [file|.]             prepare only changed files git already tracks (new files stay out)',
         'add -A [file|.]             prepare everything: changed files and new ones (like add .)',
         'restore --staged <file|.>   take a file back out of what is prepared',
-        'clean [-n|-f]               delete files git does not track (-n only lists them, -f deletes)',
+        'git rm [--cached] [-f] <file>  delete a tracked file and prepare the deletion (--cached keeps it, untracked)',
+        'git mv <old> <new>          rename a tracked file and prepare the rename',
+        'rm <file> / mv <old> <new>  without git: delete or move the file by hand (add -A prepares it)',
+        'clean [-n|-f] [-d] [path]   delete files git does not track (-n only lists them, -f deletes; -d also untracked folders, -e <pattern> keeps some)',
         'touch [--new] <file>        change a file (uncommitted work); --new makes an untracked one',
         'cherry-pick <commit>        copy one commit on top of the current branch (-n holds it until commit or --continue)',
         'cherry-pick --abort        cancel a cherry-pick that is waiting for its commit',
         'revert <commit>             undo a commit with a new one, keeping the history (-n holds it until commit or --continue)',
         'revert --abort             cancel a revert that is waiting for its commit',
         'tag [name] [-d name]        list, create or delete tags on a commit',
+        'tag -a <name> -m "msg"      an annotated tag, with its message (tag -n lists the messages, -l "v1*" filters)',
         'log [--oneline]             the history that leads to HEAD',
-        'status                      where HEAD is',
+        'show [<commit>]             the sha, message and files of a commit (HEAD without one), moving nothing (--name-status, -s)',
+        'diff [--staged] [-- <path>] the changed files not yet prepared (--staged: the prepared ones), moving nothing (--name-status)',
+        'status                      where HEAD is (and how far ahead or behind origin the branch is)',
+        'push [-u] [-f] [origin [<branch>]]  send the current branch to the remote (-u remembers it as upstream)',
+        'push origin --delete <branch>  delete a branch on the remote (and its origin/<branch>)',
+        'fetch [origin] [--prune]    bring what the remote has into origin/<branch>, without touching your branches (--prune drops the ones deleted there)',
+        'pull [--rebase|--no-rebase|--ff-only] [origin [<branch>]]  fetch, then bring the branch it follows into the current one',
+        'branch -r | -a              list the remote-tracking branches (origin/<branch>), or every branch',
+        'branch --merged [<commit>]  list the branches already in HEAD (or in that commit): safe to delete with -d; --no-merged lists the rest',
       ];
     },
 
@@ -324,46 +634,59 @@
         // como git: el commit viejo se reemplaza por uno nuevo con los mismos padres (el viejo queda en el reflog)
         const sha = this.make(text, old.parents);
         if (old.files) this.commits.get(sha).files = old.files.slice();
+        if (old.removed) Object.assign(this.commits.get(sha), { removed: old.removed.slice(), renames: old.renames });
+        if (old.added) this.commits.get(sha).added = old.added.slice();
         this.moveHead(sha);
         this.take(sha, all);
         return [`[${this.head.branch || 'detached HEAD'} ${this.short(sha)}] ${text}`];
       }
-      if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
+      if (this.conflicts.length) fail('error: Committing is not possible because you have unmerged files.\nhint: Fix them up in the work tree, and then use \'git add <file>\'\nhint: as appropriate to mark resolution and make a commit.\nfatal: Exiting because of an unresolved conflict.');
       if (this.merging) {
+        // sin -m, el mensaje que git deja preparado para la fusión (MERGE_MSG)
+        if (msg === true) fail('error: switch `m\' requires a value');
+        if (msg === '') fail('Aborting commit due to empty commit message.');
         const { theirs } = this.merging;
-        const merged = this.make(msg, [this.headSha, theirs]);
+        const text = msg || this.merging.msg || `Merge branch '${this.merging.name}'`;
+        const merged = this.make(text, [this.headSha, theirs]);
         this.moveHead(merged);
         this.take(merged, all);
+        if (this.merging.conflicted) this.conflictMerges++;
         this.merging = null;
-        return [`[${this.head.branch} ${this.short(merged)}] ${msg}`];
+        return [`[${this.head.branch} ${this.short(merged)}] ${text}`];
       }
+      if (!msg || msg === true) fail('Aborting commit due to empty commit message.\n(use: commit -m "message")');
       // los commits de esta práctica pueden ir vacíos («una foto» de la rama); pero con cambios sin preparar
       // y nada preparado, git no hace el commit: hay que elegir qué entra con add, o llevarse todo con -a
-      if (!this.picking && !all && !this.staged.length && this.work.length) {
-        fail(`no changes added to commit (use "git add" and/or "git commit -a")\n${this.commands.status.call(this)[0]}\nChanges not staged for commit:\n${this.work.map((f) => `\tmodified:   ${f}`).join('\n')}`);
+      if (!this.picking && !all && !this.staged.length && (this.work.length || this.deleted.length)) {
+        fail(`no changes added to commit (use "git add" and/or "git commit -a")\n${this.commands.status.call(this)[0]}\nChanges not staged for commit:\n${this.unstagedLines().join('\n')}`);
       }
       if (this.picking) this.picking = null;
       const sha = this.make(msg, this.headSha ? [this.headSha] : []);
       this.moveHead(sha);
       this.take(sha, all);
       const where = this.head.branch || 'detached HEAD';
-      const files = this.commits.get(sha).files;
-      return [`[${where} ${this.short(sha)}] ${msg}`, ...(files ? [` ${files.length} file${files.length > 1 ? 's' : ''} changed`] : [])];
+      const n = this.changedCount(sha);
+      return [`[${where} ${this.short(sha)}] ${msg}`, ...(n ? [` ${n} file${n > 1 ? 's' : ''} changed`] : [])];
     },
 
     status() {
-      const where = this.head.branch ? `On branch ${this.head.branch}` : `HEAD detached at ${this.short(this.head.sha)}`;
-      if (this.merging) return [where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)'];
-      if (this.rebasing) return [where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
+      const where = this.head.branch ? [`On branch ${this.head.branch}`, ...this.trackingLines()] : [`HEAD detached at ${this.short(this.head.sha)}`];
+      const kind = (s) => (s.gone ? `deleted:    ${s.file}` : s.from ? `renamed:    ${s.from} -> ${s.file}` : `${s.isNew ? 'new file' : 'modified'}:   ${s.file}`);
+      if (this.merging) {
+        const ready = this.staged.length ? ['', 'Changes to be committed:', ...this.staged.map((s) => `\t${kind(s)}`)] : [];
+        if (!this.conflicts.length) return [...where, 'All conflicts fixed but you are still merging.', '  (use "git commit" to conclude merge)', '  (use "git merge --abort" to cancel it)', ...ready];
+        return [...where, 'You have unmerged paths.', '  (fix conflicts and run "git commit")', '  (use "git merge --abort" to abort the merge)', ...ready, '', 'Unmerged paths:', '  (use "git add <file>..." to mark resolution)', ...this.conflicts.map((f) => `\tboth modified:   ${f}`)];
+      }
+      if (this.rebasing) return [...where, `interactive rebase in progress; onto ${this.short(this.rebasing.onto)}`, `Last command done (1 command done), ${this.rebasing.rest.length} remaining.`, '  (use "git rebase --continue" to replay the rest)', '  (use "git rebase --abort" to check out the original branch)'];
       if (this.picking) {
         const verb = this.picking.revert ? 'revert' : 'cherry-pick';
-        return [where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
+        return [...where, `You are currently ${this.picking.revert ? 'reverting' : 'cherry-picking'} commit ${this.short(this.picking.sha)}.`, `  (use "git ${verb} --continue" to commit it)`, `  (use "git ${verb} --abort" to cancel the ${verb} operation)`];
       }
-      if (!this.dirty().length && !this.untracked.length) return [where, 'nothing to commit, working tree clean'];
-      const out = [where];
-      if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${s.isNew ? 'new file' : 'modified'}:   ${s.file}`));
-      if (this.work.length) out.push('Changes not staged for commit:', ...this.work.map((f) => `\tmodified:   ${f}`));
-      if (this.untracked.length) out.push('Untracked files:', ...this.untracked.map((f) => `\t${f}`));
+      if (!this.dirty().length && !this.untracked.length) return [...where, 'nothing to commit, working tree clean'];
+      const out = [...where];
+      if (this.staged.length) out.push('Changes to be committed:', '  (use "git restore --staged <file>..." to unstage)', ...this.staged.map((s) => `\t${kind(s)}`));
+      if (this.work.length || this.deleted.length) out.push('Changes not staged for commit:', ...this.unstagedLines());
+      if (this.untracked.length) out.push('Untracked files:', ...[...new Set(this.untracked.map((f) => this.untrackedDir(f) || f))].map((f) => `\t${f}`));
       return out;
     },
 
@@ -375,7 +698,12 @@
         if (!/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..')) fail(`touch: invalid file name '${f}'`);
         if (fresh) {
           if (!this.untracked.includes(f) && !this.staged.some((s) => s.file === f)) this.untracked.push(f);
-        } else if (!this.work.includes(f)) this.work.push(f);
+        } else if (this.deleted.includes(f)) {
+          // volver a crear un archivo borrado a mano: queda cambiado
+          this.deleted = this.deleted.filter((d) => d !== f);
+          if (!this.work.includes(f)) this.work.push(f);
+        } else if (!this.tracked(f) && !this.untracked.includes(f)) this.untracked.push(f);
+        else if (!this.work.includes(f) && !this.untracked.includes(f)) this.work.push(f);
       }
       return [];
     },
@@ -384,6 +712,7 @@
       const { flags, rest } = parse(args, ['-m', '--message']);
       const [sub = 'push', ref] = rest;
       const msg = flags['-m'] ?? flags['--message'];
+      const withNew = !!(flags['-u'] || flags['--include-untracked']);
       const pick = () => {
         if (!this.stashes.length) fail('error: No stash entries found.');
         const m = /^(?:stash@\{(\d+)\}|(\d+))$/.exec(ref ?? '0');
@@ -392,27 +721,45 @@
         return i;
       };
       if (sub === 'push' || sub === 'save') {
-        if (!this.dirty().length) return ['No local changes to save'];
+        this.needResolved();
+        if (!this.dirty().length && !(withNew && this.untracked.length)) return ['No local changes to save'];
         if (!this.headSha) fail('You do not have the initial commit yet');
         const branch = this.head.branch || '(no branch)';
         const line = typeof msg === 'string' && msg ? `On ${branch}: ${msg}` : `WIP on ${branch}: ${this.short(this.headSha)} ${this.commits.get(this.headSha).message}`;
-        this.stashes.unshift({ files: this.dirty(), line });
-        this.work = [];
-        this.staged = [];
+        // lo borrado (a mano o con git rm, y el nombre viejo de un renombre) se aparta aparte: vuelve borrado
+        // un archivo nuevo preparado y borrado a mano no estaba en HEAD ni queda en el árbol: no se aparta como borrado
+        const removed = [...new Set([...this.deleted.filter((f) => !this.staged.some((x) => x.isNew && x.file === f)), ...this.staged.filter((x) => x.gone || x.from).map((x) => x.from ?? x.file)])];
+        const files = [...new Set([...this.staged.filter((x) => !x.gone).map((x) => x.file), ...this.work])].filter((f) => !this.deleted.includes(f));
+        // lo nuevo preparado (y el nombre nuevo de un renombre) es un archivo que el commit del stash añade: stash show lo marca con A
+        const added = files.filter((f) => this.staged.some((x) => x.file === f && (x.isNew || x.from)));
+        this.stashes.unshift({ id: ++this.stashSeq, files, removed, added, untracked: withNew ? this.untracked : [], line });
+        this.discardTree();
+        if (withNew) this.untracked = [];
         return [`Saved working directory and index state ${line}`];
       }
       if (sub === 'list') return this.stashes.map((s, i) => `stash@{${i}}: ${s.line}`);
+      if (sub === 'show') {
+        // en git, `stash -u show` es un push con la ruta show; aquí, que las opciones vayan detrás
+        if (args[0] !== 'show') fail(`error: options go after show here: try 'stash show ${args.filter((a) => a !== 'show').join(' ')}'`);
+        return this.stashShow(args.slice(1));
+      }
       if (sub === 'drop') {
         const i = pick();
         const [gone] = this.stashes.splice(i, 1);
         return [`Dropped stash@{${i}} (${hash(gone.line)})`];
       }
       if (sub === 'pop' || sub === 'apply') {
+        this.needResolved();
         const i = pick();
         const entry = this.stashes[i];
-        const clash = entry.files.filter((f) => this.dirty().includes(f));
+        const clash = [...entry.files, ...(entry.removed || [])].filter((f) => this.dirty().includes(f));
         if (clash.length) fail(`error: Your local changes to the following files would be overwritten by merge:\n${clash.map((f) => `\t${f}`).join('\n')}\nPlease commit your changes or stash them before you merge.\nAborting`);
+        const taken = entry.untracked.filter((f) => this.untracked.includes(f) || this.dirty().includes(f));
+        if (taken.length) fail(`${taken.map((f) => `${f} already exists, no checkout`).join('\n')}\nerror: could not restore untracked files from stash`);
         this.work = [...this.work, ...entry.files];
+        this.deleted = [...this.deleted, ...(entry.removed || [])];
+        this.untracked = [...this.untracked, ...entry.untracked];
+        this.stashBack.add(entry.id);
         const out = this.commands.status.call(this);
         if (sub === 'pop') {
           this.stashes.splice(i, 1);
@@ -420,14 +767,19 @@
         }
         return out;
       }
-      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push | list | pop | apply | drop]`);
+      fail(`error: unknown subcommand: '${sub}'\nusage: stash [push [-u] | list | show | pop | apply | drop]`);
     },
 
     log(args) {
-      const { flags } = parse(args);
-      const sha = this.headSha;
-      if (!sha) fail('fatal: your current branch does not have any commits yet');
-      const shas = this.log(sha);
+      const { flags, rest } = parse(args);
+      // log <ref>… desde esos commits (origin/main tras un fetch); --all, desde todas las ramas, las de seguimiento y las etiquetas
+      const tips = rest.map((ref) => this.resolve(ref) ?? fail(`fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.`));
+      if (flags['--all']) tips.push(...[...this.branches.values(), ...(this.remote ? this.tracking.values() : []), ...this.tags.values()].filter(Boolean));
+      if (!tips.length) {
+        if (!this.headSha) fail('fatal: your current branch does not have any commits yet');
+        tips.push(this.headSha);
+      } else if (flags['--all'] && this.headSha) tips.push(this.headSha);
+      const shas = this.log([...new Set(tips)]);
       if (flags['--oneline'] || flags['--oneline'] === true) {
         return shas.map((s) => `${this.short(s)}${this.decorations(s)} ${this.commits.get(s).message}`);
       }
@@ -437,12 +789,101 @@
       });
     },
 
+    /**
+     * show [<commit>...]: el sha, las ramas, el autor, el mensaje y los archivos de un commit (HEAD si no se da otro),
+     * sin mover nada. Una etiqueta anotada sale antes con su mensaje. Sin contenido no hay diff: los archivos van como
+     * en --stat, o con --name-only o --name-status; -s (--no-patch) los calla y --oneline acorta la cabecera.
+     */
+    show(args) {
+      const opts = { names: false, status: false, quiet: false, oneline: false };
+      const refs = [];
+      for (const a of args) {
+        // como en git, gana el último formato: -s calla los archivos y --stat o --name-* los vuelven a mostrar
+        if (a === '--stat') Object.assign(opts, { quiet: false, names: false, status: false });
+        else if (a === '--name-only') Object.assign(opts, { quiet: false, names: true, status: false });
+        else if (a === '--name-status') Object.assign(opts, { quiet: false, names: false, status: true });
+        else if (a === '-s' || a === '--no-patch') opts.quiet = true;
+        else if (a === '--oneline') opts.oneline = true;
+        else if (a === '-p' || a === '--patch') fail('fatal: show -p needs file contents, and the practice has none: try show --name-status');
+        else if (a === '--') fail('fatal: show <commit> -- <path> is not in this practice: try show --name-status <commit>');
+        else if (a.length > 1 && a[0] === '-') fail(`fatal: unrecognized argument: ${a}\nusage: show [--oneline] [-s | --stat | --name-only | --name-status] [<commit>...]`);
+        else refs.push(a);
+      }
+      if (!refs.length && !this.headSha) fail(`fatal: your current branch '${this.head.branch}' does not have any commits yet`);
+      const picked = (refs.length ? refs : ['HEAD']).map((ref) => {
+        const sha = this.resolve(ref);
+        if (!sha) fail(`fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'`);
+        // una etiqueta anotada (y no una rama con ese nombre, que resolve elige antes) muestra primero su objeto
+        const note = !this.branches.has(ref) && this.notes.get(ref);
+        return { sha, tag: note ? { name: ref, message: note.message } : null };
+      });
+      return picked.flatMap(({ sha, tag }, i) => {
+        const c = this.commits.get(sha);
+        const head = opts.oneline
+          ? [`${this.short(sha)}${this.decorations(sha)} ${c.message}`]
+          : [`commit ${sha}${this.decorations(sha)}`, ...(c.parents.length > 1 ? [`Merge: ${c.parents.map((p) => this.short(p)).join(' ')}`] : []), `Author: ${c.author.name}`, '', `    ${c.message}`];
+        const files = opts.quiet ? [] : fileLines(this.commitRows(sha), opts);
+        const block = [...(tag ? [`tag ${tag.name}`, `Tagger: ${AUTHOR.name}`, '', tag.message, ''] : []), ...head, ...(files.length && !opts.oneline ? [''] : []), ...files];
+        return i ? ['', ...block] : block;
+      });
+    },
+
+    /**
+     * diff [--staged|--cached] [-- <ruta>...]: los archivos cambiados sin preparar (contra lo preparado) o, con
+     * --staged, los preparados (contra HEAD), sin tocar nada. Sin contenido no hay parche: cada archivo va como en
+     * --stat, o con --name-only o --name-status; los sin seguir no salen, como en git.
+     */
+    diff(args) {
+      const opts = { names: false, status: false };
+      let staged = false;
+      const paths = [];
+      let dashes = false;
+      for (const a of args) {
+        if (dashes) paths.push(a);
+        else if (a === '--') dashes = true;
+        else if (a === '--staged' || a === '--cached') staged = true;
+        else if (a === '--stat') Object.assign(opts, { names: false, status: false });
+        else if (a === '--name-only') Object.assign(opts, { names: true, status: false });
+        else if (a === '--name-status') Object.assign(opts, { names: false, status: true });
+        else if (a === '-p' || a === '--patch' || a === '-u') fail('fatal: diff -p needs file contents, and the practice has none: try diff --name-status');
+        else if (a.length > 1 && a[0] === '-') fail(`fatal: unrecognized argument: ${a}\nusage: diff [--staged | --cached] [--stat | --name-only | --name-status] [-- <path>...]`);
+        else if (this.resolve(a) || a.split(/\.{2,3}/).some((x) => x && this.resolve(x))) fail(`fatal: diff <commit> is not in this practice: try diff, or diff --staged to compare what is prepared with HEAD`);
+        else if (this.diffKnown(a)) paths.push(a);
+        else fail(`fatal: ambiguous argument '${a}': unknown revision or path not in the working tree.\nUse '--' to separate paths from revisions, like this:\n'git <command> [<revision>...] -- [<file>...]'`);
+      }
+      // el nombre viejo de un git mv que se vuelve a crear y preparar sigue en HEAD: es un cambio, no un borrado y un nuevo
+      const back = new Set(this.staged.filter((s) => s.from && this.staged.some((x) => x.file === s.from && !x.gone)).map((s) => s.from));
+      const rows = staged
+        ? this.staged.flatMap((s) => (s.gone ? [['D', s.file]] : s.from ? [...(back.has(s.from) ? [] : [['D', s.from]]), ['A', s.file]] : [[s.isNew && !back.has(s.file) ? 'A' : 'M', s.file]]))
+        : [...this.work.map((f) => ['M', f]), ...this.deleted.map((f) => ['D', f])];
+      const picked = rows.filter(([, f]) => !paths.length || paths.some((p) => pathMatch(p, f)));
+      return fileLines(picked.sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)), opts);
+    },
+
     branch(args) {
-      const { flags, rest } = parse(args);
+      /* --merged y --no-merged [<commit>]: el commit es opcional (HEAD) y va como el argumento siguiente o con =, como
+         en git; los dos juntos dejan las contenidas en uno y no en el otro (git 2.29) */
+      const filters = [];
+      const others = [];
+      for (let i = 0; i < args.length; i++) {
+        const m = /^--(no-)?merged(?:=(.*))?$/.exec(args[i]);
+        if (!m) {
+          others.push(args[i]);
+          continue;
+        }
+        let ref = m[2];
+        if (ref === undefined && i + 1 < args.length && !args[i + 1].startsWith('-')) ref = args[++i];
+        filters.push({ merged: !m[1], ref: ref ?? 'HEAD' }); // --merged= (vacío) no es HEAD: git lo rechaza
+      }
+      const { flags, rest } = parse(others);
       const del = flags['-d'] || flags['-D'] || flags['--delete'];
       const move = flags['-m'] || flags['-M'] || flags['--move'];
+      const copy = flags['-c'] || flags['-C'] || flags['--copy'];
+      if (filters.length && (del || move || copy)) fail('usage: branch [-r | -a] [--merged [<commit>]] [--no-merged [<commit>]] [<pattern>...]\n   --merged and --no-merged only list branches: they do not go with -d, -m or -c');
       if (del && move) fail('usage: branch (-m | -M) [<old-branch>] <new-branch>');
+      if (copy && (del || move)) fail('usage: branch (-c | -C) [<old-branch>] <new-branch>');
       if (move) return renameBranch.call(this, rest, !!(flags['-M'] || flags['-f'] || flags['--force']));
+      if (copy) return copyBranch.call(this, rest, !!(flags['-C'] || flags['-f'] || flags['--force']));
       if (del) {
         if (!rest.length) fail('fatal: branch name required');
         const out = [];
@@ -454,13 +895,25 @@
             fail(`error: the branch '${name}' is not fully merged.\nIf you are sure you want to delete it, run 'branch -D ${name}'.`);
           }
           this.branches.delete(name);
+          this.upstream.delete(name);
           out.push(`Deleted branch ${name} (was ${this.short(tip)}).`);
         }
         return out;
       }
-      if (!rest.length) {
-        return [...this.branches.keys()].sort().map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
+      // con --merged o --no-merged, solo las ramas cuya punta está (o no) en la historia de ese commit; lo que queda
+      // suelto son patrones, como en git (branch --merged main "feat*")
+      for (const f of filters) {
+        const sha = this.resolve(f.ref);
+        if (!sha) fail(`error: malformed object name ${f.ref}`);
+        f.history = this.ancestors(sha);
       }
+      const glob = (p) => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
+      const keep = (name, tip) => filters.every((f) => f.history.has(tip) === f.merged) && (!filters.length || !rest.length || rest.some((p) => glob(p).test(name)));
+      const remotes = () => (this.remote ? [...this.tracking.keys()].sort().filter((n) => keep(`${this.remote.name}/${n}`, this.tracking.get(n))).map((n) => `${this.remote.name}/${n}`) : []);
+      if (flags['-r'] || flags['--remotes']) return remotes().map((n) => `  ${n}`);
+      const locals = () => [...this.branches.keys()].sort().filter((n) => keep(n, this.branches.get(n))).map((n) => `${this.head.branch === n ? '*' : ' '} ${n}`);
+      if (flags['-a'] || flags['--all']) return [...locals(), ...remotes().map((n) => `  remotes/${n}`)];
+      if (!rest.length || filters.length) return locals();
       const [name, start] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
       if (this.branches.has(name)) fail(`fatal: a branch named '${name}' already exists`);
@@ -471,6 +924,7 @@
     },
 
     checkout(args) {
+      this.needResolved();
       const { flags, rest } = parse(args);
       const create = flags['-b'] || flags['-c'];
       if (create) {
@@ -482,6 +936,15 @@
       }
       const [target] = rest;
       if (!target) fail('fatal: missing branch or commit argument');
+      // como git: checkout de una rama que solo está en el remoto la crea siguiéndolo
+      if (!this.branches.has(target) && this.remote && this.tracking.has(target) && validName(target)) {
+        const sha = this.tracking.get(target);
+        if (sha !== this.headSha) this.needClean('checkout');
+        this.branches.set(target, sha);
+        this.upstream.set(target, target);
+        this.head = { branch: target };
+        return [`branch '${target}' set up to track '${this.remote.name}/${target}'.`, `Switched to a new branch '${target}'`];
+      }
       if (this.branches.has(target)) {
         if (this.head.branch === target) return [`Already on '${target}'`];
         if (this.branches.get(target) !== this.headSha) this.needClean('checkout');
@@ -501,8 +964,8 @@
       if (flags['--abort']) {
         if (!this.merging) fail('fatal: There is no merge to abort (MERGE_HEAD missing).');
         this.merging = null;
-        this.work = [];
-        this.staged = [];
+        this.conflicts = [];
+        this.discardTree();
         this.aborts++;
         return [];
       }
@@ -521,13 +984,29 @@
         return [`Updating ${this.short(ours)}..${this.short(theirs)}`, 'Fast-forward'];
       }
       if (flags['--ff-only']) fail('fatal: Not possible to fast-forward, aborting.');
-      if (flags['--no-commit']) {
-        this.merging = { name, theirs };
-        return ['Automatic merge went well; stopped before committing as requested'];
-      }
       const msg = flags['-m'] ?? flags['--message'];
       if (msg === true || msg === '') fail('error: switch `m\' requires a value');
-      const sha = this.make(msg || `Merge branch '${name}'`, [ours, theirs]);
+      const text = msg || (this.trackingName(name) != null && !this.branches.has(name) ? `Merge remote-tracking branch '${name}'` : `Merge branch '${name}'`);
+      // los archivos que las dos ramas tocaron desde su base chocan (sin contenido, no se sabe si en las mismas líneas)
+      // (si las dos lo borraron, no hay nada que elegir; las partidas de un ejercicio propio fusionan sin conflictos)
+      const mine = this.sideStates(ours, theirs);
+      const incoming = this.sideStates(theirs, ours);
+      const clash = this.lenient ? [] : [...incoming.keys()].filter((f) => mine.has(f) && !(mine.get(f) === 'D' && incoming.get(f) === 'D')).sort();
+      if (clash.length) {
+        this.merging = { name, theirs, msg: text, conflicted: true };
+        this.conflicts = clash;
+        // lo que llega de la otra rama sin chocar ya queda preparado como llegó (nuevo, cambiado o borrado), como en git
+        for (const f of [...incoming.keys()].filter((x) => !mine.has(x)).sort()) {
+          const st = incoming.get(f);
+          this.staged.push(st === 'D' ? { file: f, gone: true } : { file: f, isNew: st === 'A' });
+        }
+        return [...clash.flatMap((f) => [`Auto-merging ${f}`, `CONFLICT (content): Merge conflict in ${f}`]), 'Automatic merge failed; fix conflicts and then commit the result.'];
+      }
+      if (flags['--no-commit']) {
+        this.merging = { name, theirs, msg: text };
+        return ['Automatic merge went well; stopped before committing as requested'];
+      }
+      const sha = this.make(text, [ours, theirs]);
       this.moveHead(sha);
       return ["Merge made by the 'ort' strategy."];
     },
@@ -546,7 +1025,7 @@
         if (!this.rebasing) fail('fatal: No rebase in progress?');
         const { branch, rest: left } = this.rebasing;
         let base = this.headSha;
-        for (const s of left) base = this.make(this.commits.get(s).message, [base]);
+        for (const s of left) base = this.copy(s, [base]);
         this.branches.set(branch, base);
         this.head = { branch };
         this.rebasing = null;
@@ -558,6 +1037,7 @@
       const onto = this.resolve(name);
       if (!onto) fail(`fatal: invalid upstream '${name}'`);
       const tip = this.headSha;
+      this.needResolved();
       if (this.dirty().length) fail('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.');
       if (this.isAncestor(onto, tip)) return [`Current branch ${this.head.branch} is up to date.`];
       if (this.isAncestor(tip, onto)) {
@@ -573,12 +1053,12 @@
       if (flags['-i'] || flags['--interactive']) {
         // sin editor: el rebase se detiene tras el primer commit, como con «edit», hasta --continue o --abort
         const [first, ...left] = own;
-        base = this.make(this.commits.get(first).message, [onto]);
+        base = this.copy(first, [onto]);
         this.rebasing = { orig: tip, branch: this.head.branch, onto, rest: left };
         this.head = { sha: base };
         return [`Stopped at ${this.short(base)}  ${this.commits.get(first).message}`, "You can amend the commit now, then run 'rebase --continue' (or 'rebase --abort' to cancel)."];
       }
-      for (const s of own) base = this.make(this.commits.get(s).message, [base]);
+      for (const s of own) base = this.copy(s, [base]);
       this.moveHead(base);
       return [`Successfully rebased and updated refs/heads/${this.head.branch}.`];
     },
@@ -599,7 +1079,7 @@
         const c = this.commits.get(pick);
         const msg = revert ? `Revert "${c.message}"` : c.message;
         // como commit: lo cambiado después del --no-commit queda sin commit
-        const sha = this.make(msg, [this.headSha]);
+        const sha = revert ? this.make(msg, [this.headSha]) : this.copy(pick, [this.headSha], msg);
         this.moveHead(sha);
         this.take(sha, false);
         return [`[${this.head.branch} ${this.short(sha)}] ${msg}`];
@@ -621,7 +1101,8 @@
         if (!pick) fail(`fatal: bad revision '${ref}'`);
         const c = this.commits.get(pick);
         if (c.parents.length > 1) fail(`error: commit ${pick} is a merge but no -m option was given.`);
-        const sha = this.commit(c.message);
+        const sha = this.copy(pick, [this.headSha]);
+        this.moveHead(sha);
         out.push(`[${this.head.branch} ${this.short(sha)}] ${c.message}`);
       }
       return out;
@@ -659,25 +1140,76 @@
       return out;
     },
 
+    /**
+     * tag [-n] | tag [-a] [-m "msg"] <nombre> [<commit>] | tag -d <nombre>…: ligera sin -a ni -m; con -a o -m,
+     * anotada: guarda su mensaje (y un objeto con su propio sha), que `tag -n` lista. El log la decora igual.
+     */
     tag(args) {
-      const { flags, rest } = parse(args);
-      if (flags['-d'] || flags['--delete']) {
+      const flags = {};
+      const rest = [];
+      let message = null;
+      const usage = 'usage: tag [-a] [-f] [-m "msg"] <tagname> [<commit>] | tag -d <tagname>... | tag [-n] [-l [<pattern>...]]';
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '-m' || a === '--message' || a === '-am') {
+          if (i + 1 >= args.length) fail(`error: switch \`m' requires a value\n${usage}`);
+          message = args[++i];
+          if (a === '-am') flags['-a'] = true;
+        } else if (a.startsWith('--message=')) message = a.slice(10);
+        else if (a === '-a' || a === '--annotate') flags['-a'] = true;
+        else if (a === '-d' || a === '--delete') flags['-d'] = true;
+        else if (/^-n\d*$/.test(a)) flags['-n'] = true;
+        else if (a === '-l' || a === '--list') flags['-l'] = true;
+        else if (a === '-f' || a === '--force') flags['-f'] = true;
+        else if (a === '--') {
+          rest.push(...args.slice(i + 1));
+          break;
+        }
+        else if (a.length > 1 && a[0] === '-') fail(`error: unknown option '${a.replace(/^-+/, '')}'\n${usage}`);
+        else rest.push(a);
+      }
+      const annotated = flags['-a'] || message !== null;
+      if (flags['-d']) {
+        if (annotated || flags['-n'] || flags['-l'] || flags['-f']) fail(`fatal: -d does not take -a, -m or -n\n${usage}`);
         if (!rest.length) fail('fatal: tag name required');
-        return rest.map((name) => {
+        // todos antes de borrar ninguno: un nombre que no existe no deja la lista a medias
+        for (const name of rest) if (!this.tags.has(name)) fail(`error: tag '${name}' not found.`);
+        return [...new Set(rest)].map((name) => {
           const tip = this.tags.get(name);
-          if (!tip) fail(`error: tag '${name}' not found.`);
+          const was = this.notes.get(name)?.sha ?? tip;
           this.tags.delete(name);
-          return `Deleted tag '${name}' (was ${this.short(tip)})`;
+          this.notes.delete(name);
+          return `Deleted tag '${name}' (was ${this.short(was)})`;
         });
       }
-      if (!rest.length) return [...this.tags.keys()].sort();
+      const listing = flags['-n'] || flags['-l'];
+      if (listing && (annotated || flags['-f'])) fail(`fatal: -n and -l are only for listing tags\n${usage}`);
+      // tag -l <patrón>…: solo las que coinciden con alguno (`*` y `?`, como git)
+      const glob = (p) => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
+      const names = () => [...this.tags.keys()].sort().filter((n) => !listing || !rest.length || rest.some((p) => glob(p).test(n)));
+      if (flags['-n']) {
+        // como git: la primera línea del mensaje de la anotada; de una ligera, el titular de su commit
+        return names().map((name) => `${name.padEnd(15)} ${(this.notes.get(name)?.message ?? this.commits.get(this.tags.get(name))?.message ?? '').split('\n')[0]}`);
+      }
+      if (listing) return names();
+      if (!rest.length) {
+        if (annotated) fail(`fatal: tag name required\n${usage}`);
+        return names();
+      }
+      if (rest.length > 2) fail(`fatal: too many arguments\n${usage}`);
       const [name, target] = rest;
       if (!validName(name)) fail(`fatal: '${name}' is not a valid tag name.`);
-      if (this.tags.has(name)) fail(`fatal: tag '${name}' already exists`);
+      if (this.tags.has(name) && !flags['-f']) fail(`fatal: tag '${name}' already exists`);
+      // git abre el editor para escribir el mensaje; la práctica no tiene editor
+      if (annotated && message === null) fail('fatal: no tag message given: the practice has no editor, so write it with -m "message"');
       const sha = target ? this.resolve(target) : this.headSha;
       if (!sha) fail(target ? `fatal: Failed to resolve '${target}' as a valid ref.` : 'fatal: Failed to resolve HEAD as a valid ref.');
+      // -f pisa la que ya existe, como git, que avisa dónde estaba
+      const old = this.tags.has(name) ? (this.notes.get(name)?.sha ?? this.tags.get(name)) : null;
       this.tags.set(name, sha);
-      return [];
+      this.notes.delete(name);
+      if (annotated) this.notes.set(name, { message, sha: hash(`tag|${name}|${sha}|${message}|${this.clock}`) });
+      return old ? [`Updated tag '${name}' (was ${this.short(old)})`] : [];
     },
 
     reset(args) {
@@ -688,15 +1220,16 @@
       const sha = this.resolve(to);
       if (!sha) fail(`fatal: ambiguous argument '${to}': unknown revision`);
       this.moveHead(sha);
-      if (flags['--hard']) {
-        this.work = [];
-        this.staged = [];
-      } else if (!flags['--soft']) this.unstage(this.staged.map((s) => s.file));
+      // lo que quedó en conflicto sigue cambiado en el árbol (con --hard, se tira)
+      for (const f of this.conflicts) if (!this.work.includes(f)) this.work.push(f);
+      this.conflicts = [];
+      if (flags['--hard']) this.discardTree();
+      else if (!flags['--soft']) this.unstage(this.staged.map((s) => s.file));
       this.merging = null;
       this.picking = null;
       if (flags['--hard']) return [`HEAD is now at ${this.short(sha)} ${this.commits.get(sha).message}`];
       // --mixed (lo que hace `reset` a secas): los cambios sin commit se quedan, sin preparar
-      if (!flags['--soft'] && this.work.length) return ['Unstaged changes after reset:', ...this.work.map((f) => `M\t${f}`)];
+      if (!flags['--soft'] && (this.work.length || this.deleted.length)) return ['Unstaged changes after reset:', ...this.work.map((f) => `M\t${f}`), ...this.deleted.map((f) => `D\t${f}`)];
       return [];
     },
 
@@ -729,12 +1262,39 @@
     for (const [n, s] of entries) this.branches.set(n, s);
     if (this.head.branch === old) this.head = { branch: name };
     if (this.defaultBranch === old) this.defaultBranch = name;
+    // como git: la rama renombrada sigue al mismo remoto, y la que se pisó con -M pierde el suyo
+    this.upstream.delete(name);
+    if (this.upstream.has(old)) {
+      this.upstream.set(name, this.upstream.get(old));
+      this.upstream.delete(old);
+    }
     this.renamed = { from: old, to: name };
+    return [];
+  }
+
+  /** `branch -c [vieja] <nueva>`: otra rama en el mismo commit (la actual si no se dice cuál), sin mover HEAD; `-C` pisa una que no está en uso. */
+  function copyBranch(rest, force) {
+    if (!rest.length) fail('fatal: branch name required');
+    if (rest.length > 2) fail('fatal: too many branches for a copy operation');
+    if (rest.length === 1 && !this.head.branch) fail('fatal: cannot copy the current branch while not on any');
+    const [old, name] = rest.length === 2 ? rest : [this.head.branch, rest[0]];
+    if (!this.branches.has(old)) fail(`fatal: no branch named '${old}'`);
+    if (this.rebasing?.branch === old) fail(`fatal: branch refs/heads/${old} is being rebased`);
+    const tip = this.branches.get(old);
+    if (!tip) fail(`fatal: no commit on branch '${old}' yet`);
+    if (!validName(name)) fail(`fatal: '${name}' is not a valid branch name`);
+    if (old === name) return []; // como git: copiar una rama sobre sí misma no hace nada, con -c o con -C
+    if (this.branches.has(name)) {
+      if (!force) fail(`fatal: a branch named '${name}' already exists`);
+      if (this.head.branch === name || this.rebasing?.branch === name) fail(`fatal: cannot force update the branch '${name}' used by worktree`);
+    }
+    this.branches.set(name, tip);
     return [];
   }
 
   /** `switch` solo mueve entre ramas: `-c` crea, `--detach` va a un commit; un commit a secas no vale. */
   Repo.prototype.commands.switch = function (args) {
+    this.needResolved();
     const { flags, rest } = parse(args);
     if (flags['--detach'] || flags['-d']) {
       const [target] = rest;
@@ -752,7 +1312,8 @@
     }
     const [target] = rest;
     if (!target) fail('fatal: missing branch or commit argument');
-    if (!this.branches.has(target)) {
+    if (!this.branches.has(target) && !(this.remote && this.tracking.has(target))) {
+      if (this.trackingName(target) != null) fail(`fatal: a branch is expected, got remote branch '${target}'\nhint: use 'switch --detach ${target}' to look at it, or 'switch ${this.trackingName(target)}' to work on it`);
       if (this.resolve(target)) fail(`fatal: a branch is expected, got commit '${target}'\nhint: use 'switch --detach ${target}' to go there without a branch`);
       fail(`fatal: invalid reference: ${target}`);
     }
@@ -765,29 +1326,62 @@
   Repo.prototype.commands.add = function (args) {
     // las banderas cortas juntas (-Au, -uA) son dos, como en git
     const { flags, rest } = parse(args.flatMap((a) => (/^-[Au]{2,}$/.test(a) ? [...a.slice(1)].map((c) => `-${c}`) : [a])));
+    // una carpeta (`build/` o `build`, como la muestra status) vale por los archivos de adentro que la práctica conoce
+    const names = [...new Set([...this.work, ...this.untracked, ...this.deleted, ...this.staged.map((x) => x.file)])];
+    rest.splice(0, rest.length, ...rest.flatMap((f) => {
+      const dir = `${f.replace(/\/+$/, '')}/`;
+      const inside = f === '.' || names.includes(f) ? [] : names.filter((n) => n.startsWith(dir));
+      return inside.length ? inside : [f];
+    }));
     const update = !!(flags['-u'] || flags['--update']);
     if (flags['-A'] || flags['--all']) {
       if (update) fail("fatal: options '-A' and '-u' cannot be used together");
       if (!rest.length) rest.push('.');
     }
+    // add marca resuelto un archivo en conflicto (con su nombre, con . o con -A y -u sin rutas)
+    if (this.conflicts.length) {
+      const every = rest.includes('.') || (update && !rest.length);
+      const fix = every ? [...this.conflicts] : this.conflicts.filter((f) => rest.includes(f));
+      for (const f of fix) this.resolveConflict(f);
+      if (!every && fix.length) {
+        rest.splice(0, rest.length, ...rest.filter((f) => !fix.includes(f)));
+        if (!rest.length) return [];
+      }
+    }
     if (update) {
       // sin rutas, -u toma todo el árbol; con rutas, solo las que git sigue y están cambiadas
-      const tracked = new Set([...this.work, ...this.staged.filter((s) => !s.isNew).map((s) => s.file)]);
+      const tracked = new Set([...this.work, ...this.deleted, ...this.staged.filter((s) => !s.isNew).map((s) => s.file)]);
       for (const f of rest) if (f !== '.' && !tracked.has(f) && !this.untracked.includes(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
-      const pick = !rest.length || rest.includes('.') ? [...this.work] : this.work.filter((w) => rest.includes(w));
+      const every = !rest.length || rest.includes('.');
+      for (const f of every ? [...this.deleted] : this.deleted.filter((d) => rest.includes(d))) this.stageDeletion(f);
+      const pick = every ? [...this.work] : this.work.filter((w) => rest.includes(w));
       for (const f of pick) {
         this.work = this.work.filter((w) => w !== f);
         if (this.staged.some((s) => s.file === f)) continue;
         this.staged.push({ file: f, isNew: false });
         this.adds++;
       }
+      this.pairMoves();
       return [];
     }
     if (!rest.length) return ['Nothing specified, nothing added.', 'hint: Maybe you wanted to say \'git add .\'?'];
     const all = rest.includes('.');
-    const known = new Set([...this.work, ...this.untracked]);
+    const known = new Set([...this.work, ...this.untracked, ...this.deleted]);
     for (const f of rest) if (f !== '.' && !known.has(f) && !this.staged.some((s) => s.file === f)) fail(`fatal: pathspec '${f}' did not match any files`);
     for (const f of all ? [...known] : rest) {
+      // borrado a mano: add (con la ruta, ., o -A) prepara el borrado, como git desde la 2.0
+      if (this.deleted.includes(f)) {
+        this.stageDeletion(f);
+        continue;
+      }
+      // sacado con rm --cached y todavía en el árbol: add lo vuelve a seguir, como si nada
+      const cachedOut = this.staged.findIndex((s) => s.file === f && s.gone && s.cached);
+      if (cachedOut >= 0 && this.untracked.includes(f)) {
+        this.staged.splice(cachedOut, 1);
+        this.untracked = this.untracked.filter((u) => u !== f);
+        this.adds++;
+        continue;
+      }
       // preparado y cambiado otra vez: add vuelve a prepararlo (sale de lo sin preparar)
       if (this.staged.some((s) => s.file === f)) {
         this.work = this.work.filter((w) => w !== f);
@@ -801,19 +1395,251 @@
         this.adds++;
       }
     }
+    this.pairMoves();
     return [];
   };
 
-  /** `clean -n` lista lo que borraría, `clean -f` lo borra: solo archivos sin seguir; nunca lo preparado ni lo cambiado. */
+  /** Prepara el borrado de un archivo borrado a mano (lo usan add y git rm). Si era nuevo, sale del índice sin más. */
+  Repo.prototype.stageDeletion = function (f) {
+    this.deleted = this.deleted.filter((d) => d !== f);
+    this.work = this.work.filter((w) => w !== f);
+    const i = this.staged.findIndex((s) => s.file === f);
+    const was = i < 0 ? null : this.staged.splice(i, 1)[0];
+    this.adds++;
+    if (was?.isNew) return;
+    // el nuevo nombre de un renombre preparado: lo que queda es el borrado del viejo
+    if (was?.from) this.staged.push({ file: was.from, gone: true });
+    else this.staged.push({ file: f, gone: true });
+  };
+
+  const bad = (f) => !/^[\w][\w./-]{0,60}$/.test(f) || f.includes('..');
+
+  /** `git rm <archivo>…`: borra archivos que git sigue y prepara el borrado; `--cached` lo saca del índice y lo deja
+   *  en el árbol, sin seguir; sin `-f`, se niega como git si el archivo tiene cambios sin commit. */
+  Repo.prototype.commands.rm = function (args) {
+    const { flags, rest } = parse(args);
+    const cached = !!flags['--cached'];
+    const force = !!(flags['-f'] || flags['--force']);
+    if (!rest.length) fail('usage: git rm [-f | --force] [--cached] <file>...');
+    // git rm de un archivo en conflicto lo da por resuelto: borrado
+    this.conflicts = this.conflicts.filter((f) => !rest.includes(f));
+    if (rest.includes('.') && !flags['-r']) fail("fatal: not removing '.' recursively without -r");
+    if (!this.headSha) fail('fatal: could not resolve HEAD');
+    const files = rest.includes('.') ? [...new Set([...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.filter((s) => !s.gone).map((s) => s.file)])] : rest;
+    if (!files.length) fail("fatal: pathspec '.' did not match any files (this practice only knows the files you named with touch, add or commit)");
+    for (const f of files) if (bad(f) || !this.tracked(f)) fail(`fatal: pathspec '${f}' did not match any files`);
+    if (!force) {
+      const indexed = (f) => this.staged.some((s) => s.file === f && !s.gone);
+      const both = files.filter((f) => indexed(f) && this.work.includes(f));
+      const inIndex = files.filter((f) => indexed(f));
+      const local = files.filter((f) => this.work.includes(f));
+      const why = (head, list, hint) => fail(`error: ${head}:\n${list.map((f) => `    ${f}`).join('\n')}\n(${hint})`);
+      if (cached && both.length) why('the following file has staged content different from both the\nfile and the HEAD', both, 'use -f to force removal');
+      if (!cached && inIndex.length) why('the following file has changes staged in the index', inIndex, 'use --cached to keep the file, or -f to force removal');
+      if (!cached && local.length) why('the following file has local modifications', local, 'use --cached to keep the file, or -f to force removal');
+    }
+    for (const f of files) {
+      const s = this.staged.find((x) => x.file === f);
+      this.stageDeletion(f);
+      if (cached && !this.deleted.includes(f)) {
+        // --cached: el archivo se queda en el árbol, ahora sin seguir
+        if (!this.untracked.includes(f)) this.untracked.push(f);
+        const g = this.staged.find((x) => x.gone && x.file === f);
+        if (g) g.cached = true;
+      }
+      if (cached && s?.from) this.work = this.work.filter((w) => w !== f);
+    }
+    return files.map((f) => `rm '${f}'`);
+  };
+
+  /** `git mv <viejo> <nuevo>`: renombra un archivo que git sigue y deja el renombre preparado. */
+  Repo.prototype.commands.mv = function (args) {
+    const { flags, rest } = parse(args);
+    if (rest.length !== 2) fail('usage: git mv [<options>] <source> <destination>');
+    const [from, to] = rest;
+    const where = `source=${from}, destination=${to}`;
+    if (bad(from) || bad(to)) fail(`fatal: bad source, ${where}`);
+    if (this.untracked.includes(from)) fail(`fatal: not under version control, ${where}`);
+    if (!this.tracked(from) || this.deleted.includes(from)) fail(`fatal: bad source, ${where}`);
+    if (from === to || (this.exists(to) && !(flags['-f'] || flags['--force']))) fail(`fatal: destination exists, ${where}`);
+    // -f pisa el destino: lo que hubiera ahí deja de contar
+    this.untracked = this.untracked.filter((u) => u !== to);
+    this.work = this.work.filter((w) => w !== to);
+    this.staged = this.staged.filter((s) => s.file !== to);
+    const s = this.staged.find((x) => x.file === from);
+    if (s?.from === to) this.staged = this.staged.filter((x) => x !== s); // de vuelta a su nombre: nada que preparar
+    else if (s?.isNew || s?.from) s.file = to;
+    else {
+      this.staged = this.staged.filter((x) => x !== s);
+      this.staged.push({ file: to, from });
+    }
+    // un archivo cambiado se lleva sus cambios sin preparar al nombre nuevo
+    if (this.work.includes(from)) this.work = this.work.map((w) => (w === from ? to : w));
+    this.adds++;
+    return [];
+  };
+
+  /** rm y mv de la terminal (sin git delante): cambian el árbol y nada más; git los ve como borrado y archivo nuevo. */
+  const SHELL = {
+    rm(args) {
+      const { rest } = parse(args);
+      if (!rest.length) fail('rm: missing operand');
+      for (const f of rest) {
+        if (bad(f)) fail(`rm: cannot remove '${f}': No such file or directory`);
+        if (this.untracked.includes(f)) {
+          this.untracked = this.untracked.filter((u) => u !== f);
+          continue;
+        }
+        if (!this.tracked(f) || this.deleted.includes(f)) fail(`rm: cannot remove '${f}': No such file or directory`);
+        this.work = this.work.filter((w) => w !== f);
+        this.deleted.push(f);
+      }
+      return [];
+    },
+    mv(args) {
+      const { rest } = parse(args);
+      if (rest.length !== 2) fail('mv: missing destination file operand');
+      const [from, to] = rest;
+      if (bad(to)) fail(`mv: cannot move '${from}' to '${to}': No such file or directory`);
+      const there = bad(from) ? false : this.untracked.includes(from) || (this.tracked(from) && !this.deleted.includes(from));
+      if (!there) fail(`mv: cannot stat '${from}': No such file or directory`);
+      if (from === to) fail(`mv: '${from}' and '${to}' are the same file`);
+      if (this.exists(to)) fail(`mv: refusing to overwrite '${to}' in this practice (it already exists)`);
+      if (this.untracked.includes(from) && this.deleted.includes(to)) {
+        // de vuelta a un nombre que git sigue: el archivo vuelve a existir (cambiado, salvo que sea el mismo mv deshecho)
+        this.untracked = this.untracked.filter((u) => u !== from);
+        this.deleted = this.deleted.filter((d) => d !== to);
+        if (this.moved.get(from) !== to && !this.work.includes(to)) this.work.push(to);
+        this.moved.delete(from);
+        return [];
+      }
+      if (this.untracked.includes(from)) {
+        this.untracked = this.untracked.map((u) => (u === from ? to : u));
+        return [];
+      }
+      this.work = this.work.filter((w) => w !== from);
+      this.deleted.push(from);
+      this.untracked.push(to);
+      this.moved.set(to, from);
+      return [];
+    },
+  };
+
+  /** Un patrón de git a expresión regular: `*` y `?` (con `slash`, también cruzan carpetas, como en una ruta de git). */
+  function globRe(pat, slash) {
+    const any = slash ? '.*' : '[^/]*';
+    const one = slash ? '.' : '[^/]';
+    return new RegExp(`^${pat.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, any).replace(/\?/g, one)}$`);
+  }
+
+  /** Si una ruta de `clean` (un archivo, una carpeta, `.` o un patrón con `*`) alcanza al archivo. */
+  function pathMatch(pat, f) {
+    const p = pat.replace(/^\.\//, '').replace(/\/+$/, '');
+    if (p === '.' || p === '' || f === p || f.startsWith(`${p}/`)) return true;
+    return /[*?]/.test(p) && globRe(p, true).test(f);
+  }
+
+  /** Si un `-e <patrón>` (como una línea de .gitignore) deja fuera al archivo: sin `/`, vale para cualquier parte de la ruta. */
+  function excluded(pat, f) {
+    const p = pat.replace(/\/+$/, '');
+    if (!p) return false;
+    if (p.replace(/^\//, '').includes('/')) {
+      const full = p.replace(/^\//, '');
+      return globRe(full, false).test(f) || f.startsWith(`${full}/`);
+    }
+    const re = globRe(p, false);
+    return f.split('/').some((part) => re.test(part));
+  }
+
+  /** Los archivos que la práctica sabe seguidos: en la historia, cambiados, borrados o preparados (con el nombre viejo de un renombre). */
+  Repo.prototype.knownNames = function () {
+    return [...this.inHistory(), ...this.work, ...this.deleted, ...this.staged.map((s) => s.file), ...this.staged.filter((s) => s.from).map((s) => s.from)];
+  };
+
+  /** Si una ruta de `diff` sin `--` delante alcanza un archivo que la práctica conoce (seguido o sin seguir; `.` siempre):
+      si no, git la toma por una revisión que no existe. */
+  Repo.prototype.diffKnown = function (p) {
+    if (pathMatch(p, '')) return true;
+    return [...this.knownNames(), ...this.untracked].some((f) => pathMatch(p, f));
+  };
+
+  /** La carpeta más alta del archivo sin seguir en la que git no sigue nada (`build/`), o null: status la muestra entera y `clean` la pide con `-d`. */
+  Repo.prototype.untrackedDir = function (f) {
+    const known = this.knownNames();
+    const parts = f.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      const dir = `${parts.slice(0, i).join('/')}/`;
+      if (!known.some((k) => k.startsWith(dir))) return dir;
+    }
+    return null;
+  };
+
+  /** `clean -n` lista lo que borraría y `clean -f` lo borra: solo archivos sin seguir, nunca lo preparado ni lo cambiado.
+      Admite rutas y patrones (`clean -f '*.tmp'`), `-d` para las carpetas que git no sigue, `-e <patrón>` para dejar
+      algo fuera, `-q`, `-x` (sin .gitignore en la práctica, no cambia nada) y las banderas juntas (`-fd`, `-nd`). */
   Repo.prototype.commands.clean = function (args) {
-    const { flags } = parse(args);
-    const dry = !!(flags['-n'] || flags['--dry-run']);
-    if (!dry && !flags['-f'] && !flags['--force']) fail('fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean');
-    if (dry) return this.untracked.map((f) => `Would remove ${f}`);
-    const gone = this.untracked;
-    this.untracked = [];
+    const flags = new Set();
+    const keep = [];
+    const paths = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === '--') {
+        paths.push(...args.slice(i + 1));
+        break;
+      }
+      if (a === '-e' || a === '--exclude') {
+        if (i + 1 >= args.length) fail(`error: switch \`${a === '-e' ? 'e' : 'exclude'}' requires a value`);
+        keep.push(args[++i]);
+      } else if (a.startsWith('--exclude=')) keep.push(a.slice(10));
+      else if (a.startsWith('--')) {
+        const long = { '--force': 'f', '--dry-run': 'n', '--quiet': 'q', '--interactive': 'i' }[a];
+        if (!long) fail(`error: unknown option \`${a.slice(2)}'`);
+        flags.add(long);
+      } else if (a.length > 1 && a[0] === '-') {
+        const letters = a.slice(1);
+        for (let k = 0; k < letters.length; k++) {
+          const l = letters[k];
+          if (l === 'e') {
+            // -e pegado a su patrón (`-e*.log`) o al final del grupo (`-fe nuevo.js`)
+            const rest = letters.slice(k + 1);
+            if (rest) keep.push(rest);
+            else if (i + 1 < args.length) keep.push(args[++i]);
+            else fail("error: switch `e' requires a value");
+            break;
+          }
+          if (!'fndqxXi'.includes(l)) fail(`error: unknown switch \`${l}'`);
+          flags.add(l);
+        }
+      } else paths.push(a);
+    }
+    if (flags.has('i')) fail('error: interactive clean (-i) is not available in this practice; use clean -n to see the list and clean -f to remove it');
+    if (flags.has('x') && flags.has('X')) fail('fatal: -x and -X cannot be used together');
+    const dry = flags.has('n');
+    if (!dry && !flags.has('f')) fail('fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean');
+    // -X borra solo lo ignorado, y en la práctica no hay .gitignore: no queda nada que borrar
+    const pick = flags.has('X') ? [] : this.untracked.filter((f) => (!paths.length || paths.some((p) => pathMatch(p, f))) && !keep.some((p) => excluded(p, f)));
+    // sin rutas, lo que vive en una carpeta que git no sigue necesita -d, y la carpeta se borra entera (si nada suyo queda fuera)
+    const dirs = new Map();
+    const files = [];
+    for (const f of pick) {
+      const dir = this.untrackedDir(f);
+      // sin rutas, la carpeta sin seguir pide -d; con una ruta que la cubre entera (`clean -f build`), se borra como carpeta
+      const covered = dir && paths.some((p) => pathMatch(p, dir.slice(0, -1)));
+      if (!dir || (paths.length && !covered)) files.push(f);
+      else if (paths.length || flags.has('d')) dirs.set(dir, [...(dirs.get(dir) || []), f]);
+    }
+    const lines = [];
+    const gone = [...files];
+    for (const [dir, list] of dirs) {
+      gone.push(...list);
+      const whole = this.untracked.filter((f) => f.startsWith(dir)).length === list.length;
+      lines.push(...(whole ? [dir] : list));
+    }
+    const shown = [...files, ...lines].sort();
+    if (dry) return shown.map((f) => `Would remove ${f}`);
+    this.untracked = this.untracked.filter((f) => !gone.includes(f));
     if (gone.length) this.cleans++;
-    return gone.map((f) => `Removing ${f}`);
+    return flags.has('q') ? [] : shown.map((f) => `Removing ${f}`);
   };
 
   /** `restore <archivo>…` o `restore .` deja los archivos como en HEAD: tira los cambios sin commit de esos archivos. */
@@ -841,10 +1667,224 @@
       return [];
     }
     this.work = rest.includes('.') ? [] : this.work.filter((f) => !rest.includes(f));
+    // un archivo borrado a mano vuelve, como estaba en HEAD
+    this.deleted = rest.includes('.') ? [] : this.deleted.filter((f) => !rest.includes(f));
     return [];
   };
 
   /* ---------- ejercicios ---------- */
+
+  /* ---------- el remoto simulado ---------- */
+
+  /** Sin remoto (un repo vacío, un ensayo sobre un repo real) push y fetch fallan como git sin `origin`. */
+  Repo.prototype.needRemote = function (name, verb) {
+    if (!this.remote) {
+      fail(verb === 'push'
+        ? 'fatal: No configured push destination.\nThis practice repository has no remote to push to.'
+        : 'fatal: No remote repository specified.  Please, specify either a URL or a\nremote name from which new revisions should be fetched.');
+    }
+    if (name != null && name !== this.remote.name) fail(`fatal: '${name}' does not appear to be a git repository\nfatal: Could not read from remote repository.`);
+  };
+
+  /** Una línea de la tabla de push y fetch: «   a1b2c3d..e4f5a6b  main -> origin/main». */
+  function refLine(from, to, src, dst, short) {
+    if (!from) return ` * [new branch]      ${src} -> ${dst}`;
+    if (to === null) return ` - [deleted]         ${dst}`;
+    return `   ${short(from)}..${short(to)}  ${src} -> ${dst}`;
+  }
+
+  /** `push [-u] [-f] [origin [<rama>]]`: sube la rama (la actual sin nombre) al remoto, si solo avanza o con -f. */
+  Repo.prototype.commands.push = function (args) {
+    const { flags, rest } = parse(args);
+    for (const f of Object.keys(flags)) if (!['-u', '--set-upstream', '-f', '--force', '-d', '--delete'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: push [-u] [-f] [-d] [origin [<branch>]]`);
+    if (rest.length > 2) fail('fatal: this practice pushes one branch at a time: push [origin [<branch>]]');
+    const [remote, ref] = rest;
+    this.needRemote(remote, 'push');
+    if (flags['-d'] || flags['--delete']) {
+      if (!ref) fail('fatal: --delete doesn\'t make sense without any refs');
+      return this.deleteRemote(ref);
+    }
+    if (ref && /^:[^:]+$/.test(ref)) return this.deleteRemote(ref.slice(1));
+    if (ref && ref.includes(':')) fail(`fatal: this practice pushes branches by name, without refspecs: push origin <branch>`);
+    const branch = ref ?? this.head.branch;
+    if (!branch) fail('fatal: You are not currently on a branch.\nTo push the history leading to the current (detached HEAD)\nstate now, use\n\n    git push origin HEAD:<name-of-remote-branch>');
+    if (!this.branches.has(branch) || !this.branches.get(branch)) fail(`error: src refspec ${branch} does not match any\nerror: failed to push some refs to '${this.remote.name}'`);
+    const setUp = !!(flags['-u'] || flags['--set-upstream']);
+    // sin nombre y sin rama de seguimiento, git (push.default=simple) no adivina a dónde subirla
+    if (!remote && !setUp && !this.upstream.has(branch)) fail(`fatal: The current branch ${branch} has no upstream branch.\nTo push the current branch and set the remote as upstream, use\n\n    git push --set-upstream ${this.remote.name} ${branch}`);
+    // como git (push.default=simple): sin decir a dónde, la rama que se sigue tiene que llamarse igual
+    if (!remote && this.upstream.has(branch) && this.upstream.get(branch) !== branch) fail(`fatal: The upstream branch of your current branch does not match\nthe name of your current branch.  To push to the branch of the same name\non the remote, use\n\n    git push ${this.remote.name} ${branch}`);
+    const dst = branch;
+    const ours = this.branches.get(branch);
+    const theirs = this.remote.branches.get(dst) ?? null;
+    const out = [];
+    const track = () => {
+      if (!setUp) return;
+      this.upstream.set(branch, dst);
+      out.push(`branch '${branch}' set up to track '${this.remote.name}/${dst}'.`);
+    };
+    if (theirs === ours) {
+      this.tracking.set(dst, ours);
+      track();
+      return ['Everything up-to-date', ...out];
+    }
+    const force = !!(flags['-f'] || flags['--force']);
+    if (theirs && !this.isAncestor(theirs, ours) && !force) {
+      // «fetch first» si el remoto tiene commits que aquí no se conocen; «non-fast-forward» si se conocen pero faltan en la rama
+      const known = this.tracking.get(dst) === theirs;
+      fail([
+        `To ${this.remote.name}`,
+        ` ! [rejected]        ${branch} -> ${dst} (${known ? 'non-fast-forward' : 'fetch first'})`,
+        `error: failed to push some refs to '${this.remote.name}'`,
+        known
+          ? `hint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. Integrate the remote changes (e.g. 'merge ${this.remote.name}/${dst}')\nhint: before pushing again.`
+          : `hint: Updates were rejected because the remote contains work that you do not\nhint: have locally. Use 'fetch' to bring it, then 'merge' or 'rebase' it,\nhint: before pushing again.`,
+      ].join('\n'));
+    }
+    const forced = theirs && !this.isAncestor(theirs, ours);
+    this.remote.branches.set(dst, ours);
+    this.tracking.set(dst, ours);
+    out.unshift(`To ${this.remote.name}`, forced ? ` + ${this.short(theirs)}...${this.short(ours)} ${branch} -> ${dst} (forced update)` : refLine(theirs, ours, branch, dst, (x) => this.short(x)));
+    track();
+    return out;
+  };
+
+  /** `push origin --delete <rama>` (o `-d`, o `origin :<rama>`): la borra del remoto y olvida su origin/<rama>;
+      la rama propia y lo que sigue quedan («the upstream is gone»). La rama por defecto no se borra, como en GitHub. */
+  Repo.prototype.deleteRemote = function (name) {
+    if (!this.remote.branches.has(name)) fail(`error: unable to delete '${name}': remote ref does not exist\nerror: failed to push some refs to '${this.remote.name}'`);
+    if (name === this.defaultBranch) fail(`To ${this.remote.name}\n ! [remote rejected] ${name} (refusing to delete the current branch: refs/heads/${name})\nerror: failed to push some refs to '${this.remote.name}'`);
+    this.remote.branches.delete(name);
+    this.tracking.delete(name);
+    return [`To ${this.remote.name}`, refLine('x', null, name, name, (x) => x)];
+  };
+
+  /** `fetch [origin] [--prune]`: copia lo que tiene el remoto en las ramas de seguimiento (origin/<rama>); no mueve
+      las propias. Con --prune (-p) quita las origin/<rama> de las ramas que ya no están en el remoto. */
+  Repo.prototype.commands.fetch = function (args) {
+    const { flags, rest } = parse(args);
+    for (const f of Object.keys(flags)) if (!['--all', '-v', '--verbose', '-p', '--prune'].includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: fetch [origin] [--prune]`);
+    if (rest.length > 1) fail('fatal: this practice fetches whole remotes: fetch [origin] [--prune]');
+    this.needRemote(rest[0], 'fetch');
+    const lines = [];
+    if (flags['-p'] || flags['--prune']) {
+      for (const name of [...this.tracking.keys()].sort()) {
+        if (this.remote.branches.has(name)) continue;
+        lines.push(` - [deleted]         (none)     -> ${this.remote.name}/${name}`);
+        this.tracking.delete(name);
+      }
+    }
+    for (const [name, sha] of [...this.remote.branches].sort(([a], [b]) => (a < b ? -1 : 1))) {
+      const had = this.tracking.get(name) ?? null;
+      if (had === sha) continue;
+      const forced = had && !this.isAncestor(had, sha);
+      lines.push(forced ? ` + ${this.short(had)}...${this.short(sha)} ${name} -> ${this.remote.name}/${name}  (forced update)` : refLine(had, sha, name, `${this.remote.name}/${name}`, (x) => this.short(x)));
+      this.tracking.set(name, sha);
+    }
+    return lines.length ? [`From ${this.remote.name}`, ...lines] : [];
+  };
+
+  /** `pull [--rebase|--no-rebase|--ff-only] [origin [<rama>]]`: fetch y después trae a la rama actual la que sigue
+      (o la que se nombra): avanza rápido si puede; si divergieron, como git desde 2.33, pide merge o rebase. */
+  Repo.prototype.commands.pull = function (args) {
+    const { flags, rest } = parse(args);
+    const known = ['--rebase', '-r', '--no-rebase', '--ff-only', '--ff', '--no-ff'];
+    for (const f of Object.keys(flags)) if (!known.includes(f)) fail(`error: unknown option '${f.replace(/^-+/, '')}'\nusage: pull [--rebase | --no-rebase | --ff-only] [origin [<branch>]]`);
+    if (rest.length > 2) fail('fatal: this practice pulls one branch at a time: pull [origin [<branch>]]');
+    const [remote, ref] = rest;
+    this.needRemote(remote, 'fetch');
+    if (ref && ref.includes(':')) fail('fatal: this practice pulls branches by name, without refspecs: pull origin <branch>');
+    const branch = this.head.branch;
+    if (!branch) fail('You are not currently on a branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>');
+    const target = ref ?? this.upstream.get(branch);
+    if (!target) fail(`There is no tracking information for the current branch.\nPlease specify which branch you want to merge with.\n\n    git pull origin <branch>\n\nTo make this branch follow one on the remote, push it with -u:\n\n    git push -u ${this.remote.name} ${branch}`);
+    // entre --rebase y --no-rebase gana la última, como en git
+    const rebase = args.reduce((on, a) => (a === '--rebase' || a === '-r' ? true : a === '--no-rebase' ? false : on), false);
+    // como git: con --rebase y cambios sin commit se niega antes de traer nada
+    if (rebase && this.dirty().length) fail('error: cannot pull with rebase: You have unstaged changes.\nerror: Please commit or stash them.');
+    const fetched = this.commands.fetch.call(this, []);
+    const out = (lines) => [...fetched, ...lines];
+    const failWith = (msg) => fail([...fetched, msg].join('\n'));
+    if (!this.remote.branches.has(target)) {
+      failWith(ref ? `fatal: couldn't find remote ref ${target}` : `Your configuration specifies to merge with the ref 'refs/heads/${target}'\nfrom the remote, but no such ref was fetched.`);
+    }
+    const theirs = this.tracking.get(target);
+    const ours = this.headSha;
+    const name = `${this.remote.name}/${target}`;
+    const step = (fn) => {
+      try {
+        return out(fn());
+      } catch (e) {
+        if (e instanceof GitError) failWith(e.message);
+        throw e;
+      }
+    };
+    if (rebase) return step(() => this.commands.rebase.call(this, [name]));
+    if (ours && this.isAncestor(theirs, ours)) return out(['Already up to date.']);
+    const ff = !ours || this.isAncestor(ours, theirs);
+    if (!ff && flags['--ff-only']) failWith('fatal: Not possible to fast-forward, aborting.');
+    if (!ff && !flags['--no-rebase'] && !flags['--ff'] && !flags['--no-ff']) {
+      failWith([
+        'hint: You have divergent branches and need to specify how to reconcile them.',
+        "hint: Use 'pull --no-rebase' to merge them, or 'pull --rebase' to put your",
+        'hint: commits on top of the remote ones.',
+        'fatal: Need to specify how to reconcile divergent branches.',
+      ].join('\n'));
+    }
+    return step(() => this.commands.merge.call(this, ['-m', `Merge branch '${target}' of ${this.remote.name}`, ...(flags['--no-ff'] ? ['--no-ff'] : []), name]));
+  };
+
+  /** Lo que un ejercicio deja en el remoto como si lo hubiera subido otra persona: un commit nuevo en esa rama del
+      remoto, que aquí no se conoce hasta el próximo fetch. */
+  Repo.prototype.remoteCommit = function (branch, message, author) {
+    const tip = this.remote.branches.get(branch) ?? null;
+    const sha = this.make(message, tip ? [tip] : []);
+    if (author) this.commits.get(sha).author = author;
+    this.remote.branches.set(branch, sha);
+    return sha;
+  };
+
+  /** Los comandos de partida de un ejercicio propio que hacen «otra persona» en el remoto, sin pasar por aquí:
+      `origin commit <rama> "<mensaje>"` deja un commit ajeno en esa rama del remoto (o la crea) y `origin delete
+      <rama>` la borra allá. Solo valen al partir; en la terminal, `origin` no es un comando de git. */
+  Repo.prototype.setupOrigin = function (args) {
+    const [verb, branch, ...words] = args;
+    if (!this.remote) fail('origin: this repository has no remote');
+    if (verb === 'commit') {
+      const message = words.join(' ').trim();
+      if (!branch || !validName(branch) || !message) fail('usage: origin commit <branch> "<message>"');
+      this.remoteCommit(branch, message, TEAMMATE);
+      return [];
+    }
+    if (verb === 'delete') {
+      if (!branch || words.length) fail('usage: origin delete <branch>');
+      if (!this.remote.branches.has(branch)) fail(`origin: the remote has no branch '${branch}'`);
+      if (branch === this.defaultBranch) fail(`origin: the remote keeps its default branch '${branch}'`);
+      this.remote.branches.delete(branch);
+      return [];
+    }
+    fail('usage: origin commit <branch> "<message>" | origin delete <branch>');
+  };
+
+  /** Un comando de partida de un ejercicio propio: los de la terminal, más `origin …` (ver setupOrigin). */
+  function runSetup(r, line) {
+    const words = tokenize(line.trim());
+    if (words[0] !== 'origin') return r.run(line);
+    try {
+      return { ok: true, lines: r.setupOrigin(words.slice(1)) };
+    } catch (e) {
+      if (!(e instanceof GitError)) throw e;
+      return { ok: false, lines: e.message.split('\n') };
+    }
+  }
+
+  /** Un remoto `origin` con una copia de la rama por defecto, seguida por ella: como un repo recién clonado. */
+  Repo.prototype.addOrigin = function () {
+    const tip = this.branches.get(this.defaultBranch);
+    this.remote = { name: 'origin', branches: new Map(tip ? [[this.defaultBranch, tip]] : []) };
+    if (tip) this.tracking.set(this.defaultBranch, tip);
+    this.upstream.set(this.defaultBranch, this.defaultBranch);
+  };
 
   const BASE = ['Initial commit', 'Add README', 'Add login form'];
 
@@ -852,6 +1892,7 @@
   function scenario(build, now) {
     const r = new Repo({ now: now ?? Date.now() - 6 * 36e5 });
     for (const m of BASE) r.commit(m);
+    r.addOrigin();
     build?.(r);
     return r;
   }
@@ -998,6 +2039,91 @@
         return !!main && r.adds > 0 && r.head.branch === 'main' && r.log(main).length === BASE.length + 1 && r.commits.get(main).files?.join() === 'login.js' && r.work.join() === 'debug.js' && !r.staged.length;
       },
     },
+    {
+      id: 'cleandir',
+      setup: (r) => {
+        r.untracked = ['nuevo.js', 'a.tmp', 'b.tmp', 'build/out.js', 'build/map.js'];
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // los temporales y la carpeta build se borraron con clean, y nuevo.js sigue ahí, sin seguir y sin commits de más
+        return !!main && r.cleans > 0 && r.untracked.join() === 'nuevo.js' && !r.staged.length && !r.work.length && r.head.branch === 'main' && r.log(main).length === BASE.length;
+      },
+    },
+    {
+      id: 'stashshow',
+      setup: (r) => {
+        // dos stash con la misma línea en list: solo stash show dice cuál guarda el formulario de login
+        r.work = ['login.js', 'login.css'];
+        r.commands.stash.call(r, []);
+        r.work = ['notes.txt'];
+        r.commands.stash.call(r, []);
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        // se miró con stash show, volvió el stash del login y el de notes.txt sigue guardado, sin commits de más
+        // los ids del setup: 1 es el del login y 2 el de notes.txt; el del login se miró con stash show y volvió con pop o apply
+        return !!main && r.stashes.length === 1 && r.stashes[0].id === 2 && r.stashSeen.has(1) && r.stashBack.has(1) && r.stashes[0].files.join() === 'notes.txt' && [...r.work].sort().join() === 'login.css,login.js' && r.head.branch === 'main' && r.log(main).length === BASE.length;
+      },
+    },
+    {
+      id: 'push',
+      setup: (r) => {
+        // otra persona subió un arreglo a origin/main que aquí todavía no se conoce, y main tiene un commit propio
+        r.remoteCommit('main', 'Fix typo in README', TEAMMATE);
+        r.commit('Add search box');
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const up = r.remote?.branches.get('main');
+        if (!main || up !== main) return false;
+        // el remoto tiene los dos: el arreglo ajeno (nada se pisó con push -f) y el commit propio
+        const msgs = r.log(main).map((s) => r.commits.get(s).message);
+        return msgs.includes('Fix typo in README') && msgs.includes('Add search box');
+      },
+    },
+    {
+      id: 'prune',
+      setup: (r) => {
+        // feature y experiment están subidas; Ana fusionó feature en origin/main y borró origin/feature allá
+        for (const [name, msg] of [['feature', 'Add profile page'], ['experiment', 'Try dark mode']]) {
+          r.commands.checkout.call(r, ['-b', name, 'main']);
+          r.commit(msg);
+          r.commands.push.call(r, ['-u', 'origin', name]);
+        }
+        r.commands.checkout.call(r, ['main']);
+        const merge = r.make("Merge branch 'feature'", [r.remote.branches.get('main'), r.branches.get('feature')]);
+        r.commits.get(merge).author = TEAMMATE;
+        r.remote.branches.set('main', merge);
+        r.remote.branches.delete('feature');
+      },
+      done: (r) => {
+        const main = r.branches.get('main');
+        const up = r.remote?.branches.get('main');
+        // main al día con la fusión de Ana; ni rastro de feature (ni local ni origin/feature) y experiment fuera del remoto
+        return !!main && main === up && r.commits.get(main).parents.length === 2 && !r.branches.has('feature') && !r.tracking.has('feature') && !r.remote.branches.has('experiment') && !r.tracking.has('experiment');
+      },
+    },
+    {
+      id: 'conflict',
+      setup: (r) => {
+        // feature y main cambiaron login.js desde su base (y feature, además, profile.js): la fusión choca en login.js
+        r.commands.checkout.call(r, ['-b', 'feature']);
+        r.commands.touch.call(r, ['login.js', 'profile.js']);
+        r.commands.add.call(r, ['login.js', 'profile.js']);
+        r.commands.commit.call(r, ['-m', 'Validate the login email']);
+        r.commands.checkout.call(r, ['main']);
+        r.commands.touch.call(r, ['login.js']);
+        r.commands.add.call(r, ['login.js']);
+        r.commands.commit.call(r, ['-m', 'Trim the login input']);
+      },
+      done: (r) => {
+        const feature = r.branches.get('feature');
+        const main = r.branches.get('main');
+        // la fusión chocó, el conflicto se resolvió con add y commit la cerró: main es un commit de fusión con feature dentro
+        return !!feature && r.conflictMerges > 0 && !r.merging && !r.conflicts.length && r.head.branch === 'main' && r.commits.get(main).parents.length === 2 && r.isAncestor(feature, main);
+      },
+    },
   ];
 
   /** main avanzó un commit mientras feature llevaba dos: las ramas divergieron. */
@@ -1027,6 +2153,10 @@
     [new RegExp(`^tip:(${BRANCH})~(.{1,60})$`), (r, [a, t]) => !!r.branches.get(a) && r.commits.get(r.branches.get(a)).message.toLowerCase().includes(t.toLowerCase())],
     // la rama tiene commits que la otra no (sin fusionar en ella)
     [new RegExp(`^unmerged:(${BRANCH})>(${BRANCH})$`), (r, [a, b]) => !!r.branches.get(a) && !!r.branches.get(b) && !r.isAncestor(r.branches.get(a), r.branches.get(b))],
+    // la rama está en origin tal cual: se subió con push y no quedó nada sin subir
+    [new RegExp(`^pushed:(${BRANCH})$`), (r, [a]) => !!r.branches.get(a) && r.remote?.branches.get(a) === r.branches.get(a)],
+    // la rama no está en origin ni queda su origin/<rama> aquí: se borró con push --delete, o allá y se podó con fetch --prune
+    [new RegExp(`^gone:(${BRANCH})$`), (r, [a]) => !!r.remote && !r.remote.branches.has(a) && !r.tracking.has(a)],
   ];
 
   const b64 = {
@@ -1061,10 +2191,13 @@
     if (solution.length > LIMITS.solution || solution.some((c) => c.length > LIMITS.command)) return { error: 'solution' };
     const spec = { title, goal, setup, checks, hints, ...(solution.length && { solution }) };
     const r = scenario();
+    r.lenient = true;
     for (const c of setup) {
-      const res = r.run(c);
-      if (!res.ok) return { error: 'command', detail: c, message: res.lines[0] };
+      const res = runSetup(r, c);
+      // el error y no lo de antes (un pull que se niega imprime primero la tabla de su fetch)
+      if (!res.ok) return { error: 'command', detail: c, message: res.lines.find((l) => /^(fatal|error):/.test(l)) ?? res.lines[0] };
     }
+    r.lenient = false;
     // la solución propuesta tiene que resolver el ejercicio: si no, mostrarla enseñaría algo falso
     if (solution.length) {
       for (const c of solution) {
@@ -1099,7 +2232,10 @@
       hints: spec.hints,
       solution: spec.solution || [],
       setup: (r) => {
-        for (const c of spec.setup) r.run(c);
+        // como los enlaces de antes de los conflictos: las partidas fusionan sin chocar; la terminal, después, sí choca
+        r.lenient = true;
+        for (const c of spec.setup) runSetup(r, c);
+        r.lenient = false;
       },
       done: (r) => tests.every((t) => t(r)),
     };
@@ -1150,10 +2286,26 @@
     return r;
   }
 
+  /** Las cartas de comandos bajo la terminal de la práctica: pulsar una escribe `line` en la línea, sin ejecutarla,
+      con el cursor en `caret` (o al final). Su descripción es `practice.card.<id>`; `id` es el comando, sin traducir. */
+  const CARDS = [
+    { id: 'status', line: 'status' },
+    { id: 'add', line: 'add .' },
+    { id: 'commit', line: 'commit -m ""', caret: 11 },
+    { id: 'branch', line: 'branch ' },
+    { id: 'switch', line: 'switch ' },
+    { id: 'merge', line: 'merge ' },
+    { id: 'rebase', line: 'rebase ' },
+    { id: 'reset', line: 'reset HEAD~1' },
+    { id: 'log', line: 'log --oneline' },
+    { id: 'stash', line: 'stash' },
+  ];
+
   GB.gitsim = {
     Repo,
     fromData,
     EXERCISES,
+    CARDS,
     LIMITS,
     hash,
     tokenize,

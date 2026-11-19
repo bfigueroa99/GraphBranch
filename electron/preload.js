@@ -1,6 +1,7 @@
 /* Lo único que la página ve de la app de escritorio: leer y guardar los tokens de GitHub y de
    GitLab, que el proceso principal guarda cifrados con el llavero del sistema (electron/token.js),
-   leer repositorios locales por su id (electron/git.js), mandar los textos de la bandeja (electron/tray.js) en su idioma y traer la ventana. La página usa
+   leer repositorios locales por su id (electron/git.js), mandar los textos de la bandeja (electron/tray.js) en su idioma, traer la ventana
+   y, si quien la usa lo prende, mandar a Sentry los errores de la página (electron/sentry.js). La página usa
    window.GBDesktop si existe; en la web no está y los tokens siguen en localStorage. */
 const { contextBridge, ipcRenderer } = require('electron');
 
@@ -36,6 +37,21 @@ contextBridge.exposeInMainWorld('GBDesktop', {
   webhook: (service, ev) => ipcRenderer.invoke('webhook:send', String(service), ev && typeof ev === 'object' ? ev : {}),
   /** El gasto de un servicio de IA (js/spend.js) con la clave guardada: lo consulta el proceso principal. */
   spend: (service, opts) => ipcRenderer.invoke('spend:fetch', String(service), { days: Number(opts?.days) || 30 }),
+  /** El reporte de errores opcional (electron/sentry.js): el DSN y el envío quedan en el proceso principal. */
+  errors: {
+    /** → { available, enabled }: available, si la app tiene un DSN (sin él, Ajustes no lo ofrece). */
+    state: () => ipcRenderer.invoke('errors:state'),
+    /** Lo prende o lo apaga (lo de fábrica es apagado) → { available, enabled }. */
+    set: (on) => ipcRenderer.invoke('errors:set', on === true),
+    /** Un error que vio la página, { kind: 'error' | 'rejection', type, message, stack }, con los nombres de repos, ramas y
+        autores que conoce, para que el proceso principal los quite antes de mandarlo → { sent }. */
+    report: (rec, names) =>
+      ipcRenderer.invoke(
+        'errors:report',
+        { kind: String(rec?.kind || ''), type: String(rec?.type || ''), message: String(rec?.message || ''), stack: String(rec?.stack || '') },
+        Array.isArray(names) ? names.slice(0, 5000).map(String) : [],
+      ),
+  },
   /** Trae la ventana aunque esté en la bandeja (al hacer clic en una notificación). */
   show: () => ipcRenderer.send('show'),
 });

@@ -304,6 +304,10 @@ window.GB = window.GB || {};
   const fmtWeekdayDate = (ms) => intl('DateTimeFormat', { weekday: 'short', day: 'numeric', month: 'short' }).format(ms);
   const fmtSeconds = (s) => intl('NumberFormat', { style: 'unit', unit: 'second', unitDisplay: 'narrow' }).format(s);
   const fmtUnit = (n, unit) => intl('NumberFormat', { style: 'unit', unit, unitDisplay: 'short' }).format(n);
+  /** «esta semana», «la semana pasada», «hace 3 semanas»… (k semanas atrás) en el idioma activo. */
+  const fmtWeeksAgo = (k) => intl('RelativeTimeFormat', { numeric: 'auto' }).format(-k, 'week');
+  /** Una lista corta con el separador del idioma («a, b, c»; «a، و b» en árabe), sin la «y» de una enumeración. */
+  const fmtList = (items) => intl('ListFormat', { type: 'unit', style: 'short' }).format(items);
 
   /** "ahora", "hace 5 min", "5 minutes ago", "5分前"…; pasado un mes, la fecha. */
   function timeAgo(ms, now = Date.now()) {
@@ -422,6 +426,8 @@ window.GB = window.GB || {};
     fmtTime,
     fmtSeconds,
     fmtUnit,
+    fmtWeeksAgo,
+    fmtList,
     fmtSpan,
     timeAgo,
     dayLabel,

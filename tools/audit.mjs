@@ -121,7 +121,7 @@ export function comparar(hallazgos, base, medidas = {}) {
 
 /** Las medidas de dos informes, con su diferencia en porcentaje (positivo = peor). */
 export function compararMedidas(antes, ahora) {
-  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false };
+  const sube = { cargaMs: true, tareasLargasMs: true, nodosDOM: true, heapMB: true, consultas: true, consultasCarga: true, fps3d: false, fps2d: false, escena3dUs: true, etiquetas3dUs: true, programas3d: true };
   return Object.keys(sube)
     .filter((k) => typeof antes?.[k] === 'number' && typeof ahora?.[k] === 'number')
     .map((k) => {
@@ -202,13 +202,14 @@ export function clasesDeEstado(dir = join(root, 'js')) {
   return [...out].sort();
 }
 
-/** Se instala en cada página antes de que cargue: violaciones del CSP, tareas largas y la firma estable
-    de un elemento (la usan revisar() y el recorrido con Tab). */
-function instrumentar(estado) {
+/** Se instala en cada página antes de que cargue: violaciones del CSP, tareas largas, los programas de WebGL que
+    se enlazan y la firma estable de un elemento (la usan revisar() y el recorrido con Tab). */
+export function instrumentar(estado) {
   const ESTADO = new Set(estado);
   window.__audit = {
     csp: [],
     tareas: { n: 0, ms: 0 },
+    programas: 0,
     firma(el) {
       const partes = [];
       for (let e = el; e && e !== document.body && e !== document.documentElement && partes.length < 4; e = e.parentElement) {
@@ -224,6 +225,17 @@ function instrumentar(estado) {
     },
   };
   document.addEventListener('securitypolicyviolation', (e) => window.__audit.csp.push(`${e.violatedDirective} ${e.blockedURI || ''}`.trim()));
+  // cada programa de shaders que se enlaza: su compilación en el primer cuadro 3D es casi todo el tiempo de las tareas
+  // largas de la carga (pendiente 11), y ese tiempo depende del equipo; la cuenta, no
+  for (const C of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) {
+    const P = C?.prototype;
+    if (!P?.linkProgram) continue;
+    const link = P.linkProgram;
+    P.linkProgram = function (p) {
+      window.__audit.programas++;
+      return link.call(this, p);
+    };
+  }
   try {
     new PerformanceObserver((l) => {
       for (const e of l.getEntries()) {
@@ -333,7 +345,9 @@ function revisar({ ambito, rtl }) {
       .map((n) => n.data)
       .join(' ')
       .trim();
-    if (/\{[a-zA-Z_]+\}|\bundefined\b|\bNaN\b|\[object Object\]|^[a-z]+(\.[a-zA-Z0-9]+){1,3}$/.test(t)) out.push({ tipo: 'sin-traducir', donde: firma(el), detalle: t.slice(0, 60) });
+    // un dato marcado translate="no" (un nombre de archivo como `a.tmp`) puede parecer una clave: solo ahí no cuenta esa forma
+    const clave = /^[a-z]+(\.[a-zA-Z0-9]+){1,3}$/.test(t) && !el.closest('[translate="no"]');
+    if (/\{[a-zA-Z_]+\}|\bundefined\b|\bNaN\b|\[object Object\]/.test(t) || clave) out.push({ tipo: 'sin-traducir', donde: firma(el), detalle: t.slice(0, 60) });
   }
   return out;
 }
@@ -438,6 +452,52 @@ function githubSimulado(extra = 0) {
       });
     },
   };
+}
+
+/** El JavaScript por cuadro del 3D, en microsegundos: `stepScene` con la escena sucia (lo que corre en cada
+    cuadro de un resaltado, un hover o un commit que llega) y `placeLabels`, la mejor de 7 tandas de 300
+    llamadas seguidas. Corre en la página. Una llamada sola no sirve: `performance.now()` va de 0,1 ms en
+    0,1 ms (sin aislamiento entre orígenes) y los primeros cuadros están fríos; así salía el 1,1 ms del
+    pendiente 12, cuando en tanda son 0,08 ms (iteración 263). */
+function medirEscena() {
+  return new Promise((ok) => {
+    const P = window.GB?.Graph3D?.prototype;
+    if (!P) return ok(null);
+    const orig = P.stepScene;
+    P.stepScene = function (...a) {
+      P.stepScene = orig;
+      const v = orig.apply(this, a);
+      const g = this;
+      try {
+        const tanda = (f) => {
+          let mejor = Infinity;
+          for (let k = 0; k < 7; k++) {
+            const t = performance.now();
+            for (let i = 0; i < 300; i++) f();
+            mejor = Math.min(mejor, (performance.now() - t) / 300);
+          }
+          return Math.round(mejor * 10000) / 10;
+        };
+        const now = performance.now();
+        ok({
+          escena: tanda(() => {
+            g.dirtyNodes = g.dirtyEdges = true;
+            g.stepScene(now, 0);
+          }),
+          etiquetas: tanda(() => g.placeLabels()), // con la cámara quieta: el JavaScript, sin escrituras al DOM
+          nodos: g.nodes.size,
+        });
+      } catch {
+        ok(null); // una excepción no cuelga la auditoría: la escena queda sin medida y se avisa
+      }
+      return v;
+    };
+    // la escena no dibujó ningún cuadro en 5 s: sin medida (si ya resolvió, no cambia nada)
+    setTimeout(() => {
+      if (P.stepScene !== orig) P.stepScene = orig;
+      ok(null);
+    }, 5000);
+  });
 }
 
 /* ---------------------------------------------------------- los escenarios */
@@ -551,6 +611,20 @@ export function escenarios({ langs = false, completa = false } = {}) {
         await ctx.revisar();
       },
     })),
+    // la práctica de git a 320 px (pendiente 5 de la iteración 267): su panel no puede ensanchar la página
+    // en ningún idioma; es, uno de derecha a izquierda y dos de textos largos (ta desbordaba 66 px, de 57)
+    ...IDIOMAS_PUERTA.map((lang) => ({
+      nombre: `practica-320-${lang}`,
+      puerta: true,
+      contexto: { ...CELULAR, viewport: { width: 320, height: 640 } },
+      url: `?lang=${lang}&practice=12`,
+      rtl: RTL.includes(lang),
+      async mirar(ctx) {
+        await ctx.page.waitForSelector('#practice:not([hidden]) .pr-make', { timeout: 15000 });
+        await ctx.page.waitForTimeout(500);
+        await ctx.revisar();
+      },
+    })),
     {
       nombre: 'cuota-sin-token',
       puerta: true,
@@ -637,6 +711,9 @@ export function escenarios({ langs = false, completa = false } = {}) {
         });
         ctx.add(pares.out.map((donde) => ({ tipo: 'etiquetas-pisadas', donde })));
         if (!pares.visibles) ctx.add([{ tipo: 'error', donde: '.g3-head', detalle: 'ninguna etiqueta de rama visible con 1.000 ramas' }]);
+        const m = await ctx.page.evaluate(medirEscena);
+        if (m) (ctx.medidas.escena3dUs = m.escena), (ctx.medidas.etiquetas3dUs = m.etiquetas), (ctx.medidas.escena3dNodos = m.nodos);
+        else ctx.add([{ tipo: 'error', donde: 'medirEscena', detalle: 'el 3D con 1.000 ramas no dibujó un cuadro medible en 5 s' }]);
       },
     },
     {
@@ -728,7 +805,7 @@ async function auditar({ browser, base, estado, soloPuerta, langs, completa, dec
               const f = () => {
                 n++;
                 if (performance.now() - t0 < 3000) return requestAnimationFrame(f);
-                ok({ fps: (n * 1000) / (performance.now() - t0), nodos: document.getElementsByTagName('*').length, heap: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null, tareas: window.__audit.tareas });
+                ok({ fps: (n * 1000) / (performance.now() - t0), nodos: document.getElementsByTagName('*').length, heap: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null, tareas: window.__audit.tareas, programas: window.__audit.programas });
               };
               requestAnimationFrame(f);
             }),
@@ -739,6 +816,7 @@ async function auditar({ browser, base, estado, soloPuerta, langs, completa, dec
         if (m.heap) medidas.heapMB = Math.round(m.heap);
         medidas.tareasLargasMs = Math.round(m.tareas.ms);
         medidas.tareasLargas = m.tareas.n;
+        medidas.programas3d = m.programas;
       },
     };
     try {

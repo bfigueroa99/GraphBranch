@@ -47,6 +47,12 @@
         <div class="pr-line">
           <span class="pr-prompt" aria-hidden="true">$ git</span>
           <input class="pr-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
+        </div>
+        <div class="pr-cards" role="toolbar"></div>
+        <div class="pr-areas" role="group">
+          <div class="pr-area" data-area="work"><p class="pr-area-h" id="pr-area-work"></p><ul aria-labelledby="pr-area-work" tabindex="0"></ul></div>
+          <div class="pr-area" data-area="index"><p class="pr-area-h" id="pr-area-index"></p><ul aria-labelledby="pr-area-index" tabindex="0"></ul></div>
+          <div class="pr-area" data-area="head"><p class="pr-area-h" id="pr-area-head"></p><ul aria-labelledby="pr-area-head" tabindex="0"></ul></div>
         </div>`;
       this.sel = root.querySelector('.pr-ex');
       this.restart = root.querySelector('.pr-restart');
@@ -63,6 +69,9 @@
       this.log = root.querySelector('.pr-log');
       this.status = root.querySelector('.pr-status');
       this.input = root.querySelector('.pr-input');
+      this.cards = root.querySelector('.pr-cards');
+      this.areas = root.querySelector('.pr-areas');
+      this.buildCards();
       root.addEventListener('submit', (ev) => {
         ev.preventDefault();
         this.submit();
@@ -91,6 +100,48 @@
         this.cursor = Math.max(0, Math.min(this.history.length, this.cursor + (ev.key === 'ArrowUp' ? -1 : 1)));
         this.input.value = this.history[this.cursor] || '';
       });
+    }
+
+    /** Las cartas de comandos (GB.gitsim.CARDS): una barra de botones con un solo punto de tabulación; las flechas,
+        Inicio y Fin se mueven entre ellas y pulsar una escribe su comando en la línea, sin ejecutarlo. */
+    buildCards() {
+      for (const [i, card] of GB.gitsim.CARDS.entries()) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pr-card';
+        b.dataset.cmd = card.id;
+        b.tabIndex = i ? -1 : 0;
+        const code = document.createElement('code');
+        code.dir = 'ltr';
+        code.textContent = card.id;
+        const desc = document.createElement('span');
+        desc.className = 'pr-card-desc';
+        b.append(code, desc);
+        b.addEventListener('click', () => this.useCard(card));
+        this.cards.append(b);
+      }
+      this.cards.addEventListener('keydown', (ev) => {
+        const all = [...this.cards.querySelectorAll('.pr-card')];
+        const at = all.indexOf(document.activeElement);
+        if (at < 0) return;
+        const rtl = getComputedStyle(this.cards).direction === 'rtl';
+        const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1, ArrowDown: 1, ArrowUp: -1 }[ev.key];
+        const to = step ? (at + step + all.length) % all.length : ev.key === 'Home' ? 0 : ev.key === 'End' ? all.length - 1 : -1;
+        if (to < 0) return;
+        ev.preventDefault();
+        all[at].tabIndex = -1;
+        all[to].tabIndex = 0;
+        all[to].focus();
+      });
+    }
+
+    /** Escribe el comando de la carta en la línea (en lugar de lo que hubiera) y deja el cursor donde va lo que falta. */
+    useCard(card) {
+      const at = card.caret ?? card.line.length;
+      this.input.value = card.line;
+      this.input.focus();
+      this.input.setSelectionRange(at, at);
+      for (const b of this.cards.querySelectorAll('.pr-card')) b.tabIndex = b.dataset.cmd === card.id ? 0 : -1;
     }
 
     /** Muestra el panel para esta fuente (o lo esconde si no es de práctica). */
@@ -146,9 +197,51 @@
       this.make.querySelector('.pr-m-help').textContent = t('practice.make.help');
       this.make.querySelector('.pr-m-go').textContent = t('practice.make.go');
       this.input.setAttribute('aria-label', t('practice.input'));
+      this.cards.setAttribute('aria-label', t('practice.cards'));
+      for (const b of this.cards.querySelectorAll('.pr-card')) b.querySelector('.pr-card-desc').textContent = t(`practice.card.${b.dataset.cmd}`);
+      this.renderAreas();
       this.status.textContent = src.exercise.done(src.git) ? t('practice.solved') : '';
       const note = this.log.querySelector('.pr-note');
       if (note) note.textContent = t('practice.hello');
+    }
+
+    /** Las tres áreas de git (árbol de trabajo, índice y HEAD) con sus archivos y el estado de cada uno, de
+        GB.gitsim (`areas()`); se rehacen tras cada comando y al cambiar de idioma. Como listas con su título, un
+        lector de pantalla las lee como el mismo texto que se ve. */
+    renderAreas() {
+      const t = i18n.t;
+      const git = this.source?.git;
+      const data = git?.areas ? git.areas() : { work: [], index: [], head: [] };
+      this.areas.setAttribute('aria-label', t('practice.areas'));
+      for (const box of this.areas.querySelectorAll('.pr-area')) {
+        const key = box.dataset.area;
+        const rows = key === 'head' ? data.head.map((file) => ({ file })) : data[key];
+        box.querySelector('.pr-area-h').textContent = `${t(`practice.area.${key}`)} (${rows.length})`;
+        const ul = box.querySelector('ul');
+        ul.textContent = '';
+        if (!rows.length) {
+          const li = document.createElement('li');
+          li.className = 'pr-area-empty';
+          li.textContent = t('practice.area.empty');
+          ul.append(li);
+        }
+        for (const row of rows) {
+          const li = document.createElement('li');
+          li.dataset.state = row.state || 'H'; // H: un archivo de HEAD (C es uno en conflicto)
+          const code = document.createElement('code');
+          code.dir = 'ltr';
+          code.translate = false; // un nombre de archivo es un dato: ni el traductor del navegador ni la auditoría lo tratan como texto
+          code.textContent = row.file;
+          li.append(code);
+          if (row.state) {
+            const st = document.createElement('span');
+            st.className = 'pr-area-state';
+            st.textContent = t(`practice.state.${row.state}`, { from: row.from || '' });
+            li.append(' ', st);
+          }
+          ul.append(li);
+        }
+      }
     }
 
     /** El botón «Pista» (solo si el ejercicio propio trae pistas) y las pistas ya pedidas, una por una. */
@@ -227,6 +320,9 @@
       const res = this.source.run(text);
       for (const l of res.lines) this.print(l, res.ok ? '' : 'pr-err');
       this.render();
+      // la práctica se desplaza por dentro cuando no cabe junto al grafo (`.practice` en styles.css): lo que sumaron el
+      // registro y el estado no deja la línea de comandos fuera de la vista mientras se escribe en ella
+      if (document.activeElement === this.input) this.input.scrollIntoView?.({ block: 'nearest' });
     }
 
     focus() {

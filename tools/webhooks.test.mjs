@@ -66,6 +66,14 @@ test('el cuerpo no deja que un texto de GitHub mencione a nadie ni abra enlaces 
   assert.ok(wh.payload('discord', { title: 'x'.repeat(5000) }).content.length <= 2000);
 });
 
+test('Discord: un título de GitHub no arma un enlace enmascarado ni formato', () => {
+  const ev = { repo: 'acme/**app**', kind: 'PR', title: 'Arregla [login](https://evil.example) y ~~esto~~ `x` # h', detail: '[a](https://evil.example)\n> cita' };
+  const d = wh.payload('discord', ev);
+  assert.ok(!/(^|[^\\])\[[^\]]*\]\(/.test(d.content), d.content); // ningún [texto](url) sin escapar
+  assert.match(d.content, /\\\[login\\\]\\\(https/);
+  assert.ok(!/(^|[^\\])\*\*app/.test(d.content.split('\n')[0].replace(/^\*\*acme/, '')));
+});
+
 test('el cuerpo de Teams es una tarjeta adaptable sin menciones ni enlaces ajenos', () => {
   const ev = { repo: 'acme/app', kind: 'Release', title: 'v1 <at>Todos</at> [x](https://evil.example) *grueso*', detail: '@everyone', url: 'https://github.com/acme/app/releases/tag/v(1)' };
   const p = wh.payload('teams', ev);
@@ -98,7 +106,8 @@ test('send manda el JSON de cada servicio y no sigue redirecciones', async () =>
     const ev = { repo: 'acme/app', kind: 'CI failed', title: 'main falló' };
     assert.deepEqual(await wh.send('slack', `${base}/ok`, ev, fetch, base), { ok: true, status: 204 });
     assert.equal(got[0].type, 'application/json');
-    assert.match(got[0].body.text, /^\*acme\/app\* · CI failed\nmain falló$/);
+    assert.match(got[0].body.text, /^acme\/app · CI failed\nmain falló$/); // el texto de respaldo, sin formato propio
+    assert.equal(got[0].body.blocks[1].text.text, 'main falló');
     assert.deepEqual(await wh.send('teams', `${base}/teams`, ev, fetch, base), { ok: true, status: 204 });
     assert.equal(got.pop().body.attachments[0].content.body[1].text, 'main falló');
     assert.equal((await wh.send('discord', `${base}/fail`, ev, fetch, base)).ok, false);
@@ -149,4 +158,44 @@ test('un PR fusionado avisa una vez aunque llegue también su commit de merge, y
   assert.deepEqual(Array.from(r.slack, (a) => a.kind), ['pr-merge']);
   const many = Array.from({ length: 12 }, (_, i) => act('release', null, { id: 'r' + i }));
   assert.equal(hooks.route(many, 'main', {}, ON).slack.length, hooks.MAX_PER_BATCH);
+});
+
+test('Slack: un texto de GitHub sale sin formato mrkdwn (bloques plain_text) y el enlace sigue', () => {
+  const ev = { repo: 'acme/a_b_c', kind: 'PR', title: '*URGENTE* _ya_ ~no~ `x` :tada: <!here>', detail: '*negrita*', url: 'https://github.com/acme/a_b_c/pull/1' };
+  const s = wh.payload('slack', ev);
+  assert.ok(Array.isArray(s.blocks), 'el aviso lleva bloques');
+  const textos = [];
+  for (const b of s.blocks) {
+    for (const t of [b.text, ...(b.elements || [])].filter(Boolean)) {
+      if (t.type === 'mrkdwn') assert.equal(t.text, '<https://github.com/acme/a_b_c/pull/1>'); // solo el enlace va en mrkdwn
+      else { assert.equal(t.type, 'plain_text'); assert.equal(t.emoji, false); textos.push(t.text); }
+    }
+  }
+  assert.ok(textos.some((t) => t.includes('*URGENTE* _ya_ ~no~ `x` :tada: &lt;!here&gt;')), textos.join('|'));
+  assert.ok(textos.some((t) => t === '*negrita*'));
+  assert.ok(textos.every((t) => t.length > 0 && t.length <= 3000));
+  assert.ok(s.blocks[0].text.text.length <= 150); // el encabezado de Slack admite 150
+  assert.ok(wh.payload('slack', { repo: 'r'.repeat(100), kind: 'k'.repeat(60) }).blocks[0].text.text.length <= 150);
+  assert.ok(s.text.includes('&lt;!here&gt;')); // el texto de respaldo, como antes
+  // el webhook de un flujo de Workflow Builder recibe solo variables de texto: sin bloques
+  assert.equal(wh.payload('slack', ev, { blocks: false }).blocks, undefined);
+});
+
+test('Slack: send manda bloques a un webhook entrante y solo texto a uno de Workflow Builder', async () => {
+  const bodies = [];
+  const fake = async (url, opts) => (bodies.push(JSON.parse(opts.body)), { status: 200 });
+  const ev = { repo: 'acme/app', kind: 'PR', title: '*x*' };
+  await wh.send('slack', 'https://hooks.slack.com/services/T000/B000/XXXXXXXXXXXX', ev, fake);
+  await wh.send('slack', 'https://hooks.slack.com/workflows/T000/A000/123/XXXXXXXXXXXX', ev, fake);
+  await wh.send('slack', 'https://hooks.slack.com/triggers/T000/123/XXXXXXXXXXXX', ev, fake);
+  assert.ok(Array.isArray(bodies[0].blocks));
+  assert.deepEqual(bodies.slice(1).map((b) => Object.keys(b)), [['text'], ['text']]);
+});
+
+test('una URL larga se valida entera: lo que pasa del carácter 500 no cierra el enlace ni menciona', () => {
+  const u = 'https://github.com/' + 'a'.repeat(481) + '> <!channel> *x*';
+  for (const service of ['slack', 'discord']) assert.ok(!JSON.stringify(wh.payload(service, { title: 't', url: u })).includes('<!channel>'), service);
+  assert.equal(wh.payload('slack', { title: 't', url: 'https://github.com/' + 'a'.repeat(600) }).blocks.length, 1); // demasiado larga: sin enlace
+  const blanco = wh.payload('slack', { repo: 'acme/app', title: '   ', detail: ' \n ' });
+  assert.ok(blanco.blocks.every((b) => [b.text, ...(b.elements || [])].filter(Boolean).every((x) => x.text.trim())), JSON.stringify(blanco)); // sin bloques vacíos
 });

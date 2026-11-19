@@ -9,8 +9,11 @@
      scripts, estilos y fuentes solo pueden venir del propio sitio. El manifiesto y el service worker
      (sw.js, que la deja abrir sin red) también son del propio sitio. Las conexiones van a las APIs de
      GitHub, de gitlab.com, de codeberg.org, de api.bitbucket.org y de dev.azure.com (y, con la vista de agentes, al gasto de
-     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan), y las imágenes de otro sitio son los avatares de cada uno
-     (los de Bitbucket y los de Azure DevOps no se cargan). -->
+     Anthropic, OpenAI, OpenRouter y un OmniRoute local, solo si se conectan, y, al abrir la salud de un repo público de
+     github.com, al puntaje de OpenSSF Scorecard), y las imágenes de otro sitio son los avatares de cada uno
+     (los de Bitbucket y los de Azure DevOps no se cargan). Los informes de errores a Sentry de la web suman a
+     connect-src solo el host de su DSN, y solo si quien publica la página lo pone con tools/sentry-web.mjs, que
+     deja el DSN en una etiqueta meta «sentry-dsn» justo después de esta; el repo no trae ninguno. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self';
@@ -19,11 +22,110 @@
   manifest-src 'self';
   worker-src 'self';
   img-src 'self' data: https://avatars.githubusercontent.com https://gitlab.com https://codeberg.org;
-  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128;
+  connect-src https://api.github.com https://gitlab.com https://codeberg.org https://api.bitbucket.org https://dev.azure.com https://api.anthropic.com https://api.openai.com https://openrouter.ai http://localhost:20128 http://127.0.0.1:20128 https://api.scorecard.dev;
   base-uri 'none';
   form-action 'none'">
-<title>GraphBranch</title>
+<title data-i18n="meta.title">Live graph of a GitHub repository's branches · GraphBranch</title>
 <meta name="description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues." data-i18n-attr="content:meta.description">
+<!-- Lo que leen sin ejecutar la página los buscadores, las redes (la tarjeta de un enlace compartido) y los
+     asistentes: va en inglés, el idioma base. La web es una sola dirección con los 40 idiomas en el cliente:
+     por eso la canónica es una (?repo=…, ?embed=1 y ?lang= son la misma página) y no hay hreflang. La
+     imagen es docs/social.png (1200 × 630); tools/seo.test.mjs comprueba todo esto contra package.json.
+     El JSON-LD es un bloque de datos: el navegador no lo ejecuta y script-src sigue en 'self'. -->
+<link rel="canonical" href="https://bfigueroa99.github.io/GraphBranch/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GraphBranch">
+<meta property="og:title" content="Live graph of a GitHub repository's branches · GraphBranch">
+<meta property="og:description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.">
+<meta property="og:url" content="https://bfigueroa99.github.io/GraphBranch/">
+<meta property="og:image" content="https://bfigueroa99.github.io/GraphBranch/docs/social.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GraphBranch drawing the branches, commits and pull requests of a demo repository as a live 3D graph">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Live graph of a GitHub repository's branches · GraphBranch">
+<meta name="twitter:description" content="Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues.">
+<meta name="twitter:image" content="https://bfigueroa99.github.io/GraphBranch/docs/social.png">
+<meta name="twitter:image:alt" content="GraphBranch drawing the branches, commits and pull requests of a demo repository as a live 3D graph">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebApplication",
+ "name": "GraphBranch",
+ "url": "https://bfigueroa99.github.io/GraphBranch/",
+ "description": "Live graph of a GitHub repository's branches, with alerts for commits, pull requests and issues: force-pushes, branches created and deleted, reviews, releases, stars and forks. In 3D or 2D, for repositories on GitHub, GitLab, Codeberg, Bitbucket and Azure DevOps, with a demo that needs no account.",
+ "applicationCategory": "DeveloperApplication",
+ "operatingSystem": "Any (web browser); desktop app for Windows, macOS and Linux",
+ "browserRequirements": "Requires JavaScript",
+ "isAccessibleForFree": true,
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ },
+ "license": "https://spdx.org/licenses/MIT.html",
+ "author": {
+  "@type": "Person",
+  "name": "Benjamin Figueroa Guzman"
+ },
+ "sameAs": "https://github.com/bfigueroa99/GraphBranch",
+ "image": "https://bfigueroa99.github.io/GraphBranch/docs/social.png",
+ "screenshot": "https://bfigueroa99.github.io/GraphBranch/docs/social.png",
+ "inLanguage": [
+  "ar",
+  "bg",
+  "bn",
+  "ca",
+  "cs",
+  "da",
+  "de",
+  "el",
+  "en",
+  "es",
+  "fa",
+  "fi",
+  "fil",
+  "fr",
+  "he",
+  "hi",
+  "hr",
+  "hu",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "ms",
+  "nb",
+  "nl",
+  "pl",
+  "pt",
+  "ro",
+  "ru",
+  "sk",
+  "sv",
+  "sw",
+  "ta",
+  "th",
+  "tr",
+  "uk",
+  "ur",
+  "vi",
+  "zh-Hans",
+  "zh-Hant"
+ ],
+ "featureList": [
+  "Live 3D and 2D graph of branches, commits, merges and pull requests",
+  "Alerts, sound and system notifications for commits, force-pushes, pull requests, reviews, issues, releases, stars and forks",
+  "Replay of the repository history as a time-lapse, recordable as video",
+  "Repository health: stale branches, pull requests by age and state, time to merge, CI failures",
+  "Keyboard-only text view of branches and commits for screen readers",
+  "Works offline once opened and installs as an app (PWA)",
+  "Embeddable widget and TV mode for shared screens",
+  "Practice git with a terminal on a sandbox repository"
+ ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121917'/%3E%3Cpath d='M8 24V8M8 15c0-4 4-5 8-5h3M8 19c0 3 3 4 7 4h9' stroke='%233987e5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%233987e5'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23d95926'/%3E%3Ccircle cx='24' cy='23' r='3' fill='%23199e70'/%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -81,6 +183,8 @@
       </div>
     </div>
 
+    <!-- tres grupos: lo que está pasando en vivo, explorar los datos (la paleta de comandos primero, con su atajo a la
+         vista) y las preferencias -->
     <div class="controls">
       <button class="icon-btn" type="button" id="pause-btn" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
         <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
@@ -95,21 +199,22 @@
       <button class="icon-btn" type="button" id="notify-btn" aria-pressed="false" title="System notifications when the tab is in the background" aria-label="System notifications" data-i18n-attr="title:ctl.notify.title;aria-label:ctl.notify.label">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7.2a4 4 0 0 1 8 0v4.3l1.3 1.2H2.7zM6.6 14h2.8"/><path class="when-off" d="M2.5 2.5l11 11"/></svg>
       </button>
-      <label class="icon-btn lang-btn" id="lang-btn" title="Language" data-i18n-attr="title:ctl.language">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
-        <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
-      </label>
-      <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
-      </button>
-      <button class="icon-btn" type="button" id="agents-btn" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
-        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+      <span class="ctl-sep" aria-hidden="true"></span>
+      <button class="icon-btn cmdk-btn" type="button" id="cmdk-btn" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" title="Command palette" aria-label="Command palette" data-i18n-attr="title:cmdk.title;aria-label:cmdk.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="2.2"/><path d="m4.6 6.3 2 1.7-2 1.7M8.4 10h3"/></svg>
+        <kbd class="cmdk-kbd" id="cmdk-kbd" aria-hidden="true">Ctrl K</kbd>
       </button>
       <button class="icon-btn" type="button" id="search-btn" title="Search commits" aria-label="Search commits" data-i18n-attr="title:search.title;aria-label:search.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="textview-btn" title="Text view" aria-label="Text view" data-i18n-attr="title:textview.title;aria-label:textview.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3h11M5.5 6.5h8M5.5 10h8M8.5 13.5h5M3 6.5v7"/></svg>
+      </button>
+      <button class="icon-btn" type="button" id="health-btn" title="Repo health" aria-label="Repo health" data-i18n-attr="title:health.title;aria-label:health.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8.5h3l1.7-4.5 3 8 1.8-3.5h3.5"/></svg>
+      </button>
+      <button class="icon-btn" type="button" id="agents-btn" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
       </button>
       <button class="icon-btn" type="button" id="constellation-btn" title="Constellation" aria-label="Constellation" data-i18n-attr="title:constellation.title;aria-label:constellation.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 11.5 6 6l3.5 3 3.5-5.5M3 11.5h.01M6 6h.01M9.5 9h.01M13 3.5h.01"/></svg>
@@ -121,6 +226,11 @@
       <button class="icon-btn" type="button" id="loop-btn" aria-haspopup="dialog" title="Copy a prompt that makes Claude Code develop this project on its own" aria-label="Autonomous loop prompt" data-i18n-attr="title:loopPrompt.btnTitle;aria-label:loopPrompt.title">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.4-1.9-2.6-3-4-3a3 3 0 0 0 0 6c1.4 0 2.6-1.1 4-3s2.6-3 4-3a3 3 0 0 1 0 6c-1.4 0-2.6-1.1-4-3z"/></svg>
       </button>
+      <span class="ctl-sep" aria-hidden="true"></span>
+      <label class="icon-btn lang-btn" id="lang-btn" title="Language" data-i18n-attr="title:ctl.language">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.7 3.7 2.7 6S9.8 12.3 8 14M8 2C6.2 3.7 5.3 5.7 5.3 8S6.2 12.3 8 14"/></svg>
+        <select id="lang-select" aria-label="Language" data-i18n-attr="aria-label:ctl.language"></select>
+      </label>
       <button class="icon-btn" type="button" id="settings-btn" title="Settings and token" aria-label="Settings and token" data-i18n-attr="title:ctl.settings;aria-label:ctl.settings">
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6"/></svg>
       </button>
@@ -171,7 +281,7 @@
     <section class="panel graph-panel" id="graph-panel" tabindex="-1" aria-labelledby="graph-title">
       <div class="panel-head">
         <div class="repo-title">
-          <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a></h1>
+          <h1 id="graph-title"><a id="repo-link" target="_blank" rel="noopener">acme/orbita</a><span id="graph-all" hidden></span></h1>
           <span class="badge demo" id="repo-badge">simulation</span>
           <p class="repo-desc" id="repo-desc" hidden></p>
         </div>
@@ -216,6 +326,9 @@
           <button class="icon-btn" type="button" id="snap-btn" title="Save the view as an image (PNG)" aria-label="Save image" data-i18n-attr="title:snap.title;aria-label:snap.label">
             <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.2h2.6l1.3-1.9h4.2l1.3 1.9H14v7.5H2z"/><circle cx="8" cy="8.8" r="2.4"/></svg>
           </button>
+          <button class="icon-btn" type="button" id="mermaid-btn" title="Copy the graph as a Mermaid diagram (gitGraph) to paste into documentation" aria-label="Copy as Mermaid diagram" data-i18n-attr="title:mermaid.title;aria-label:mermaid.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="7" r="1.6"/><path d="M4 5.1v5.8M12 8.6c0 2.2-3.2 2.6-6.6 3.4"/></svg>
+          </button>
           <button class="btn btn-follow" type="button" id="follow-btn" data-following="true">
             <span class="live-dot" aria-hidden="true"></span><span class="follow-label">Live</span>
           </button>
@@ -247,7 +360,18 @@
         <div class="lower" id="lower" aria-hidden="true"></div>
         <!-- aviso de "imagen guardada": se ve unos segundos y lo lee el lector de pantalla -->
         <p class="snap-note" id="snap-note" role="status"></p>
+        <!-- la barra del modo TV: vive sobre el grafo y, con la vista de agentes, en la cabecera del tablero (app.js la mueve) -->
         <div class="tv-bar" id="tv-bar">
+          <!-- todos los repos seguidos a la vez (la vista conjunta) y de vuelta al grafo con el director; también la R -->
+          <button class="icon-btn" type="button" id="tv-all" aria-pressed="false" aria-keyshortcuts="R" hidden title="Every followed repository at once, each in its card (R)" aria-label="All repositories" data-i18n-attr="title:tv.allTitle;aria-label:all.title">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-all3d" aria-pressed="false" aria-keyshortcuts="3" hidden title="Every repository together in one 3D scene (3)" aria-label="Every repository together in one 3D scene" data-i18n-attr="title:all.view3dKey;aria-label:all.view3d">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 13.5 5v6L8 14.2 2.5 11V5z"/><path d="M2.5 5 8 8.2 13.5 5M8 8.2v6"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="tv-agents" aria-pressed="false" title="Who works with whom: people and agents (Claude Code, Copilot, Codex, bots…)" aria-label="Agents and interactions" data-i18n-attr="title:agents.btnTitle;aria-label:agents.title">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5.5" width="10" height="7.5" rx="2"/><path d="M8 5.5V3M8 3h.01M6 9.2h.01M10 9.2h.01M1.5 8.5v2M14.5 8.5v2"/></svg>
+          </button>
           <button class="icon-btn" type="button" id="tv-pause" aria-pressed="false" title="Pause" aria-label="Pause" data-i18n-attr="title:ctl.pause;aria-label:ctl.pause">
             <svg class="ico when-off" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9"/></svg>
             <svg class="ico when-on" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z"/></svg>
@@ -307,6 +431,7 @@
           <h2 class="ab-title" id="agents-title"><span class="live-dot" aria-hidden="true"></span><span data-i18n="agents.title">Agents and interactions</span></h2>
           <time class="ab-clock" id="agents-clock" aria-hidden="true"></time>
           <div class="ab-switches">
+            <label class="hl-switch" id="agents-all-wrap" hidden><input type="checkbox" id="agents-all"> <span data-i18n="all.title">All repositories</span></label>
             <label class="hl-switch"><input type="checkbox" id="agents-only"> <span data-i18n="agents.onlyAgents">Only between agents</span></label>
             <label class="hl-switch"><input type="checkbox" id="agents-graph"> <span data-i18n="agents.onGraph">Show them on the graph (2D and 3D)</span></label>
           </div>
@@ -333,22 +458,43 @@
     </section>
 
     <!-- vista conjunta (js/overview.js): todos los repos seguidos a la vez, en el lugar del grafo de uno solo -->
-    <section class="panel all-panel" id="all-panel" aria-labelledby="all-title" hidden>
+    <section class="panel all-panel" id="all-panel" tabindex="-1" aria-labelledby="all-title" hidden>
       <div class="panel-head">
         <div class="repo-title">
           <h2 id="all-title" data-i18n="all.title">All repositories</h2>
           <p class="repo-desc" id="all-sum"></p>
         </div>
+        <!-- el modo TV también desde aquí: el botón de la barra del grafo no se ve con la vista conjunta, y en TV se queda
+             con todos los repos a la vista -->
+        <div class="toolbar">
+          <!-- cada repo en su tarjeta (2D) o todos juntos en una sola escena 3D (js/allspace.js) -->
+          <div class="view-switch" role="group" aria-label="View type" data-i18n-attr="aria-label:view.aria">
+            <button type="button" id="all-3d" aria-pressed="false" title="Every repository together in one 3D scene" data-i18n-attr="title:all.view3d">3D</button>
+            <button type="button" id="all-2d" aria-pressed="true" title="Each repository in its card" data-i18n-attr="title:all.view2d">2D</button>
+          </div>
+          <button class="icon-btn" type="button" id="all-tv-btn" aria-pressed="false" title="TV mode" aria-label="TV mode" data-i18n-attr="title:tv.title;aria-label:tv.label">
+            <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.4"/><path d="M5.5 14h5M8 11.5V14"/></svg>
+          </button>
+        </div>
       </div>
       <section class="ap" id="all-prs" hidden></section>
       <div class="rc-grid" id="all-grid"></div>
-      <p class="hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
+      <div class="as-stage" id="all-space" hidden></div>
+      <p class="hint" id="all-space-hint" hidden data-i18n="all.spaceHint">Each tower is a repository: its default branch up the middle, the others around it and the newest on top. Drag to turn it, the wheel zooms; the name opens the repository.</p>
+      <p class="hint" id="all-hint" data-i18n="all.hint">Each card follows its repository live. Click a commit for its details and its changes; the name opens the repository in its tab.</p>
     </section>
 
-    <aside class="panel feed-panel" aria-labelledby="feed-title">
+    <!-- el panel de actividad se ensancha o se angosta arrastrando su borde (o con las flechas sobre él) y se pliega a una
+         franja con su botón, para dejarle todo el ancho al grafo; los dos se recuerdan en este navegador (js/app.js) -->
+    <aside class="panel feed-panel" id="feed-panel" aria-labelledby="feed-title">
+      <div class="feed-resize" id="feed-resize" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="feed-panel" aria-valuemin="280" aria-valuemax="720" aria-valuenow="370" title="Resize the activity panel (drag it, or use the arrow keys)" aria-label="Resize the activity panel (drag it, or use the arrow keys)" data-i18n-attr="title:feed.resize;aria-label:feed.resize"></div>
       <div class="panel-head">
         <h2 id="feed-title" data-i18n="feed.title">Activity</h2>
         <span class="feed-count" id="feed-count"></span>
+        <span class="feed-unseen" id="feed-unseen" aria-hidden="true" hidden></span>
+        <button type="button" class="icon-btn feed-fold" id="feed-fold" aria-expanded="true" aria-controls="chips feed" title="Hide or show the activity panel" aria-label="Hide or show the activity panel" data-i18n-attr="title:feed.fold;aria-label:feed.fold">
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.5" width="12.4" height="11" rx="2"/><path d="M10 2.5v11M5 6l2 2-2 2"/></svg>
+        </button>
       </div>
       <div class="chips" id="chips" role="group" aria-label="Filter activity by type" data-i18n-attr="aria-label:feed.filterAria"></div>
       <ol class="feed" id="feed" aria-label="Recent activity" data-i18n-attr="aria-label:feed.listAria"></ol>
@@ -483,17 +629,12 @@
       <p class="help" data-i18n-html="settings.azureTokenHelp">For private projects on dev.azure.com: a personal access token with the <code>Code (Read)</code> scope. Public projects don't need one.</p>
       <p class="help" id="azure-token-where" data-i18n="settings.azureTokenWhere">The token is stored only in this browser and is sent only to dev.azure.com.</p>
     </div>
-    <div class="field">
-      <label for="token2-owner"><span data-i18n="settings.token2">Second GitHub account</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
-      <div class="field-row">
-        <input id="token2-owner" type="text" autocomplete="off" spellcheck="false" maxlength="39" placeholder="org">
-      </div>
-      <div class="field-row">
-        <input id="token2-input" type="password" autocomplete="off" spellcheck="false" aria-label="Second GitHub account token" data-i18n-attr="aria-label:settings.token2Token">
-        <button type="button" class="btn btn-ghost" id="token2-toggle">Show</button>
-      </div>
-      <p class="help" data-i18n="settings.token2Help">A second token for the private repos of another user or organization (type its name above). It is used only for that owner's repos; every other repo uses the token above. Both go only to api.github.com.</p>
-    </div>
+    <fieldset class="field accounts" id="accounts-box">
+      <legend><span data-i18n="settings.accounts">Other GitHub accounts</span> <span class="opt" data-i18n="settings.optional">optional</span></legend>
+      <p class="help" data-i18n="settings.accountsHelp">Tokens for the private repos of other users or organizations, up to 5, each with its owner's name. Each token is used only for that owner's repos; every other repo uses the token above. All of them go only to api.github.com.</p>
+      <div id="accounts-list" class="accounts-list"></div>
+      <button type="button" class="btn btn-ghost accounts-add" id="account-add" data-i18n="settings.accountAdd">Add an account</button>
+    </fieldset>
     <div class="field" id="bbdc-token-field" hidden>
       <label for="bbdc-token-input"><span data-i18n="settings.bbdcToken">Token for your Bitbucket server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
       <div class="field-row">
@@ -503,11 +644,24 @@
       <p class="help" data-i18n-html="settings.bbdcTokenHelp">For your own Bitbucket Data Center or Server: a personal or HTTP access token with read permission on the repositories. Most servers don't let anyone read without signing in.</p>
       <p class="help" id="bbdc-token-where"></p>
     </div>
+    <div class="field" id="forge-token-field" hidden>
+      <label for="forge-token-input"><span data-i18n="settings.forgeToken">Token for your Forgejo or Gitea server</span> <span class="opt" data-i18n="settings.optional">optional</span></label>
+      <div class="field-row">
+        <input id="forge-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="forge-token-toggle">Show</button>
+      </div>
+      <p class="help" data-i18n-html="settings.forgeTokenHelp">For your own Forgejo or Gitea: an access token with the <code>read:repository</code> scope, to see private repositories. Public ones don't need one.</p>
+      <p class="help" id="forge-token-where"></p>
+    </div>
     <fieldset class="field hooks" id="hooks-box" hidden>
       <legend data-i18n="settings.hooks">Notices to Slack, Discord and Teams</legend>
       <p class="help" data-i18n="settings.hooksHelp">Each webhook gets the events you tick: releases, merges to the default branch, CI turning red and force-pushes on it. The URL is a secret: it is stored encrypted on this computer and is sent only to its own service.</p>
       <div id="hooks-list" class="hooks-list"></div>
     </fieldset>
+    <div class="errors-field" id="errors-field" hidden>
+      <label class="marks-toggle"><input type="checkbox" id="errors-report" aria-describedby="errors-help"> <span data-i18n="settings.errors">Send error reports</span></label>
+      <p class="help" id="errors-help" data-i18n="settings.errorsHelp">Off unless you turn it on. When something in the app breaks, it sends Sentry the kind of error, its message and where in GraphBranch's code it happened, with the app version and your operating system. Tokens, web addresses, the names of repositories, branches and people, the folders on this computer and your IP address are left out.</p>
+    </div>
     <div class="grid2">
       <div class="field">
         <label for="depth" data-i18n="settings.depth">Commits per branch</label>
@@ -738,6 +892,11 @@
         <option value="name" data-i18n="constellation.orderName">Name</option>
       </select>
     </label>
+    <label class="cs-order" id="constellation-due-field" hidden>
+      <span data-i18n="constellation.due">Deadline</span>
+      <input type="date" id="constellation-due">
+    </label>
+    <p class="help" id="constellation-late" aria-live="polite" hidden></p>
     <p id="constellation-status" class="sr-only" role="status" aria-live="polite"></p>
     <div id="constellation-body" class="cs-body" aria-describedby="constellation-help"></div>
   </div>
@@ -772,7 +931,7 @@
     </div>
     <p class="help" id="graph-author-status" role="status"></p>
     <label class="marks-toggle"><input type="checkbox" id="graph-firstparent"> <span data-i18n="search.firstParent">First parent only (like git log --first-parent)</span></label>
-    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show SHA, author and date next to each commit (2D graph)</span></label>
+    <label class="marks-toggle"><input type="checkbox" id="graph-columns"> <span data-i18n="search.columns">Show SHA, author and date next to each commit</span></label>
     <div class="sr-row">
       <p class="help" id="branch-view-status" role="status"></p>
       <button type="button" class="btn" id="branch-view-reset" hidden data-i18n="branchview.reset">Show all branches</button>
@@ -829,6 +988,7 @@
 <script src="js/textview.js"></script>
 <script src="js/constellation.js"></script>
 <script src="js/overview.js"></script>
+<script src="js/allspace.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/search.js"></script>
 <script src="js/cmdk.js"></script>
@@ -836,6 +996,7 @@
 <script src="js/hooks.js"></script>
 <script src="js/feed.js"></script>
 <script src="js/snapshot.js"></script>
+<script src="js/mermaid.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
 </body>

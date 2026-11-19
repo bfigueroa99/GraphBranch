@@ -335,9 +335,9 @@ test('CI: el estado del pipeline de la cabeza va a data.ci, una consulta por ram
   assert.deepEqual(errors, []);
   assert.equal(src.data.ci.get('main'), 'success');
   const asked = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length;
-  assert.equal(asked(), 1);
+  assert.equal(asked(), 2, 'la por defecto y `feature`, del resto');
   await src.cycle();
-  assert.equal(asked(), 1, 'la misma cabeza no se vuelve a preguntar');
+  assert.equal(asked(), 2, 'la misma cabeza no se vuelve a preguntar');
 
   // un push sin pipeline todavía: sin estado; después corre y falla
   gl.push('main', 'm4', 'm3');
@@ -382,6 +382,28 @@ test('CI: una rama con MR abierta también; un proyecto sin pipelines (403) deja
   noTok.src.data.repo.private = true;
   await noTok.src.syncCiGitlab([], true);
   assert.equal(priv.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length, 0);
+});
+
+test('CI: el resto de las ramas también, con tope propio por ciclo y solo entre las 20 más recientes', async () => {
+  const gl = project();
+  for (let i = 0; i < 5; i++) {
+    gl.push('r' + i, 'r' + i + 'x', 'm3');
+    gl.pipelines.push({ ref: 'r' + i, sha: 'r' + i + 'x', status: 'success' });
+  }
+  gl.pipelines.push({ ref: 'main', sha: 'm3', status: 'success' });
+  const { src, errors } = connect(gl);
+  const asked = () => gl.calls.filter((c) => c.startsWith(PROJECT + '/pipelines')).length;
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  const others = () => [...src.data.ci.keys()].filter((k) => k !== 'main').length;
+  assert.ok(asked() <= 3, 'la por defecto y como mucho 2 del resto por ciclo');
+  const first = others();
+  assert.ok(first >= 1 && first <= 2);
+  for (let i = 0; i < 6; i++) await src.cycle();
+  assert.equal(others(), 5, 'en unos ciclos todas llevan su marca');
+  const n = asked();
+  await src.cycle();
+  assert.equal(asked(), n, 'una cabeza ya resuelta no se vuelve a preguntar');
 });
 
 test('un proyecto que no existe (o es privado) lo dice y no insiste', async () => {
@@ -615,6 +637,15 @@ test('un GitLab propio no muestra avatares (su host no está en img-src); gitlab
   assert.equal(new GB.GitLabSource({ path: 'g/p' }).person({ username: 'a', avatar_url: 'https://gitlab.com/uploads/a.png' }).avatar, 'https://gitlab.com/uploads/a.png');
 });
 
+test('mapPull: los revisores y los asignados de un MR, para el filtro por persona del Launchpad', () => {
+  const GB = load(fakeGitLab());
+  const src = new GB.GitLabSource({ path: 'g/p' });
+  const m = src.mapPull({ iid: 4, title: 't', source_branch: 'f', target_branch: 'main', author: { username: 'ana' }, created_at: '2026-10-01T00:00:00Z', reviewers: [{ username: 'beto' }, {}], assignees: [{ username: 'carla' }] });
+  assert.deepEqual([...m.requested], ['beto']);
+  assert.deepEqual([...m.assignees], ['carla']);
+  assert.deepEqual([...src.mapPull({ iid: 5, title: 't' }).requested], [], 'sin listas, vacías');
+});
+
 test('el filtro por autor funciona sobre los datos de esta fuente: deja la rama de quien escribió y quita la de nadie', async () => {
   const gl = project();
   gl.mr(5, 'feature', 'main');
@@ -718,6 +749,7 @@ test('editar: lee el archivo de la rama (su huella es el último commit que lo t
   };
   const { src } = connect(gl, { token: 'glpat-w' });
   assert.equal(src.canEdit(), true);
+  assert.equal(src.givesReviews(), true, 'sus eventos traen las aprobaciones: la salud parte el tiempo de ciclo');
   assert.equal(src.canWrite(), null);
   const f = await src.readFile({ path: 'src/app.js', ref: 'feature' });
   assert.deepEqual([f.text, f.sha, f.binary], ['const a = 1;\n', 'f2', false]);
@@ -749,4 +781,115 @@ test('editar: sin token no escribe; un token que no puede (403) o un archivo que
   await assert.rejects(src.writeFile({ path: 'a', branch: 'main', text: 'x', message: 'm', sha: 's' }), (err) => err.editKind === 'perm');
   reply = { status: 400, body: { message: 'You are attempting to update a file that has changed since you started editing it.' } };
   await assert.rejects(src.writeFile({ path: 'a', branch: 'main', text: 'x', message: 'm', sha: 's' }), (err) => err.editKind === 'conflict');
+});
+
+/* OpenSSF Scorecard de gitlab.com (ítem 225): la API de Scorecard también da el puntaje de los proyectos públicos de
+   gitlab.com que analiza cada semana. Lo mismo que en GitHub: solo al abrir la salud y una vez por pestaña, sin el
+   token, sin cookies y sin referer, con la ruta que da la API de GitLab (Scorecard distingue mayúsculas). Su ruta es
+   /projects/{plataforma}/{dueño}/{repo}, de un segmento cada uno (leído en ossf/scorecard-infra, api/openapi.yaml):
+   un proyecto de un subgrupo no tiene dónde preguntarse, y la salud lo dice sin consultar. */
+
+/** api.scorecard.dev simulada sobre la API falsa de GitLab: `reply` (un objeto fijo o una función de la URL) da
+    `{ status, body }`. Devuelve las consultas que recibió, con sus opciones. Va antes de `connect`. */
+function withScorecard(gl, reply) {
+  const asked = [];
+  const gitlab = gl.fetch;
+  gl.fetch = async (url, opts = {}) => {
+    if (!String(url).startsWith('https://api.scorecard.dev/')) return gitlab(url, opts);
+    asked.push({ url, opts });
+    const r = typeof reply === 'function' ? reply(url) : reply;
+    const status = r.status ?? 200;
+    const body = typeof r.body === 'string' ? r.body : r.body == null ? '' : JSON.stringify(r.body);
+    return { status, ok: status >= 200 && status < 300, headers: { get: () => null }, text: async () => body };
+  };
+  return asked;
+}
+const SCORECARD = { date: '2026-11-15T03:12:40Z', repo: { name: 'gitlab.com/Grupo/Proyecto' }, score: 4.6, checks: [{ name: 'Maintained', score: 10, reason: '30 commit(s) found' }, { name: 'Code-Review', score: 2, reason: 'Found 4/20 approved changesets' }, { name: 'Packaging', score: -1, reason: 'packaging workflow not detected' }] };
+/** El proyecto como lo da la API de GitLab, con otra ruta (movido o escrito con otras mayúsculas) y su visibilidad
+    (null: la respuesta no la trae, y el proyecto es público). */
+const projectAs = (gl, path_with_namespace, visibility = 'public') => {
+  gl.visibility = visibility ?? 'public';
+  gl.override = (p) => (p === PROJECT ? { body: { id: 7, path_with_namespace, default_branch: 'main', web_url: `${gl.web}/${path_with_namespace}`, ...(visibility == null ? {} : { visibility }) } } : null);
+};
+
+test('Scorecard: un proyecto público de gitlab.com, al pedirlo y una vez por pestaña, con la ruta de GitLab, sin token, cookies ni referer', async () => {
+  const gl = project();
+  projectAs(gl, 'Grupo/Proyecto');
+  gl.tokens.set('glpat-x', ['read_api']);
+  gl.expect = 'glpat-x';
+  const asked = withScorecard(gl, { body: SCORECARD });
+  const { src, errors } = connect(gl, { token: 'glpat-x' });
+  await src.cycle();
+  assert.deepEqual(errors, []);
+  assert.equal(asked.length, 0, 'sin abrir el panel no se consulta');
+  const [a, b] = await Promise.all([src.syncScorecard(), src.syncScorecard()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].url, 'https://api.scorecard.dev/projects/gitlab.com/Grupo/Proyecto', 'la ruta que da la API de GitLab, no la escrita');
+  assert.deepEqual(Object.keys(asked[0].opts.headers || {}), ['Accept'], 'el token de GitLab no sale a otro servicio');
+  assert.equal(asked[0].opts.credentials, 'omit', 'sin cookies');
+  assert.equal(asked[0].opts.referrerPolicy, 'no-referrer', 'sin la URL de la página, que lleva ?repo=');
+  const sc = JSON.parse(JSON.stringify(src.data.scorecard));
+  assert.equal(sc.state, 'ok');
+  assert.equal(sc.score, 4.6);
+  assert.deepEqual(sc.checks.map((c) => c.name), ['Maintained', 'Code-Review', 'Packaging']);
+  assert.equal(await src.syncScorecard(), false, 'con la respuesta ya llegada, no se vuelve a preguntar');
+  assert.equal(asked.length, 1);
+  assert.ok(!gl.calls.some((c) => c.includes('scorecard')), 'nada de esto pasa por la API de GitLab');
+
+  const none = project();
+  projectAs(none, 'grupo/sin-analisis');
+  const askedNone = withScorecard(none, { status: 404, body: '' });
+  const c = connect(none);
+  await c.src.cycle();
+  assert.equal(await c.src.syncScorecard(), true);
+  assert.equal(askedNone[0].url, 'https://api.scorecard.dev/projects/gitlab.com/grupo/sin-analisis');
+  assert.deepEqual(JSON.parse(JSON.stringify(c.src.data.scorecard)), { state: 'none' }, 'sin análisis lo dice');
+});
+
+test('Scorecard: un proyecto privado, interno o de un GitLab propio no se consulta; el de un subgrupo lo dice sin consultar', async () => {
+  const run = async (path, visibility, { token = '', web = '' } = {}) => {
+    const gl = project();
+    if (web) gl.web = web;
+    projectAs(gl, path, visibility);
+    if (token) {
+      gl.tokens.set(token, ['read_api']);
+      gl.expect = token;
+    }
+    const asked = withScorecard(gl, { body: SCORECARD });
+    const { src, errors } = connect(gl, { token, webUrl: web });
+    await src.cycle();
+    assert.deepEqual(errors, [], `${path} (${visibility})`);
+    return { src, asked, ran: await src.syncScorecard() };
+  };
+  for (const visibility of ['private', 'internal']) {
+    const r = await run('grupo/proyecto', visibility, { token: 'glpat-x' });
+    assert.equal(r.ran, false, visibility);
+    assert.equal(r.asked.length, 0, `${visibility}: el nombre del proyecto no sale a un tercero`);
+    assert.equal(r.src.data.scorecard, undefined, `${visibility}: la salud no muestra la sección`);
+  }
+  const own = await run('grupo/proyecto', 'public', { web: 'https://gitlab.miempresa.com' });
+  assert.equal(own.ran, false);
+  assert.equal(own.asked.length, 0, 'Scorecard solo analiza gitlab.com');
+  assert.equal(own.src.data.scorecard, undefined);
+
+  const sub = await run('g/sub/p', 'public');
+  assert.equal(sub.ran, true, 'la salud se vuelve a dibujar con el aviso');
+  assert.equal(sub.asked.length, 0, 'la API de Scorecard no tiene ruta para un subgrupo: no se pregunta');
+  assert.deepEqual(JSON.parse(JSON.stringify(sub.src.data.scorecard)), { state: 'subgroup' });
+  assert.equal(await sub.src.syncScorecard(), false, 'una vez');
+  const subPriv = await run('g/sub/p', 'private', { token: 'glpat-x' });
+  assert.equal(subPriv.src.data.scorecard, undefined, 'de un subgrupo privado, ni el aviso');
+
+  // sin la visibilidad en la respuesta: sin token, gitlab.com solo muestra los públicos; con token, no se sabe
+  const bare = await run('grupo/proyecto', null);
+  assert.equal(bare.asked.length, 1, 'sin token y sin visibilidad, el proyecto que se pudo leer es público');
+  const bareTok = await run('grupo/proyecto', null, { token: 'glpat-x' });
+  assert.equal(bareTok.asked.length, 0, 'con token y sin visibilidad, puede ser privado: no se pregunta');
+
+  const early = project();
+  const askedEarly = withScorecard(early, { body: SCORECARD });
+  const before = connect(early);
+  assert.equal(await before.src.syncScorecard(), false, 'antes de cargar el proyecto no se sabe si es público');
+  assert.equal(askedEarly.length, 0);
 });

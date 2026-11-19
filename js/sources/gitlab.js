@@ -66,7 +66,9 @@
   /** Cada parte de una ruta (grupos, ramas con "/") escapada por separado: las barras quedan. */
   const segs = (path) => String(path).split('/').map(encodeURIComponent).join('/');
 
-  const CI_MAX = 6; // ramas cuyo pipeline se pregunta por ciclo
+  const CI_MAX = 6; // ramas (por defecto, fijadas, de una MR) cuyo pipeline se pregunta por ciclo
+  const CI_REST = 2; // y, además, ramas del resto por ciclo,
+  const CI_REST_TOP = 20; // entre las 20 más recientes del listado
   /** El estado de un pipeline de GitLab en uno de tres ('success', 'failure', 'pending'); 'skipped' y 'manual' no cuentan. */
   const pipelineState = (s) => {
     if (s === 'success') return 'success';
@@ -193,17 +195,21 @@
 
     /** El estado del último pipeline de la cabeza de la rama por defecto, las fijadas y las de una MR abierta
         (`/pipelines?ref=`, una consulta por rama que se movió, como mucho CI_MAX por ciclo), en el mismo
-        `data.ci` que usa GitHub. Un proyecto privado sin token ni se pregunta; sin pipelines (403/404) se
+        `data.ci` que usa GitHub. Después, y con su propio tope (CI_REST por ciclo), las 20 ramas más
+        recientes del resto, para que no queden sin marca. Un proyecto privado sin token ni se pregunta; sin pipelines (403/404) se
         deja de preguntar. Un pipeline de otro commit que la cabeza no cuenta: se vuelve a preguntar luego. */
     async syncCiGitlab(acts, quiet) {
       if (this.noCi || (this.data.repo.private && !this.gitlabToken)) return;
       const { branches, repo } = this.data;
       const heads = [...this.data.pulls.values()].filter((p) => p.sameRepo !== false && p.state !== 'merged').map((p) => p.head);
       let left = CI_MAX;
-      for (const name of new Set([repo.defaultBranch, ...this.pins, ...heads])) {
+      const first = new Set([repo.defaultBranch, ...this.pins, ...heads]);
+      const rest = [...branches.keys()].filter((n) => !first.has(n)).slice(0, CI_REST_TOP);
+      let more = CI_REST;
+      for (const name of [...first, ...rest]) {
         const sha = branches.get(name)?.sha;
         if (!sha || this.ciSha.get(name) === sha) continue;
-        if (left-- <= 0) break;
+        if (first.has(name) ? left-- <= 0 : more-- <= 0) { if (first.has(name)) continue; break; }
         const res = await this.api(`${this.base}/pipelines?ref=${encodeURIComponent(name)}&per_page=1&order_by=id&sort=desc`, { allow: [403, 404] });
         if (!res.data) {
           this.noCi = true;
@@ -231,6 +237,37 @@
         stars: Number.isFinite(p.star_count) ? p.star_count : null,
         forks: Number.isFinite(p.forks_count) ? p.forks_count : null,
       });
+      // OpenSSF Scorecard (ítem 225) solo se consulta de un proyecto que se sabe público: el que GitLab dice público o, si
+      // la respuesta no trae la visibilidad, el que se pudo leer sin token (gitlab.com esconde los privados y los internos
+      // tras un 404 a quien no inició sesión). Con token y sin visibilidad, podría ser privado: no se consulta.
+      this.publicProject = p.visibility === 'public' || (!p.visibility && !this.gitlabToken);
+    }
+
+    /** El proyecto que se le pregunta a OpenSSF Scorecard (`gitlab.com/grupo/proyecto`, ya escapado), o null si no se
+        consulta: solo uno público de gitlab.com (un GitLab propio no está en Scorecard), ya cargado, y con la ruta que da
+        su API (Scorecard distingue mayúsculas). Uno de un subgrupo tampoco: la ruta de Scorecard es
+        `/projects/{plataforma}/{dueño}/{repo}`, un segmento cada uno, y no tiene dónde preguntarse (ver `syncScorecard`). */
+    scorecardProject() {
+      const { owner, name } = this.data.repo;
+      if (!this.scorecardPublic() || !owner || owner.includes('/')) return null;
+      return 'gitlab.com/' + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+    }
+
+    scorecardPublic() {
+      return this.ep.web === WEB && this.publicProject === true;
+    }
+
+    /** El puntaje de OpenSSF Scorecard (ítem 225), como el de GitHub: una consulta al abrir la salud y una sola por pestaña.
+        De un proyecto público de gitlab.com en un subgrupo, que la API de Scorecard no da, la salud lo dice sin consultar
+        (devuelve true la primera vez, para que el panel se vuelva a dibujar con el aviso). */
+    syncScorecard() {
+      const { owner } = this.data.repo;
+      if (this.scorecardPublic() && owner && owner.includes('/')) {
+        if (this.data.scorecard) return Promise.resolve(false);
+        this.data.scorecard = { state: 'subgroup' };
+        return Promise.resolve(true);
+      }
+      return super.syncScorecard();
     }
 
     /** Una página de ramas, las actualizadas más recientemente primero. */
@@ -401,6 +438,8 @@
         url: m.web_url,
         draft: !!(m.draft ?? m.work_in_progress),
         user: this.person(m.author),
+        requested: (Array.isArray(m.reviewers) ? m.reviewers : []).map((u) => u?.username).filter((u) => typeof u === 'string' && u), // el filtro por persona del Launchpad
+        assignees: (Array.isArray(m.assignees) ? m.assignees : []).map((u) => u?.username).filter((u) => typeof u === 'string' && u),
         createdAt: Date.parse(m.created_at) || Date.now(),
         mr: true,
       };
@@ -567,6 +606,12 @@
     }
 
     diffCheap() {
+      return true;
+    }
+
+    /** Sus eventos traen las aprobaciones de cada MR con su hora (`approved`), no las demás revisiones: el panel de salud
+        parte el tiempo de ciclo con ellas, y la primera revisión de una MR es su primera aprobación. */
+    givesReviews() {
       return true;
     }
 

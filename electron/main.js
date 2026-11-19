@@ -22,6 +22,7 @@ const { pathToFileURL } = require('node:url');
 const local = require('./git');
 const token = require('./token');
 const webhooks = require('./webhooks');
+const sentry = require('./sentry'); // el reporte de errores opcional: sin DSN, y mientras no se prenda, no hace nada
 const spend = require('../js/spend.js'); // el gasto de los servicios de IA: el mismo código que la web, sin CORS aquí
 const tray = require('./tray');
 
@@ -35,6 +36,16 @@ const PUBLIC = new Set(['index.html', 'css', 'js', 'vendor']);
 const PERMISSIONS = new Set(['notifications', 'fullscreen', 'pointerLock', 'screen-wake-lock']);
 /** Fondo de la ventana mientras carga, igual al --bg de css/styles.css, para que no destelle en blanco. */
 const BG = { light: '#eef1ef', dark: '#0a0f0e' };
+/** El DSN de Sentry que deja en el paquete quien lo arma (electron/sentry-dsn.txt, fuera del repo: .gitignore); el
+    SENTRY_DSN del entorno manda sobre él. Sin ninguno, Ajustes no ofrece mandar informes de errores. */
+function sentryDsn() {
+  if (process.env.SENTRY_DSN) return process.env.SENTRY_DSN;
+  try {
+    return fs.readFileSync(path.join(__dirname, 'sentry-dsn.txt'), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
 
 protocol.registerSchemesAsPrivileged([{ scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
 // Con la ventana oculta o minimizada, Chromium espacia los temporizadores de la página a uno por minuto
@@ -305,7 +316,9 @@ if (!app.requestSingleInstanceLock()) {
     });
     ipcMain.handle('token:set', async (ev, value, service = 'github') => {
       fromApp(ev, service);
-      if (typeof value !== 'string' || value.length > 1000) throw new Error('token inválido');
+      // 'github2' guarda las otras cuentas de GitHub juntas: hasta 5 dueños con su token, que GitHub dice que puede
+      // llegar a 255 caracteres (unos 1.600 en total)
+      if (typeof value !== 'string' || value.length > (service === 'github2' ? 2000 : 1000)) throw new Error('token inválido');
       await token.write(value.trim(), service);
       return token.where();
     });
@@ -350,6 +363,26 @@ if (!app.requestSingleInstanceLock()) {
         return { error: err.kind || 'net', status: err.status || 0 };
       }
     });
+    // el reporte de errores opcional (electron/sentry.js): el DSN no sale del proceso principal ni llega a la página;
+    // la página solo sabe si hay uno, si está prendido, y manda el error que vio con los nombres que conoce para quitarlos
+    const reports = sentry.createReports({
+      dsn: sentryDsn(),
+      allowLocal: !app.isPackaged, // un Sentry de prueba en esta máquina (http://…@127.0.0.1), solo sin empaquetar
+      consentFile: path.join(app.getPath('userData'), 'error-reports.json'),
+      fetch: net.fetch,
+      process,
+      appRoot: ROOT,
+      release: process.env.SENTRY_RELEASE || `graphbranch@${app.getVersion()}`,
+      environment: process.env.SENTRY_ENVIRONMENT || (app.isPackaged ? 'production' : 'development'),
+      os: process.platform,
+      runtime: process.versions.electron,
+    });
+    const fromPage = (ev) => {
+      if (!isApp(ev.senderFrame?.url)) throw new Error('origen no permitido');
+    };
+    ipcMain.handle('errors:state', (ev) => (fromPage(ev), reports.state()));
+    ipcMain.handle('errors:set', (ev, on) => (fromPage(ev), reports.set(on === true)));
+    ipcMain.handle('errors:report', (ev, rec, names) => (fromPage(ev), reports.report(rec, names)));
     // repositorios locales (electron/git.js): la página trabaja con ids de carpetas que el usuario eligió
     const guard = (fn) => async (ev, ...args) => {
       if (!isApp(ev.senderFrame?.url)) throw new Error('origen no permitido');

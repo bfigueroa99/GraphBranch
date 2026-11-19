@@ -26,6 +26,12 @@
   const DEPENDABOT = { name: 'dependabot[bot]', login: 'dependabot[bot]' };
   /** El mensaje de un commit de una sesión de Claude Code, con los trailers que deja la herramienta. */
   const signed = (msg, a) => (a.session ? `${msg}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_${a.session}` : msg);
+  /** La firma de cada commit de la demo (ítem 230), como la da la fuente de GitHub (`{ ok }` o `{ ok: false, state }`) y
+      siempre la misma por autor, sin gastar el azar de la demo: GitHub firma los de sus bots (Copilot, Dependabot, la app de
+      Claude), casi todas las personas firman los suyos, dos no firman, las sesiones de Claude Code tampoco y la llave de
+      una venció (firmado, sin verificar). */
+  const NO_SIGN = new Set(['msoto', 'taraya']);
+  const sigOf = (a) => (!a?.login || NO_SIGN.has(a.login) ? { ok: false, state: 'UNSIGNED' } : a.login === 'dmunoz' ? { ok: false, state: 'EXPIRED_KEY' } : { ok: true });
 
   /* ramas de ejemplo: [nombre, ámbito]. Son identificadores, así que van en inglés para cualquier idioma */
   const NEW_BRANCHES = [
@@ -44,6 +50,9 @@
     ['claude/csv-import', 'import'], // las ramas claude/* las trabajan las sesiones de Claude Code
     ['claude/a11y-audit', 'a11y'],
   ];
+
+  const PREHISTORY = 12; // commits de main de antes de la semilla, sin cargar (ver prehistory)
+  const MORE_BATCH = 6; // los que trae cada «Cargar más» en la demo
 
   function mulberry32(seed) {
     return function () {
@@ -66,7 +75,7 @@
         pulls: new Map(),
         ci: new Map(), // rama -> 'success' | 'failure' | 'pending'
         tags: new Map(), // commit -> [tag]
-        deploys: new Map(), // entorno -> { sha }
+        deploys: new Map(), // entorno -> { sha, ref, status }: status como los de GitHub (success, failure, in_progress…)
         forks: [],
         totalBranches: 0,
         loaded: false,
@@ -77,6 +86,8 @@
       this.issueSeq = 85;
       this.release = [1, 4, 0];
       this.openIssues = [];
+      this.older = new Map(); // historia que no está cargada (la de antes de la semilla y lo que trim() saca): «Cargar más» la trae
+      this.kept = new Set(); // lo traído con «Cargar más»: trim() no lo vuelve a sacar por viejo
       this.timers = new Set();
       this.running = false;
       this.paused = false;
@@ -123,10 +134,11 @@
         author: this.actor(author),
         date: time,
         url: null,
+        sig: sigOf(author),
       };
       this.data.commits.set(c.sha, c);
       b.sha = c.sha;
-      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha }); // staging sigue a develop
+      if (branch === 'develop' && this.data.deploys.has('staging')) this.data.deploys.set('staging', { sha: c.sha, ref: 'develop', status: 'in_progress' }); // staging sigue a develop: cada push lo vuelve a desplegar
       b.own = (b.own || 0) + 1;
       b.movedAt = time;
       return c;
@@ -170,6 +182,25 @@
       return [...log].reverse().map((e, i) => ({ ...e, from: i * size + 1, to: Math.min(total, (i + 1) * size) }));
     }
 
+    /** El CODEOWNERS de la demo (en `.github/`, como lo busca GitHub): todo archivo que inventan sus cambios tiene dueño. */
+    codeOwners() {
+      const text = [
+        '# Dueños del código de la demo: el último patrón que coincide manda',
+        '*                     @vrojas',
+        '/src/                 @msoto @demo/frontend',
+        '/src/api/             @cfuentes @demo/backend',
+        '/src/auth/            @dmunoz @demo/seguridad',
+        '*.css                 @demo/diseno',
+        '/tests/               @jperez',
+        '/docs/                @taraya',
+        '/README.md            @taraya @vrojas',
+        '/.github/             @demo/plataforma',
+        'package*.json         @demo/plataforma',
+        '/vite.config.ts       @demo/plataforma',
+      ].join('\n');
+      return new Promise((resolve) => setTimeout(() => resolve({ path: '.github/CODEOWNERS', text }), 120));
+    }
+
     createBranch(name, from, scope, time) {
       const base = this.data.branches.get(from);
       this.data.branches.set(name, {
@@ -208,11 +239,18 @@
         this.createBranch(name, from, scope, step(10, 30));
         H.push(this.act('branch-create', { title: MSG('act.branchCreated', { name }), detail: MSG('act.branchFromOnly', { from }), branch: name, actor: this.actor(author) }, t));
       };
-      const merge = (head, base, num, author, del) => {
+      // `reviews`: las revisiones del PR antes de fusionarlo, cada una [tipo, quién, en qué fracción del tiempo que estuvo
+      // abierto]; con ellas el panel de salud parte su tiempo de ciclo en etapas (el que no trae ninguna, sin revisión)
+      const merge = (head, base, num, author, del, reviews = []) => {
         const hb = this.data.branches.get(head);
         const msg = `Merge pull request #${num} from acme/${head}`;
         const c = this.commit(base, msg, author, step(), [hb.sha]);
-        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author), openedAt: c.date - (4 + this.rnd() * 44) * 36e5 }, c.date));
+        const openedAt = Math.max(hb.createdAt || 0, c.date - (4 + this.rnd() * 44) * 36e5); // nunca antes de que existiera su rama
+        for (const [kind, who, f] of reviews) {
+          const title = MSG(kind === 'review-ok' ? 'act.prApproved' : kind === 'review-changes' ? 'act.prChanges' : 'act.prReview', { num });
+          H.push(this.act(kind, { title, detail: kind === 'review-ok' ? hb.prTitle || msg : this.C.comments[0], branch: head, actor: this.actor(who), number: num }, openedAt + f * (c.date - openedAt)));
+        }
+        H.push(this.act('pr-merge', { title: MSG('act.prMergedInto', { num, base }), detail: hb.prTitle || msg, ref: `${head} → ${base}`, branch: base, sha: c.sha, actor: this.actor(author), number: num, openedAt }, c.date));
         if (del) {
           this.data.branches.delete(head);
           H.push(this.act('branch-delete', { title: MSG('act.branchDeleted', { name: head }), detail: MSG('act.branchDeletedMerged', { into: base }), branch: head }, t + 20e3));
@@ -220,7 +258,7 @@
         return c;
       };
 
-      this.data.branches.set('main', { name: 'main', sha: null, isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
+      this.data.branches.set('main', { name: 'main', sha: this.prehistory(t), isDefault: true, protected: true, movedAt: t, scope: 'core', own: 0 });
       const first = push('main', V, S.initial);
       push('main', M, S.health);
       push('main', V, S.install);
@@ -231,7 +269,7 @@
       create('fix/empty-payload', 'main', 'api', M);
       push('fix/empty-payload', M, S.emptyPayload);
       this.data.branches.get('fix/empty-payload').prTitle = S.emptyPayloadPr;
-      merge('fix/empty-payload', 'main', 31, V, true);
+      merge('fix/empty-payload', 'main', 31, V, true, [['review-ok', V, 0.6]]);
       push('develop', D, S.sessionTests);
       create('feature/login', 'develop', 'login', J);
       push('feature/login', J, S.loginForm);
@@ -240,18 +278,45 @@
       push('feature/login', J, S.oauth);
       push('feature/dark-mode', T, S.darkVars);
       this.data.branches.get('develop').prTitle = 'Release 1.4';
-      const rel = merge('develop', 'main', 34, V, false);
+      const rel = merge('develop', 'main', 34, V, false, [['review-changes', M, 0.3], ['review-ok', M, 0.8]]);
       this.data.tags.set(first.sha, ['v1.0.0']);
       this.data.tags.set(rel.sha, ['v1.4.0']);
-      this.data.deploys.set('production', { sha: rel.sha });
+      this.data.deploys.set('production', { sha: rel.sha, ref: 'main', status: 'success' });
+      // líneas añadidas y borradas por semana, como las daría /stats/code_frequency: cifras propias de las últimas 8 semanas (la actual, a medias)
+      this.data.codeFreq = { state: 'ok', weeks: [[1840, 420], [960, 310], [2310, 1205], [640, 180], [1475, 890], [3120, 1460], [880, 240], [415, 95]].map(([added, deleted], i) => ({ time: Date.now() - ((7 - i) * 7 + 2) * 864e5, added, deleted })) };
+      // el puntaje de OpenSSF Scorecard, como lo daría api.scorecard.dev (sus motivos van en inglés, como los de la API):
+      // un análisis de hace 3 días, con las comprobaciones de un proyecto chico y una no concluyente (-1)
+      this.data.scorecard = {
+        state: 'ok',
+        score: 6.2,
+        date: Date.now() - 3 * 864e5,
+        checks: [
+          ['Maintained', 10, '30 commit(s) and 12 issue activity found in the last 90 days -- score normalized to 10'],
+          ['Code-Review', 4, 'Found 6/15 approved changesets -- score normalized to 4'],
+          ['Branch-Protection', 3, 'branch protection is not maximal on development and all release branches'],
+          ['Pinned-Dependencies', 7, 'dependency not pinned by hash detected -- score normalized to 7'],
+          ['Security-Policy', 0, 'security policy file not detected'],
+          ['Packaging', -1, 'packaging workflow not detected'],
+          ['License', 10, 'license file detected'],
+          ['Dependency-Update-Tool', 10, 'update tool detected'],
+        ].map(([name, score, reason]) => ({ name, score, reason })),
+      };
+      // las alertas de Dependabot abiertas, como las contaría la fuente de GitHub (solo las cifras, ítem 232): una de cada
+      // gravedad por lo menos, para que se vean todas; la demo no es un repo de GitHub, así que la salud no lleva enlace
+      this.data.dependabot = { state: 'ok', critical: 1, high: 2, medium: 4, low: 3, more: false };
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
       ];
       H.push(this.act('release', { title: MSG('act.release', { tag: 'v1.4.0' }), detail: S.releaseNotes, actor: this.actor(V) }, t + 60e3));
+      // un arreglo fusionado en main después de v1.4.0: lo que traería la versión siguiente (borrador de notas de la versión)
+      create('fix/cache-headers', 'main', 'api', C);
+      push('fix/cache-headers', C, S.cacheHeaders);
+      this.data.branches.get('fix/cache-headers').prTitle = S.cacheHeadersPr;
+      merge('fix/cache-headers', 'main', 33, M, true, [['review-ok', M, 0.5]]);
       push('feature/login', J, S.loginA11y);
       push('feature/dark-mode', T, S.darkToggle);
-      H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C) }, step(5, 20)));
+      H.push(this.act('issue-open', { title: MSG('act.issueOpened', { num: ++this.issueSeq }), detail: this.C.issues[0], actor: this.actor(C), number: this.issueSeq }, step(5, 20)));
       this.openIssues.push(this.issueSeq);
       H.push(this.act('issue-close', { title: MSG('act.issueClosed', { num: 84 }), detail: S.resolved, actor: this.actor(M), number: 84 }, step(5, 20)));
       // agentes: Dependabot sube una dependencia y Matías la fusiona; una sesión de Claude Code empieza una rama y
@@ -269,28 +334,30 @@
       push('claude/search-index', CLAUDE_A, agentMsg(1));
       push('claude/search-index', CLAUDE_B, agentMsg(3));
       const dev = push('develop', D, S.vite);
-      this.data.deploys.set('staging', { sha: dev.sha });
+      this.data.deploys.set('staging', { sha: dev.sha, ref: 'develop', status: 'failure' });
       create('fix/rate-limit', 'main', 'api', M);
       push('fix/rate-limit', M, S.retryAfter);
       push('feature/login', J, S.loginE2e);
 
-      const openPR = (head, base, title, user, draft = false) => {
+      // a quiénes se les pidió revisión y quiénes están asignados (logins): el filtro por persona del Launchpad los cuenta
+      const openPR = (head, base, title, user, draft = false, requested = [], assignees = []) => {
         const n = ++this.prSeq;
         this.data.branches.get(head).pr = n;
-        this.data.pulls.set(n, { number: n, title, head, base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: t });
+        this.data.pulls.set(n, { number: n, title, head, base, sameRepo: true, url: null, draft, user: this.actor(user), requested: requested.map((a) => a.login), assignees: assignees.map((a) => a.login), createdAt: t });
       };
       this.prSeq = 35;
-      openPR('feature/login', 'develop', S.prLogin, J);
+      openPR('feature/login', 'develop', S.prLogin, J, false, [], [J]);
       this.data.pulls.get(this.prSeq).review = 'approved';
-      openPR('feature/dark-mode', 'feature/login', S.prDark, T, true);
-      openPR('fix/rate-limit', 'main', S.prRetry, M);
-      openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP);
+      openPR('feature/dark-mode', 'feature/login', S.prDark, T, true, [], [T]);
+      openPR('fix/rate-limit', 'main', S.prRetry, M, false, [V, J]);
+      openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP, false, [M], [V]);
       const agentPr = this.prSeq;
       for (const [name, st] of [['main', 'success'], ['develop', 'success'], ['feature/login', 'success'], ['feature/dark-mode', 'pending'], ['fix/rate-limit', 'failure'], ['claude/search-index', 'success']]) this.setCi(name, st);
       H.push(this.act('pr-open', { title: MSG('act.prOpened', { num: agentPr }), detail: this.data.pulls.get(agentPr).title, ref: 'claude/search-index → develop', branch: 'claude/search-index', actor: this.actor(CLAUDE_APP), number: agentPr }, t + 60e3));
       H.push(this.act('review-changes', { title: MSG('act.prChanges', { num: agentPr }), detail: this.C.comments[1] || this.C.comments[0], branch: 'claude/search-index', actor: this.actor(COPILOT), number: agentPr }, t + 100e3));
       H.push(this.act('comment', { title: MSG('act.commentPr', { num: 38 }), detail: this.C.comments[0], actor: this.actor(V), number: 38, pr: true }, t + 120e3));
-      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }) }, t + 140e3));
+      H.push(this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: 'pgarrido' }), actor: this.actor({ name: 'pgarrido', login: 'pgarrido' }) }, t + 140e3));
+      H.push(this.act('fork', { title: MSG('act.fork'), detail: 'icortes/orbita' }, t + 160e3)); // un fork de hace uno o dos días (de una cuenta que no hace forks en vivo): la tendencia de forks del panel de salud
       this.data.totalBranches = this.data.branches.size;
     }
 
@@ -308,7 +375,7 @@
         [7, prs.length > 0, () => this.doReview()],
         [9, prs.some((p) => !p.draft && this.data.branches.get(p.head)?.own >= 2), () => this.doMerge()],
         [6, true, () => this.doIssue()],
-        [3, true, () => [this.chance(0.7) ? this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login: this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes']) }) }) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
+        [3, true, () => [this.chance(0.7) ? ((login) => this.act('star', { title: MSG('act.star'), detail: MSG('act.starDetail', { login }), actor: this.actor({ name: login, login }) }))(this.pick(['pgarrido', 'nlagos', 'fvera', 'icortes'])) : this.act('fork', { title: MSG('act.fork'), detail: `${this.pick(['nlagos', 'fvera'])}/orbita` })]],
         [2, topics.some((x) => x.own >= 2), () => this.doForcePush()],
         [2, true, () => this.doHotfix()],
         [3, prs.every((p) => p.head !== 'develop') && this.data.branches.get('develop').own >= 3, () => this.doReleasePR()],
@@ -384,7 +451,10 @@
       const draft = this.chance(0.2);
       const user = b.name.startsWith('claude/') ? CLAUDE_APP : this.pick(AUTHORS);
       b.pr = n;
-      this.data.pulls.set(n, { number: n, title, head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), createdAt: Date.now(), ci: this.data.ci.get(b.name) });
+      // un borrador todavía no pide revisión; el revisor sale del número (no del azar: así no cambia lo que la demo sortea después)
+      const others = AUTHORS.filter((a) => a.login !== user.login);
+      const reviewer = draft ? null : others[n % others.length];
+      this.data.pulls.set(n, { number: n, title, head: b.name, base: b.base, sameRepo: true, url: null, draft, user: this.actor(user), requested: reviewer ? [reviewer.login] : [], assignees: [], createdAt: Date.now(), ci: this.data.ci.get(b.name) });
       return [this.act('pr-open', { title: MSG(draft ? 'act.prOpenedDraft' : 'act.prOpened', { num: n }), detail: this.data.pulls.get(n).title, ref: `${b.name} → ${b.base}`, branch: b.name, sha: b.sha, actor: this.actor(user), number: n })];
     }
 
@@ -396,8 +466,16 @@
         pr.draft = false;
         return [this.act('pr-open', { title: MSG('act.prReady', { num: pr.number }), detail: pr.title, ref: `${pr.head} → ${pr.base}`, branch: pr.head, actor: pr.user, number: pr.number })];
       }
-      if (r < 0.55) return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
-      if (r < 0.8) return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      // como el reviewDecision de GitHub: la última aprobación o el último pedido de cambios queda en el PR (lo leen la
+      // salud, el Launchpad y la vista de texto); un comentario no lo cambia
+      if (r < 0.55) {
+        pr.review = 'approved';
+        return [this.act('review-ok', { title: MSG('act.prApproved', { num: pr.number }), detail: pr.title, branch: pr.head, actor: who, number: pr.number })];
+      }
+      if (r < 0.8) {
+        pr.review = 'changes';
+        return [this.act('review-changes', { title: MSG('act.prChanges', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number })];
+      }
       return [this.act('comment', { title: MSG('act.commentPr', { num: pr.number }), detail: this.pick(this.C.comments), branch: pr.head, actor: who, number: pr.number, pr: true })];
     }
 
@@ -481,12 +559,63 @@
     }
 
     /** Mantiene acotada la historia en memoria. */
+    /** La historia de main de antes de la semilla, sin cargar: `PREHISTORY` commits de un prototipo, del más viejo al
+        más nuevo, que «Cargar más» trae de a `MORE_BATCH` (como el tope de Commits por rama de un repo real). Con su
+        propio azar fijo: no cambia lo que la demo sortea después. Devuelve el sha del más nuevo. */
+    prehistory(t) {
+      const rnd = mulberry32(4242);
+      const pool = this.C.feature;
+      let parent = null;
+      for (let i = 0; i < PREHISTORY; i++) {
+        let sha = '';
+        for (let k = 0; k < 40; k++) sha += Math.floor(rnd() * 16).toString(16);
+        const author = AUTHORS[i % 2];
+        const msg = pool[i % pool.length].replace('{s}', 'prototype');
+        this.older.set(sha, { sha, parents: parent ? [parent] : [], message: msg, author: this.actor(author), date: t - (PREHISTORY - i) * (5 + rnd() * 7) * 36e5, url: null, sig: sigOf(author) });
+        parent = sha;
+      }
+      return parent;
+    }
+
+    /** ¿Queda historia guardada para «Cargar más» desde donde se corta la de `name`? (lo que el tope de `older` ya
+        soltó no vuelve: entonces el botón no se ofrece) */
+    hasMore(name) {
+      const from = U.historyCut(this.data.commits, this.data.branches.get(name)?.sha);
+      return !!from && this.older.has(from);
+    }
+
+    /** «Cargar más» de la ficha de una rama: hasta `MORE_BATCH` commits más de su historia, desde donde se cortó lo
+        cargado, sin tocar las demás. Devuelve cuántos (0: no había más). */
+    async loadMore(name) {
+      const b = this.data.branches.get(name);
+      const from = b && U.historyCut(this.data.commits, b.sha);
+      const queue = from ? [from] : [];
+      let n = 0;
+      while (queue.length && n < MORE_BATCH) {
+        const c = this.older.get(queue.shift());
+        if (!c || this.data.commits.has(c.sha)) continue;
+        this.older.delete(c.sha);
+        this.data.commits.set(c.sha, c);
+        this.kept.add(c.sha);
+        queue.push(...c.parents);
+        n++;
+      }
+      if (n && this.running) this.emit('update', { activities: [], initial: false, calm: true });
+      return n;
+    }
+
     trim() {
       const { commits, branches } = this.data;
-      if (commits.size <= 260) return;
+      for (const sha of this.kept) if (!commits.has(sha)) this.kept.delete(sha);
+      if (commits.size <= 260 + this.kept.size) return;
       const heads = new Set([...branches.values()].map((b) => b.sha));
-      const old = [...commits.values()].filter((c) => !heads.has(c.sha)).sort((a, b) => a.date - b.date);
-      for (const c of old.slice(0, commits.size - 240)) commits.delete(c.sha);
+      // lo traído con «Cargar más» es lo más viejo: recortar por fecha lo sacaría primero
+      const old = [...commits.values()].filter((c) => !heads.has(c.sha) && !this.kept.has(c.sha)).sort((a, b) => a.date - b.date);
+      for (const c of old.slice(0, commits.size - 240 - this.kept.size)) {
+        commits.delete(c.sha);
+        this.older.set(c.sha, c); // lo que sale queda para «Cargar más», como la historia de un repo real
+      }
+      for (const sha of [...this.older.keys()].slice(0, Math.max(0, this.older.size - 400))) this.older.delete(sha);
     }
 
     /* ---------- ciclo de vida ---------- */
@@ -694,6 +823,12 @@
     }
 
     diffCheap() {
+      return true;
+    }
+
+    /** La demo trae revisiones con su hora (las de su historia y las que llegan en vivo): su panel de salud parte el
+        tiempo de ciclo en etapas. */
+    givesReviews() {
       return true;
     }
 

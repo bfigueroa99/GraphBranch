@@ -109,6 +109,7 @@ test('carga las ramas locales con su historia, sin red y sin enlaces a la web', 
   assert.equal(d.repo.name, name);
   assert.equal(d.repo.url, null);
   assert.equal(d.repo.local, true);
+  assert.equal(src.givesReviews(), false, 'una carpeta local no tiene PRs ni revisiones');
   assert.deepEqual([...d.branches.keys()].sort(), ['feature/x', 'main']);
   assert.equal(d.branches.get('main').isDefault, true);
   assert.equal(d.branches.get('feature/x').sha, c3);

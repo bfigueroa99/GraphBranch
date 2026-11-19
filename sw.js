@@ -2,11 +2,12 @@
 
    - Al instalarse guarda en la caché todo lo que la página puede pedir: index.html, el manifiesto,
      los íconos y todo css/, js/ y vendor/ (FILES; tools/pwa.test.mjs comprueba que no falte ni
-     sobre nada).
+     sobre nada), salvo lo de ON_DEMAND, que la página pide solo a veces y va directo a la red.
    - Con red, esos archivos se piden a la red como siempre y la copia guardada se pone al día: quien
      está conectado siempre ve la última versión. Sin red, se sirve la copia.
    - Nunca guarda nada de otro sitio: las respuestas de api.github.com llevan datos privados si hay
-     token, y los avatares van y vienen de GitHub. Esas peticiones no pasan por aquí. */
+     token, y los avatares van y vienen de GitHub. Esas peticiones no pasan por aquí, ni los informes de
+     errores a Sentry (un POST a otro sitio). */
 'use strict';
 
 const CACHE = 'graphbranch';
@@ -15,8 +16,8 @@ const FILES = [
   'css/styles.css',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
   'js/app.js', 'js/director.js', 'js/feed.js', 'js/flight.js', 'js/galaxy.js', 'js/game.js', 'js/graph.js',
-  'js/graph3d.js', 'js/health.js', 'js/agents.js', 'js/swarm.js', 'js/cortex.js', 'js/spend.js', 'js/digest.js', 'js/bitacora.js', 'js/loopprompt.js', 'js/hooks.js', 'js/diff.js', 'js/i18n-apply.js', 'js/i18n.js', 'js/layout.js', 'js/palette.js', 'js/search.js', 'js/cmdk.js', 'js/textview.js', 'js/constellation.js', 'js/overview.js', 'js/editor.js', 'js/pwa.js',
-  'js/replay.js', 'js/snapshot.js', 'js/sound.js', 'js/util.js', 'js/world.js',
+  'js/graph3d.js', 'js/health.js', 'js/agents.js', 'js/swarm.js', 'js/cortex.js', 'js/spend.js', 'js/digest.js', 'js/bitacora.js', 'js/loopprompt.js', 'js/hooks.js', 'js/diff.js', 'js/i18n-apply.js', 'js/i18n.js', 'js/layout.js', 'js/palette.js', 'js/search.js', 'js/cmdk.js', 'js/textview.js', 'js/constellation.js', 'js/overview.js', 'js/allspace.js', 'js/editor.js', 'js/pwa.js',
+  'js/replay.js', 'js/snapshot.js', 'js/mermaid.js', 'js/sound.js', 'js/util.js', 'js/world.js',
   'js/locales/ar.js', 'js/locales/bg.js', 'js/locales/bn.js', 'js/locales/ca.js', 'js/locales/cs.js',
   'js/locales/da.js', 'js/locales/de.js', 'js/locales/el.js', 'js/locales/en.js', 'js/locales/es.js',
   'js/locales/fa.js', 'js/locales/fi.js', 'js/locales/fil.js', 'js/locales/fr.js', 'js/locales/he.js',
@@ -41,6 +42,10 @@ const FILES = [
   'vendor/fonts/JetBrainsMono-latin-italic.woff2', 'vendor/fonts/JetBrainsMono-latin.woff2',
   'vendor/fonts/JetBrainsMono-vietnamese-italic.woff2', 'vendor/fonts/JetBrainsMono-vietnamese.woff2',
 ];
+
+/* Lo que no se guarda: js/sentry.js solo se pide al mandar un informe de errores, prendido en Ajustes y con un DSN
+   en la página (tools/sentry-web.mjs). Quien no los usa no lo baja nunca, y sin red tampoco habría a quién mandarlo. */
+const ON_DEMAND = ['js/sentry.js'];
 
 /** La carpeta del sitio (en GitHub Pages, /GraphBranch/), con barra al final. */
 const BASE = new URL('./', self.location).href;

@@ -54,6 +54,22 @@ test('setLocale: si se eligen dos idiomas seguidos, gana el último elegido aunq
   assert.equal(await a, 'fr', 'la llamada vieja devuelve el idioma vigente');
 });
 
+test('fmtWeeksAgo y fmtList: la semana de cada cifra y el separador de lista, en el idioma activo (las series por semana de la salud)', async () => {
+  const { i18n, soltar } = cargar();
+  soltar('en');
+  await i18n.ready;
+  const p = i18n.setLocale('es');
+  soltar('es');
+  await p;
+  assert.deepEqual([0, 1, 7].map((k) => i18n.fmtWeeksAgo(k)), ['esta semana', 'la semana pasada', 'hace 7 semanas']);
+  assert.equal(i18n.fmtList(['3 (hace 7 semanas)', '0 (la semana pasada)', '5 (esta semana)']), '3 (hace 7 semanas), 0 (la semana pasada), 5 (esta semana)');
+  const q = i18n.setLocale('ar');
+  soltar('ar');
+  await q;
+  assert.equal(i18n.fmtWeeksAgo(0), 'هذا الأسبوع');
+  assert.ok(i18n.fmtList(['1', '2', '3']).includes('،'), 'en árabe, la coma árabe');
+});
+
 test('cada tipo del panel de actividad (GB.Feed.KINDS) tiene su rótulo kind.* en inglés', () => {
   const feed = readFileSync(join(root, 'js', 'feed.js'), 'utf8');
   const bloque = feed.slice(feed.indexOf('const KINDS = {'), feed.indexOf('};', feed.indexOf('const KINDS = {')));

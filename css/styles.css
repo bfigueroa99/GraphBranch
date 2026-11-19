@@ -196,6 +196,9 @@ kbd {
     text-decoration: underline;
   }
 }
+/* absoluto y sin coordenadas: queda donde estaría en el flujo. Dentro de un contenedor con scroll, ese contenedor
+   tiene que ser su bloque contenedor (position: relative); si no, el scroll no lo recorta y estira la página
+   (.repo-tabs y .rc-grid, iteración 297) */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -302,6 +305,10 @@ kbd {
 }
 .repo-field:focus-within {
   border-color: var(--ink-2);
+  /* el campo quita el contorno de su <input>: el foco se ve en la caja, con el mismo anillo que los demás controles
+     (un borde de 1 px que cambia de gris no alcanza, y con colores forzados ni siquiera cambia) */
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 .repo-prefix {
   padding-left: 11px;
@@ -395,7 +402,51 @@ kbd {
 .controls {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 2px;
+}
+/* los tres grupos de la barra (en vivo · explorar · preferencias), separados por una raya fina */
+.ctl-sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin-inline: 6px;
+  background: var(--line-strong);
+}
+/* la paleta de comandos, a la vista: icono y atajo (el atajo no se muestra en pantallas táctiles, donde no hay teclado) */
+.icon-btn.cmdk-btn {
+  width: auto;
+  grid-auto-flow: column;
+  gap: 6px;
+  padding-inline: 8px 6px;
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+.icon-btn.cmdk-btn:hover {
+  background: var(--surface-2);
+}
+.cmdk-kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font: 500 10.5px/1.4 var(--font-mono);
+  white-space: nowrap;
+}
+@media (pointer: coarse), (max-width: 560px) {
+  .cmdk-kbd {
+    display: none;
+  }
+  .icon-btn.cmdk-btn {
+    width: 34px;
+    padding: 0;
+  }
+}
+@media (max-width: 860px) {
+  .ctl-sep {
+    margin-inline: 3px;
+  }
 }
 
 /* estado de conexión */
@@ -519,7 +570,11 @@ kbd {
 .tabs-row[hidden] {
   display: none;
 }
+/* position: relative la hace el bloque contenedor de lo absoluto de adentro (el .sr-only de cada pestaña): sin eso,
+   su bloque contenedor queda fuera de la fila, la fila no lo recorta y cada pestaña que no cabe estira la página hacia
+   el costado, que en árabe la deja corrida o en blanco (pendiente 1, iteración 297) */
 .repo-tabs {
+  position: relative;
   flex: 1 1 auto;
   display: flex;
   gap: 6px;
@@ -714,11 +769,28 @@ kbd {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* pantallas bajas (un portátil de 720 o 768 px de alto): cada cifra con su detalle al lado, en una franja más baja que le
+   deja ese alto al grafo */
+@media (min-width: 861px) and (max-height: 860px) {
+  .stat {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 9px;
+    padding-block: 7px 8px;
+  }
+  .stat-label {
+    grid-column: 1 / -1;
+  }
+  .stat-value {
+    font-size: 20px;
+  }
+}
 
 /* ---------- paneles ---------- */
 .main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 370px);
+  /* el ancho del panel de actividad lo elige quien mira (su borde se arrastra: --feed-w, js/app.js), nunca más de la mitad */
+  grid-template-columns: minmax(0, 1fr) minmax(280px, min(var(--feed-w, 370px), 50%));
   gap: 12px;
   min-height: 0;
 }
@@ -855,6 +927,9 @@ kbd {
 /* práctica de git: la terminal bajo el grafo */
 .practice {
   display: grid;
+  /* una columna que no crece con sus hijos: sin esto la pista toma el ancho mínimo del más ancho (la fila de
+     botones en ta o de) y el panel ensancha la página a 320 px (pendiente 5 de la iteración 267) */
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   margin: 8px 8px 0;
   padding: 8px 10px;
@@ -865,6 +940,18 @@ kbd {
 }
 .practice[hidden] {
   display: none;
+}
+/* con la práctica abierta el grafo guarda su alto: la terminal, sus cartas y las tres columnas del árbol de trabajo, el
+   índice y HEAD pasan de 400 px en un panel de 610 (1280×800) y, con unos comandos en la terminal, el grafo quedaba en
+   0 px y no dibujaba los commits nuevos (`dev` en rojo en la iteración 301: «la práctica de git responde a los comandos
+   en el grafo»). Lo que no cabe se desplaza dentro de la práctica; en el celular la página crece y esto no cambia nada */
+.graph-panel:has(> .practice:not([hidden])) .graph-stage {
+  min-height: 200px;
+}
+.practice {
+  min-height: 0;
+  overflow-y: auto;
+  grid-auto-rows: max-content; /* cada fila con su alto entero: sin esto las cartas (con su desplazamiento de lado) se aplastaban a 6 px */
 }
 .pr-head {
   display: flex;
@@ -1002,6 +1089,96 @@ kbd {
   color: var(--ink);
   font: inherit;
 }
+/* las cartas de comandos: una fila que se desplaza de lado dentro del panel, sin ensanchar la página */
+.pr-cards {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scroll-snap-type: x proximity;
+}
+.pr-card {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 2px;
+  width: 10.5rem;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+.pr-card:hover {
+  border-color: var(--s1);
+}
+.pr-card:focus-visible {
+  outline: 2px solid var(--s1);
+  outline-offset: 1px;
+}
+.pr-card code {
+  font: 600 12px/1.3 var(--font-mono);
+}
+.pr-card-desc {
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+/* las tres áreas de git (árbol de trabajo, índice y HEAD): tres columnas que bajan a una en el celular */
+.pr-areas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.pr-area {
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.pr-area-h {
+  margin: 0 0 2px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pr-area ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 24px; /* enfocable (se desplaza): un objetivo de al menos 24 px aunque tenga una sola línea */
+  max-height: 6.5em;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.pr-area li {
+  overflow-wrap: anywhere;
+}
+.pr-area code {
+  font: 400 12px/1.45 var(--font-mono);
+}
+.pr-area-state,
+.pr-area-empty {
+  color: var(--ink-3);
+}
+.pr-area li[data-state='A'] .pr-area-state,
+.pr-area li[data-state='U'] .pr-area-state {
+  color: color-mix(in srgb, var(--good, #2e7d32) 75%, var(--ink));
+}
+.pr-area li[data-state='D'] .pr-area-state {
+  color: color-mix(in srgb, var(--bad, #c0392b) 70%, var(--ink));
+}
+@media (max-width: 560px) {
+  .pr-areas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
 /* pantalla completa (botón o tecla F): el panel del grafo ocupa toda la pantalla.
    Reglas separadas: un selector que el navegador no conoce anularía la lista entera. */
@@ -1107,6 +1284,8 @@ kbd {
 }
 .filter-field:focus-within {
   border-color: var(--ink-2);
+  outline: 2px solid var(--ink); /* como .repo-field: el <input> no lleva contorno propio */
+  outline-offset: 2px;
 }
 .filter-field input {
   width: 140px;
@@ -1326,7 +1505,8 @@ kbd {
 }
 .head .h-ci,
 .h3-ci,
-.tip-ci {
+.tip-ci,
+.sig-mark {
   fill: var(--ci);
   color: var(--ci);
 }
@@ -1610,6 +1790,16 @@ kbd {
   font: 500 11px var(--font-mono);
   white-space: nowrap;
   will-change: transform;
+}
+/* con las columnas encendidas, «SHA · Autor · fecha» bajo el mensaje */
+.g3-note .g3-meta {
+  display: block;
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 14px;
+}
+.g3-note .g3-meta[hidden] {
+  display: none;
 }
 @keyframes glow3 {
   0%,
@@ -3428,7 +3618,8 @@ kbd {
 }
 .tip-prview,
 .tip-pin,
-.tip-view {
+.tip-view,
+.tip-more {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -3443,8 +3634,18 @@ kbd {
 }
 .tip-prview:hover,
 .tip-pin:hover,
-.tip-view:hover {
+.tip-view:hover,
+.tip-more:hover {
   background: var(--surface-2);
+}
+/* «Cargar más» mientras trae la historia, y la nota que dice qué pasó (siempre en la página: es una región viva) */
+.tip-more[aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.6;
+}
+.tip-more-note {
+  font-size: 12px;
+  color: var(--ink-2);
 }
 .tip-pin[data-on="true"] {
   background: var(--surface-2);
@@ -3473,9 +3674,124 @@ kbd {
 .avatar-i.t5 { background: #7a4a4a; }
 
 /* ---------- feed de actividad ---------- */
+.feed-panel {
+  position: relative;
+}
 .feed-panel .panel-head {
   align-items: baseline;
   justify-content: flex-start;
+}
+/* plegar el panel: el botón al final de la cabecera */
+.feed-fold {
+  align-self: center;
+  margin-block: -6px;
+  margin-inline-start: auto;
+}
+.feed-fold .ico {
+  transition: transform 0.2s;
+}
+[dir="rtl"] .feed-fold .ico,
+.feed-fold[aria-expanded="false"] .ico {
+  transform: scaleX(-1);
+}
+[dir="rtl"] .feed-fold[aria-expanded="false"] .ico {
+  transform: none;
+}
+/* lo que llegó con el panel plegado */
+.feed-unseen {
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--surface);
+  font: 600 11px/18px var(--font-mono);
+}
+/* el borde que se arrastra: 24 px de ancho (lo que pide WCAG 2.5.8) centrados en el hueco entre los dos paneles, con una
+   manija que se ve siempre y una raya entera al pasar, al arrastrar o con el foco */
+.feed-resize {
+  position: absolute;
+  inset-block: 12px;
+  inset-inline-start: -19px;
+  z-index: 3;
+  width: 24px;
+  border-radius: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.feed-resize::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 10px;
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  transform: translateY(-50%);
+  transition: height 0.15s, background-color 0.15s;
+}
+.feed-resize:hover::after,
+.feed-resize:focus-visible::after,
+.feed-resize.dragging::after {
+  height: 100%;
+  background: var(--ink-3);
+}
+.feed-resize:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+html.resizing-feed,
+html.resizing-feed * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+@media (min-width: 861px) {
+  /* plegado: una franja con el botón, el título de lado y lo nuevo; el grafo se queda con el resto */
+  html:not(.tv) .main.feed-folded:not(.diffing) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel {
+    width: 48px;
+  }
+  html:not(.tv) .main.feed-folded .feed-resize,
+  html:not(.tv) .main.feed-folded .chips,
+  html:not(.tv) .main.feed-folded .feed,
+  html:not(.tv) .main.feed-folded .feed-empty {
+    display: none;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel .panel-head {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+  }
+  html:not(.tv) .main.feed-folded .feed-fold {
+    order: -1;
+    margin: 0;
+  }
+  html:not(.tv) .main.feed-folded .feed-panel h2,
+  html:not(.tv) .main.feed-folded .feed-count {
+    writing-mode: vertical-rl;
+  }
+}
+@media (max-width: 860px) {
+  /* en una sola columna el panel va debajo del grafo: ni se pliega ni se ensancha */
+  .feed-resize,
+  .feed-fold,
+  .feed-unseen {
+    display: none;
+  }
+}
+html.tv .feed-resize,
+html.tv .feed-fold,
+html.tv .feed-unseen {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-fold .ico,
+  .feed-resize::after {
+    transition: none;
+  }
 }
 .feed-count {
   color: var(--ink-3);
@@ -3671,6 +3987,43 @@ button.act-main:hover {
 .toast.leaving {
   animation: toast-out 0.25s ease-in forwards;
 }
+/* el mazo (js/feed.js, restack): el aviso más nuevo entero y los anteriores asomando detrás, más angostos, como bordes de
+   tarjeta; con el puntero encima o el foco adentro se despliegan todos. El contenedor recibe el puntero solo mientras
+   está desplegado, para que el hueco entre dos avisos no lo vuelva a plegar */
+.toasts:hover,
+.toasts:focus-within {
+  pointer-events: auto;
+}
+.toast {
+  max-height: 240px;
+  transition: max-height 0.25s ease, margin 0.25s ease, opacity 0.2s;
+}
+.toast[data-depth="0"] {
+  z-index: 4;
+}
+.toast[data-depth="1"] {
+  z-index: 3;
+}
+.toast[data-depth="2"] {
+  z-index: 2;
+}
+.toasts:not(:hover, :focus-within) > .toast:not([data-depth="0"], .leaving) {
+  max-height: 16px;
+  margin-bottom: -14px;
+  margin-inline: 10px;
+  box-shadow: none;
+  opacity: 0.9;
+}
+.toasts:not(:hover, :focus-within) > .toast[data-depth="2"]:not(.leaving),
+.toasts:not(:hover, :focus-within) > .toast[data-depth="3"]:not(.leaving) {
+  margin-inline: 20px;
+  opacity: 0.75;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+}
 .toast-main {
   flex: 1;
   min-width: 0;
@@ -3764,6 +4117,28 @@ button.act-main:hover {
 .settings::backdrop {
   background: rgb(5 10 8 / 0.45);
 }
+/* los paneles de datos (salud, vista de texto, búsqueda, constelación, agentes, el PR) más anchos y más altos en
+   pantallas grandes: se lee más de una vez y se baja menos. La salud, que es la más larga, en dos columnas */
+.settings.health {
+  width: min(780px, calc(100vw - 2 * var(--gutter)));
+}
+.settings.health .tr-wrap {
+  max-height: min(86vh, 960px);
+}
+.settings.health#health {
+  width: min(1080px, calc(100vw - 2 * var(--gutter)));
+}
+@media (min-width: 900px) {
+  #health-body {
+    display: block;
+    columns: 2 400px;
+    column-gap: 32px;
+  }
+  #health-body > * {
+    break-inside: avoid;
+    margin: 0 0 18px;
+  }
+}
 .settings form {
   display: grid;
   gap: 16px;
@@ -3814,6 +4189,39 @@ button.act-main:hover {
   padding: 0;
   font-weight: 600;
   font-size: 13px;
+}
+.accounts {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.accounts > legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 600;
+  font-size: 13px;
+}
+.accounts-list {
+  display: grid;
+  gap: 12px;
+}
+/* cada cuenta, un grupo con su número a la vista: el lector de pantalla lo dice al entrar, y su «Quitar» lo nombra */
+.account {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.account > legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.accounts-add {
+  justify-self: start;
 }
 .hooks-list {
   display: grid;
@@ -4194,6 +4602,10 @@ html.tv .g3-day,
 html.tv .g3-note {
   padding: calc(1px * var(--tvz, 1)) calc(6px * var(--tvz, 1));
   font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .g3-note .g3-meta {
+  font-size: calc(10px * var(--tvz, 1));
+  line-height: calc(14px * var(--tvz, 1));
 }
 /* sin tocar el ratón un rato: fuera el puntero y los controles (con el teclado vuelven) */
 html.tv-idle,
@@ -4631,6 +5043,18 @@ html.embed-hide-clock .g3-day {
   direction: ltr;
   text-align: left;
 }
+.df-fhead:has(.df-owners) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* los dueños del archivo (CODEOWNERS), en su propia línea bajo la ruta */
+.df-owners {
+  flex: 1 0 100%;
+  padding-inline-start: 14px;
+  color: var(--ink-3);
+  font: 11.5px var(--font-ui);
+  overflow-wrap: anywhere;
+}
 .df-from {
   color: var(--ink-3);
 }
@@ -4826,6 +5250,15 @@ html.embed .diff-panel {
   }
   .agk-panel {
     max-height: none;
+  }
+  /* con la práctica abierta pasa lo mismo: la terminal y sus cartas crecen con la página y el grafo guarda su alto
+     (no en el modo TV, que esconde la práctica con CSS y deja el grafo entero) */
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) {
+    height: auto;
+  }
+  html:not(.tv) .graph-panel:has(> .practice:not([hidden])) .graph-stage {
+    flex: none;
+    height: max(280px, 42vh);
   }
   /* la vista de agentes en el celular: el tablero se lee con la página, sin un desplazamiento dentro de otro */
   .graph-panel.agents-on {
@@ -5068,6 +5501,41 @@ a.hl-row:focus-visible {
   color: var(--ink-3);
   font: 12px var(--font-mono);
 }
+/* los despliegues dicen commit, estado y edad: en una pantalla angosta el texto se parte en vez de desbordar */
+#hl-deploys .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+/* un commit sin firma verificada dice su motivo, a veces largo («Nicht verifizierte Signatur (EXPIRED_KEY)»): en una
+   pantalla angosta pasa a su propia línea, al final, en vez de partir las palabras o desbordar el panel */
+#hl-signed .hl-row {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+#hl-signed .hl-main {
+  flex: 1 1 14em;
+}
+/* el enlace a las alertas de Dependabot (ítem 232) es una frase, no un nombre: en un idioma largo a 320 px se parte en
+   líneas en vez de cortarse con «…» */
+#hl-dependabot-link .hl-main {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#hl-signed .hl-aside {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+/* las comprobaciones de OpenSSF Scorecard: el motivo es una frase de la API (a veces con una URL entera), así que se
+   parte en vez de recortarse o desbordar el panel a 320 px */
+.hl-checks li {
+  padding: 2px 8px;
+  overflow-wrap: anywhere;
+}
 .hl-switch {
   display: flex;
   align-items: center;
@@ -5081,7 +5549,10 @@ a.hl-row:focus-visible {
   height: 18px;
 }
 .hl-none,
+/* position: relative: el bloque contenedor del .sr-only de las series por semana (lo que lee un lector de pantalla),
+   para que quede dentro de su línea y del panel que se desplaza, como en .repo-tabs */
 .hl-line {
+  position: relative;
   margin: 0;
   color: var(--ink-3);
 }
@@ -5129,7 +5600,8 @@ a.hl-row:focus-visible {
   min-width: 0;
   margin-inline-start: auto;
 }
-/* la vista de agentes: el tablero en el lugar del grafo, con su propio desplazamiento; lo del grafo se esconde */
+/* la vista de agentes: el tablero en el lugar del grafo, con su propio desplazamiento; lo del grafo se esconde (menos el
+   modo TV, que también muestra el tablero) */
 .agents-board {
   display: grid;
   flex: 1 1 auto;
@@ -5146,7 +5618,7 @@ a.hl-row:focus-visible {
 .graph-panel.agents-on .agk-panel,
 .graph-panel.agents-on .hint,
 .graph-panel.agents-on .practice,
-.graph-panel.agents-on .toolbar > :not(.view-switch) {
+.graph-panel.agents-on .toolbar > :not(.view-switch, #tv-btn) {
   display: none !important;
 }
 .ab-head {
@@ -5841,6 +6313,15 @@ html.tv .agk-btn {
   border-radius: 6px;
   color: inherit;
 }
+/* un PR con el CI en rojo: la ✗ queda junto a su texto, que es el que se parte en pantalla angosta */
+.tv-cipull {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+.tv-cipull-x {
+  color: var(--bad);
+  font-weight: 600;
+}
 .tv-head::before {
   content: '▸';
   color: var(--ink-3);
@@ -5876,14 +6357,29 @@ html.tv .agk-btn {
   min-width: 24px;
   min-height: 24px;
   padding: 0 6px;
-  border: 1px solid var(--line, currentColor);
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
   background: none;
   color: var(--ink-3);
   font: inherit;
   cursor: pointer;
 }
-.tv-act:first-of-type {
+/* la cabecera de una rama: flecha, nombre y marcas (en una o más líneas) y, al final de la primera, sus dos botones */
+.tv-head {
+  flex-wrap: nowrap;
+}
+.tv-info {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.tv-acts {
+  display: flex;
+  flex: none;
+  gap: 6px;
   margin-inline-start: auto;
 }
 .tv-act:hover,
@@ -6005,6 +6501,45 @@ html.tv .agk-btn {
 .cs-gx[data-state='error'],
 .cs-gx[data-state='loading'] {
   opacity: 0.5;
+}
+.cs-gx[data-quiet='true'] svg {
+  opacity: 0.4;
+}
+/* un repo de una organización seguida sin pestaña: galaxia tenue, sin color, con un borde punteado; su nombre se lee igual */
+.cs-gx[data-state='ghost'] {
+  border: 1px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.cs-gx[data-state='ghost'] svg {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+.cs-gx[data-state='ghost'] .cs-name {
+  color: var(--ink-2);
+}
+/* una entrega de una tarea con su último push después del plazo: borde de color y un reloj en la esquina (su nombre
+   accesible y su globo lo dicen con palabras) */
+.cs-gx[data-late='true'] {
+  border: 2px solid var(--bad);
+}
+.cs-gx[data-state='ghost'][data-late='true'] {
+  border-style: dashed;
+}
+/* el reloj no se apaga con la galaxia tenue o quieta (esas reglas tocan todo svg de la galaxia) */
+.cs-gx[data-late='true'] .cs-late {
+  grid-area: auto;
+  opacity: 1;
+  filter: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bad);
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 1.6;
+  stroke-linecap: round;
 }
 .cs-gx:hover svg,
 .cs-gx:focus-visible svg {
@@ -6684,6 +7219,21 @@ html.tv .agk-btn {
 .app.all-on .graph-panel {
   display: none;
 }
+/* el tablero de agentes con todos los repos juntos (app.js, paintAgentsScope): sin las cifras de un repo y con el
+   título de todos en lugar del nombre del que estaba a la vista */
+.app.agents-all:not(.all-on) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.app.agents-all .stats,
+.graph-panel.agents-all #repo-link,
+.graph-panel.agents-all #repo-badge,
+.graph-panel.agents-all #repo-desc,
+.graph-panel.agents-all .game-strip {
+  display: none;
+}
+#graph-all[hidden] {
+  display: none;
+}
 .all-panel[hidden] {
   display: none;
 }
@@ -6708,6 +7258,18 @@ html.tv .agk-btn {
 .ap-title {
   margin: 0 0 6px;
   font: 650 13px/1.3 var(--font-display);
+}
+.ap-person,
+.ap-repo {
+  max-width: 100%;
+  min-height: 28px;
+  margin: 0 0 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 12px/1.3 var(--font-body);
 }
 .ap-groups {
   display: grid;
@@ -6744,6 +7306,43 @@ html.tv .agk-btn {
 .ap-row:hover {
   background: var(--surface-2);
 }
+a.ap-row {
+  text-decoration: none;
+}
+.ap-list li {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+.ap-list li > .ap-row {
+  flex: 1;
+}
+.ap-pin,
+.ap-snooze {
+  flex: none;
+  min-width: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.ap-pin:hover,
+.ap-pin:focus-visible,
+.ap-pin[aria-pressed='true'],
+.ap-snooze:hover,
+.ap-snooze:focus-visible,
+.ap-snooze[aria-pressed='true'] {
+  opacity: 1;
+  filter: none;
+  background: var(--surface-2);
+}
+/* un PR pospuesto baja al final de su grupo y se atenúa hasta que pase el día */
+.ap-list li.snoozed .ap-t {
+  color: var(--ink-2);
+}
 .ap-t,
 .ap-m {
   overflow: hidden;
@@ -6757,7 +7356,23 @@ html.tv .agk-btn {
   font-size: 11px;
   color: var(--ink-2);
 }
+/* con una persona elegida: por qué está un PR que no abrió ella (se le pidió revisión o está asignada) */
+.ap-role {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+}
+/* bloque contenedor del .sr-only de cada tarjeta, como .repo-tabs: sin él, con más tarjetas de las que caben, la
+   página crecía hacia abajo en blanco (20 repos en 1280×800: 3.273 px de alto) */
 .rc-grid {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -6915,7 +7530,8 @@ html.tv .agk-btn {
   }
 }
 @media (max-width: 860px) {
-  .app.all-on {
+  .app.all-on,
+  .app.agents-all:not(.all-on) {
     grid-template-rows: none;
   }
   .rc-grid {
@@ -6928,6 +7544,238 @@ html.tv .agk-btn {
   }
   .tabs-row {
     margin-block: 0;
+  }
+}
+
+/* la tarjeta donde acaba de llegar algo se enciende un momento (js/overview.js, celebrate): en la vista conjunta, y
+   sobre todo en una pantalla compartida, se ve desde lejos dónde pasó */
+.rc-card {
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.rc-card.rc-news {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 40%, transparent);
+  animation: rc-news 1.4s ease-out;
+}
+@keyframes rc-news {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent);
+  }
+  55% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--good) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-card {
+    transition: none;
+  }
+  .rc-card.rc-news {
+    animation: none;
+  }
+}
+
+/* ---------- la vista conjunta en 3D (js/allspace.js): todos los repos como torres de una misma escena ----------
+   Toma el lugar de las tarjetas (el Launchpad sigue arriba). Los rótulos de las torres son botones sobre el lienzo,
+   que app.js no mueve: allspace.js los pone sobre su torre en cada cuadro. Sin WebGL quedan en una lista. */
+.rc-grid[hidden],
+.as-stage[hidden] {
+  display: none;
+}
+.as-stage {
+  position: relative;
+  isolation: isolate; /* los rótulos se ordenan entre ellos (z-index), no con el resto de la página */
+  flex: 1;
+  min-height: 360px;
+  margin: 0 8px 4px;
+  border-radius: 9px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 85%, color-mix(in srgb, var(--s1) 9%, transparent), transparent 60%),
+    var(--surface);
+  border: 1px solid var(--line);
+}
+.as-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.as-canvas:active {
+  cursor: grabbing;
+}
+.as-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.as-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 1px;
+  max-width: 230px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--ink);
+  font: 650 12px/1.25 var(--font-ui);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.as-label:hover {
+  border-color: var(--ink-3);
+}
+/* fuera de cuadro (o detrás de la cámara) no se ve, pero sigue en el orden de Tab: al enfocarlo la cámara va a su torre */
+.as-label.is-off {
+  opacity: 0;
+  pointer-events: none;
+}
+.as-label.is-off:focus {
+  opacity: 1;
+}
+.as-lhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.as-name,
+.as-stats {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.as-name {
+  font-family: var(--font-mono);
+}
+.as-stats {
+  color: var(--ink-3);
+  font: 500 10.5px/1.3 var(--font-ui);
+}
+.as-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-3);
+}
+.as-label[data-state="live"] .as-dot {
+  background: var(--good);
+}
+.as-label[data-state="limited"] .as-dot {
+  background: var(--warn);
+}
+.as-label[data-state="error"] .as-dot {
+  background: var(--bad);
+}
+.as-label[data-state="loading"] .as-dot {
+  background: transparent;
+  border: 1.5px solid var(--ink-3);
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+.as-label.as-news {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 40%, transparent);
+  animation: rc-news 1.4s ease-out;
+}
+.as-wrap.is-many:not(.is-flat) .as-stats {
+  display: none;
+}
+.as-nogl {
+  margin: 12px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+/* sin WebGL: los repos en una lista que se puede recorrer (y abrir) igual */
+.as-wrap.is-flat .as-labels {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.as-wrap.is-flat .as-label {
+  position: static;
+}
+@media (prefers-reduced-motion: reduce) {
+  .as-label {
+    transition: none;
+  }
+  .as-label.as-news {
+    animation: none;
+  }
+  .as-label[data-state="loading"] .as-dot {
+    animation: none;
+    border-top-color: var(--ink-3);
+  }
+}
+html.tv .all-panel.as-on .as-stage {
+  margin-bottom: 8px;
+}
+/* el texto crece con la pantalla; el rótulo no (allspace.js lo ubica en píxeles: con zoom se correría) */
+html.tv .as-lhead,
+html.tv .as-stats {
+  zoom: var(--tvz, 1);
+}
+
+/* ---------- modo TV con la vista conjunta: todos los repos a la vez, en una pantalla compartida ----------
+   Las tarjetas entran todas sin desplazarse (app.js calcula columnas y filas con GB.overview.fitGrid: --tv-cols y
+   --tv-rows), sin los controles (fijar o posponer un PR, elegir persona, la ayuda) y con la letra que crece con la pantalla
+   (--tvz); los grafos no se agrandan con zoom (se verían borrosos). La barra del modo TV va al final de la cabecera
+   de la vista (app.js la mueve), que ya crece con la pantalla: ella no crece otra vez. */
+html.tv .all-panel .hint,
+html.tv .ap-pin,
+html.tv .ap-snooze,
+html.tv .ap-person,
+html.tv .ap-repo {
+  display: none !important;
+}
+html.tv .all-panel > .panel-head,
+html.tv .all-panel .ap,
+html.tv .rc-head,
+html.tv .rc-stats,
+html.tv .rc-last {
+  zoom: var(--tvz, 1);
+}
+html.tv .all-panel > .panel-head {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+html.tv .all-panel h2 {
+  font-size: 22px;
+}
+html.tv .all-panel .tv-bar {
+  position: static;
+  flex: none;
+  margin-inline-start: auto;
+  zoom: 1;
+}
+html.tv .all-panel .ap {
+  max-height: 26%;
+  overflow: hidden;
+}
+html.tv .rc-card.rc-news {
+  box-shadow: 0 0 0 calc(3px * var(--tvz, 1)) color-mix(in srgb, var(--good) 45%, transparent);
+}
+@media (min-width: 861px) {
+  html.tv .app.all-on .rc-grid {
+    grid-template-columns: repeat(var(--tv-cols, 2), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--tv-rows, 1), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    overflow: hidden;
+    padding-bottom: 8px;
+  }
+  html.tv .app.all-on .rc-stage {
+    min-height: 0;
+    margin: 6px;
   }
 }
 
@@ -7104,7 +7952,8 @@ html.tv .agk-btn {
   outline-offset: -2px;
 }
 
-.graph-panel:focus {
+.graph-panel:focus,
+.all-panel:focus {
   outline: none;
 }
 
@@ -7513,6 +8362,11 @@ html.tv .agk-btn {
   font-size: 11px;
 }
 /* el ingreso de tareas */
+.sw-repo {
+  margin-inline-end: 6px;
+  color: var(--ink-3);
+  font: 600 11px/1.6 var(--font-mono);
+}
 .sw-tag {
   margin-inline-end: 6px;
   padding: 0 5px;
@@ -7855,5 +8709,203 @@ button.sw-log-row:hover {
   .sw-slice figcaption {
     padding: 2px 4px 3px;
     font-size: 9.5px;
+  }
+}
+
+/* ---------- el tablero de agentes en el modo TV: lo que se lee de lejos y en vivo ----------
+   Los indicadores, la corteza (con las interacciones viajando por ella), lo último que pasó entre agentes y personas y
+   el log; sin los controles ni el resto del análisis (la red, la línea de tiempo, el gasto…), que piden desplazarse. La
+   barra del modo TV va en la cabecera del tablero (app.js la mueve) y la letra crece con la pantalla (--tvz), como en el
+   resto del modo; el lienzo de la corteza no se agranda con zoom (se vería borroso): lo hacen sus rótulos. */
+html.tv .agents-board .ab-help,
+html.tv .agents-board .ab-switches,
+html.tv .agents-board .ag-hint,
+html.tv #sw-ingest,
+html.tv #sw-thread,
+html.tv #sw-rate,
+html.tv #sw-per,
+html.tv #ag-net,
+html.tv #ag-time,
+html.tv #ag-spend,
+html.tv #ag-pairs,
+html.tv #ag-list {
+  display: none !important;
+}
+html.tv .agents-board .ab-head,
+html.tv #sw-kpis,
+html.tv #ag-noagents,
+html.tv #ag-focus,
+html.tv #sw-cortex-card > h3,
+html.tv #ag-recent,
+html.tv #sw-log {
+  zoom: var(--tvz, 1);
+}
+html.tv .agents-board .ab-head {
+  position: relative;
+  flex-wrap: nowrap;
+}
+html.tv .agents-board .ab-title {
+  font-size: 20px;
+}
+html.tv .agents-board .ab-clock {
+  font-size: 15px;
+}
+/* la barra flota sobre el reloj del tablero, como sobre el grafo (se va con el puntero quieto); dentro de la cabecera,
+   que ya crece con la pantalla, no crece otra vez */
+html.tv .agents-board .tv-bar {
+  top: 50%;
+  right: auto;
+  inset-inline-end: 0;
+  transform: translateY(-50%);
+  zoom: 1;
+}
+html.tv .agents-board .sw-label {
+  max-width: calc(190px * var(--tvz, 1));
+  padding: calc(2px * var(--tvz, 1)) calc(6px * var(--tvz, 1));
+  font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-label span {
+  font-size: calc(10px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp {
+  width: min(calc(260px * var(--tvz, 1)), calc(100% - 250px));
+  font-size: calc(12px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp dt {
+  font-size: calc(10.5px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-insp-foot {
+  font-size: calc(11px * var(--tvz, 1));
+}
+html.tv .agents-board .sw-slice figcaption {
+  font-size: calc(10.5px * var(--tvz, 1));
+}
+/* el log es un tail -f: lo más nuevo, abajo, siempre a la vista */
+html.tv #sw-log .sw-log-list {
+  max-height: none;
+}
+@media (min-width: 861px) {
+  /* el tablero entra entero en la pantalla: la corteza a la izquierda, lo último y el log a la derecha */
+  html.tv .graph-panel.agents-on .agents-board {
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+  html.tv #agents-body {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-areas:
+      'kpis kpis'
+      'noag noag'
+      'focus focus'
+      'cortex recent'
+      'cortex log';
+    row-gap: 0;
+    min-height: 0;
+  }
+  html.tv #agents-body > .ab-row {
+    display: contents;
+  }
+  html.tv #sw-kpis {
+    grid-area: kpis;
+    margin-bottom: 12px;
+  }
+  html.tv #ag-noagents {
+    grid-area: noag;
+    margin: 0 0 10px;
+  }
+  html.tv #ag-focus {
+    grid-area: focus;
+    margin: 0 0 10px;
+  }
+  html.tv #sw-cortex-card {
+    grid-area: cortex;
+  }
+  html.tv #ag-recent {
+    grid-area: recent;
+  }
+  html.tv #sw-log {
+    grid-area: log;
+    margin-top: 12px;
+  }
+  html.tv #sw-cortex-card,
+  html.tv #ag-recent,
+  html.tv #sw-log {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  html.tv #sw-cortex-card .sw-cortex-wrap,
+  html.tv #ag-recent .hl-list,
+  html.tv #sw-log .sw-log-list {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  html.tv #sw-cortex,
+  html.tv #sw-cortex .sw-viz {
+    height: 100%;
+  }
+  html.tv #sw-cortex .sw-viz {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, calc(210px * var(--tvz, 1)));
+    grid-template-rows: minmax(0, 1fr);
+  }
+  html.tv #sw-cortex .sw-stage,
+  html.tv #sw-cortex .sw-slices {
+    height: auto;
+    min-height: 0;
+  }
+  /* lo último, de lo más nuevo hacia abajo: lo que no cabe es lo más viejo y, si algo queda cortado (app.js lo marca),
+     se desvanece abajo */
+  html.tv #ag-recent .hl-list {
+    overflow: hidden;
+  }
+  html.tv #ag-recent .hl-list.is-cut {
+    -webkit-mask-image: linear-gradient(to top, transparent, #000 2em);
+    mask-image: linear-gradient(to top, transparent, #000 2em);
+  }
+  /* el log, de lo más viejo a lo más nuevo: lo que no cabe se va por arriba, desvaneciéndose */
+  html.tv #sw-log .sw-log-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  html.tv #sw-log .sw-log-list.is-cut {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 2.5em);
+    mask-image: linear-gradient(to bottom, transparent, #000 2.5em);
+  }
+  html.tv #sw-log .sw-caret {
+    flex: none;
+  }
+}
+
+/* ---------- colores forzados (Contraste alto de Windows, forced-colors) ----------
+   El sistema reemplaza fondos, bordes y sombras por los suyos: lo que se distinguía solo por el fondo o por el
+   color del borde (el botón pulsado, la vista elegida, la pestaña a la vista) queda igual que lo de al lado.
+   Esos estados van con los colores de selección del sistema; lo que ya tiene otro canal (el ícono que cambia,
+   el tachado de los filtros apagados, el contorno de la paleta de comandos) no se toca. */
+@media (forced-colors: active) {
+  .icon-btn[aria-pressed="true"],
+  .view-switch button[aria-pressed="true"],
+  .all-tab[aria-pressed="true"],
+  .sw-tab.on,
+  .sw-tab[aria-pressed="true"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  .all-tab[aria-pressed="true"] .rt-n {
+    background: HighlightText;
+    color: Highlight;
+  }
+  /* la pestaña del repo a la vista y la galaxia actual de la constelación: su borde y su sombra no se distinguen */
+  .rt.on {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .cs-gx[aria-current] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
 }

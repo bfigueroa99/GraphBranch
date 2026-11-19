@@ -7,22 +7,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'browser-extension');
 const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'));
-const { repoFromUrl, appUrl, APP } = createRequire(import.meta.url)('../browser-extension/repo.js');
+const { repoFromUrl, targetFromUrl, appUrl, APP } = createRequire(import.meta.url)('../browser-extension/repo.js');
 
-test('el manifiesto: MV3, sin permisos ni host_permissions, solo github.com', () => {
+test('el manifiesto: MV3, sin permisos ni host_permissions, solo github.com, gitlab.com, codeberg.org y bitbucket.org', () => {
   assert.equal(manifest.manifest_version, 3);
   for (const k of ['permissions', 'host_permissions', 'optional_permissions', 'optional_host_permissions',
     'background', 'web_accessible_resources', 'externally_connectable', 'content_security_policy'])
     assert.equal(manifest[k], undefined, `${k} no va`);
   assert.equal(manifest.content_scripts.length, 1);
   const cs = manifest.content_scripts[0];
-  assert.deepEqual(cs.matches, ['https://github.com/*']);
+  assert.deepEqual(cs.matches, ['https://github.com/*', 'https://gitlab.com/*', 'https://codeberg.org/*', 'https://bitbucket.org/*']);
   assert.deepEqual(cs.js, ['repo.js', 'content.js']);
   for (const f of [...cs.js, ...Object.values(manifest.icons)]) assert.ok(existsSync(join(dir, f)), `${f} existe`);
   assert.match(manifest.browser_specific_settings.gecko.id, /@/);
@@ -61,4 +62,131 @@ test('appUrl: va a la web publicada con ?repo= codificado', () => {
   const u = new URL(appUrl('o/r.x-y_z'));
   assert.equal(u.searchParams.get('repo'), 'o/r.x-y_z');
   assert.equal(u.origin, 'https://bfigueroa99.github.io');
+});
+
+test('targetFromUrl: GitHub sigue dando dueño/repo; GitLab, Codeberg y Bitbucket, la URL del proyecto', () => {
+  assert.equal(targetFromUrl('https://github.com/o/r/pull/1'), 'o/r');
+  assert.equal(targetFromUrl('https://gitlab.com/grupo/proyecto'), 'https://gitlab.com/grupo/proyecto');
+  assert.equal(targetFromUrl('https://gitlab.com/g/sub/proyecto/-/merge_requests/3?x=1#y'), 'https://gitlab.com/g/sub/proyecto');
+  assert.equal(targetFromUrl('https://gitlab.com/g/p.git'), 'https://gitlab.com/g/p');
+  assert.equal(targetFromUrl('https://codeberg.org/dueño/repo'), null, 'segmento no ASCII');
+  assert.equal(targetFromUrl('https://codeberg.org/ana/repo/issues/4'), 'https://codeberg.org/ana/repo');
+  assert.equal(targetFromUrl('https://bitbucket.org/espacio/repo/src/main/'), 'https://bitbucket.org/espacio/repo');
+  assert.equal(targetFromUrl('https://bitbucket.org/espacio/repo.git'), 'https://bitbucket.org/espacio/repo');
+  for (const u of ['https://gitlab.com/', 'https://gitlab.com/ana', 'https://gitlab.com/users/ana/projects', 'https://gitlab.com/explore/projects',
+    'https://gitlab.com/groups/g/-/issues', 'https://gitlab.com/-/profile', 'https://codeberg.org/explore/repos', 'https://codeberg.org/user/settings',
+    'https://codeberg.org/ana', 'https://bitbucket.org/account/signin', 'https://bitbucket.org/dashboard/overview', 'https://bitbucket.org/ana',
+    'http://gitlab.com/g/p', 'https://gitlab.com:8443/g/p', 'https://u:p@gitlab.com/g/p', 'https://www.gitlab.com/g/p', 'https://gitlab.com.evil.com/g/p',
+    'https://evil.com/gitlab.com/g/p', 'https://gitlab.com/g/..', 'https://gitlab.com/g/%2e%2e/p', 'https://bitbucket.org/a/b%2fc'])
+    assert.equal(targetFromUrl(u), null, u);
+});
+
+test('lo que arma la extensión lo entiende la web: parseRepo da el mismo proyecto', () => {
+  const ctx = vm.createContext({ window: {}, console, document: { hidden: false, addEventListener() {}, removeEventListener() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: { onLine: true }, addEventListener() {}, removeEventListener() {} });
+  ctx.window = ctx;
+  vm.runInContext(readFileSync(join(dir, '..', 'js', 'util.js'), 'utf8'), ctx, { filename: 'util.js' });
+  const parse = (x) => JSON.parse(JSON.stringify(ctx.GB.U.parseRepo(x)));
+  for (const [page, want] of [
+    ['https://gitlab.com/g/sub/p/-/issues', { host: 'gitlab', owner: 'g/sub', name: 'p' }],
+    ['https://codeberg.org/ana/r/src/branch/main', { host: 'codeberg', owner: 'ana', name: 'r' }],
+    ['https://bitbucket.org/ws/r/src/main', { host: 'bitbucket', owner: 'ws', name: 'r' }],
+  ]) {
+    const link = new URL(appUrl(targetFromUrl(page)));
+    assert.equal(link.origin, 'https://bfigueroa99.github.io');
+    assert.deepEqual(parse(link.searchParams.get('repo')), want, page);
+  }
+});
+
+/** Corre content.js en una página falsa, con el idioma del navegador que se diga: `boton` es el enlace que agregó (o
+    null) y `navegar` cambia la dirección como lo hace una página que no recarga (GitHub con Turbo) y avisa con `turbo:load`. */
+function pagina(href, language) {
+  const added = [];
+  const oyentes = {};
+  const location = { href };
+  const ctx = vm.createContext({
+    URL,
+    encodeURIComponent,
+    location,
+    navigator: { language },
+    document: {
+      getElementById: (id) => added.find((a) => a.id === id && !a.quitado) || null,
+      createElement: () => ({ style: {}, attrs: {}, setAttribute(k, v) { this.attrs[k] = String(v); }, remove() { this.quitado = true; } }),
+      documentElement: { appendChild: (a) => added.push(a) },
+      addEventListener: (tipo, fn) => (oyentes[tipo] = fn),
+    },
+    addEventListener() {},
+    setInterval() {},
+  });
+  ctx.window = ctx;
+  ctx.self = ctx;
+  for (const f of manifest.content_scripts[0].js) vm.runInContext(readFileSync(join(dir, f), 'utf8'), ctx, { filename: f });
+  return {
+    get boton() { return added.find((a) => !a.quitado) || null; },
+    navegar(a) { location.href = a; oyentes['turbo:load'](); },
+  };
+}
+
+test('al pasar a otro repo sin recargar, el botón lleva al nuevo y su título también lo dice', () => {
+  const p = pagina('https://github.com/o/uno', 'es-CL');
+  const a = p.boton;
+  assert.equal(a.title, 'Abrir o/uno en GraphBranch');
+  assert.equal(a.target, '_blank');
+  assert.equal(a.rel, 'noopener noreferrer');
+  p.navegar('https://github.com/o/dos/issues');
+  assert.equal(p.boton, a, 'es el mismo botón');
+  assert.equal(new URL(a.href).searchParams.get('repo'), 'o/dos');
+  assert.equal(a.title, 'Abrir o/dos en GraphBranch'); // antes seguía diciendo o/uno
+  p.navegar('https://gitlab.com/g/sub/p/-/issues');
+  assert.equal(a.title, 'Abrir gitlab.com/g/sub/p en GraphBranch');
+  p.navegar('https://github.com/settings/profile');
+  assert.equal(p.boton, null, 'fuera de un repo, el botón se va');
+});
+
+const boton = (href, language) => pagina(href, language).boton;
+
+test('el botón habla inglés, y español si el navegador está en español; siempre abre en otra pestaña y sin referrer', () => {
+  const en = boton('https://github.com/o/r/pulls', 'de-DE');
+  assert.equal(en.textContent, '⑂ Open in GraphBranch');
+  assert.equal(en.title, 'Open o/r in GraphBranch');
+  assert.equal(en.lang, 'en'); // la página puede estar en otro idioma: un lector de pantalla lo pronuncia en el suyo
+  assert.equal(en.attrs['aria-label'], 'Open in GraphBranch'); // el nombre accesible, sin el glifo ⑂
+  const es = boton('https://gitlab.com/g/sub/p/-/issues', 'es-CL');
+  assert.equal(es.textContent, '⑂ Abrir en GraphBranch');
+  assert.equal(es.title, 'Abrir gitlab.com/g/sub/p en GraphBranch');
+  assert.equal(es.lang, 'es');
+  assert.equal(es.attrs['aria-label'], 'Abrir en GraphBranch');
+  assert.equal(boton('https://github.com/o/r', undefined).lang, 'en', 'sin idioma del navegador, inglés');
+  assert.equal(boton('https://github.com/o/r', 'est').lang, 'en', 'estonio (et) no es español');
+  for (const a of [en, es]) {
+    assert.equal(a.target, '_blank');
+    assert.equal(a.rel, 'noopener noreferrer');
+    assert.match(a.href, /^https:\/\/bfigueroa99\.github\.io\/GraphBranch\/\?repo=/);
+  }
+  assert.equal(boton('https://github.com/settings/profile', 'en'), null, 'fuera de un repo no hay botón');
+});
+
+/** Ancho y alto de un PNG (su cabecera IHDR). */
+const pngSize = (file) => {
+  const b = readFileSync(file);
+  assert.equal(b.toString('latin1', 1, 4), 'PNG', `${file} no es un PNG`);
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+};
+
+test('los íconos: los tamaños que usan Chrome y su tienda (16, 32, 48 y 128), y cada archivo mide lo que dice', () => {
+  assert.deepEqual(Object.keys(manifest.icons), ['16', '32', '48', '128']); // la Chrome Web Store exige el de 128
+  for (const [size, f] of Object.entries(manifest.icons)) assert.deepEqual(pngSize(join(dir, f)), [Number(size), Number(size)], f);
+});
+
+test('la descripción va en inglés y en español, y entra en los 132 caracteres que admite la Chrome Web Store', () => {
+  assert.equal(manifest.default_locale, 'en');
+  assert.equal(manifest.description, '__MSG_description__');
+  for (const code of ['en', 'es']) {
+    const msgs = JSON.parse(readFileSync(join(dir, '_locales', code, 'messages.json'), 'utf8'));
+    assert.deepEqual(Object.keys(msgs), ['description'], code);
+    const text = msgs.description.message;
+    assert.ok([...text].length > 40 && [...text].length <= 132, `${code}: ${[...text].length} caracteres`);
+    assert.match(text, /GraphBranch/);
+    for (const site of ['GitHub', 'GitLab', 'Codeberg', 'Bitbucket']) assert.match(text, new RegExp(site), `${code}: falta ${site}`);
+  }
 });

@@ -357,6 +357,58 @@ test('organización: suma los PRs abiertos en la semana de cada repo y los muest
   assert.match(toMarkdownOrg(many, 'a', t), /- Abiertos: (#\d+, ){9}#\d+ … \+2\n/);
 });
 
+test('organización: suma los issues cerrados en la semana de cada repo y los muestra en Markdown e imagen', () => {
+  const cl = (id, number, days) => ({ id, kind: 'issue-close', number, detail: `Issue ${number}`, time: NOW - days * 864e5 });
+  const quiet = { commits: new Map([c('v', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'v' }]]) };
+  const o = computeOrg([
+    // web: el #7 llega dos veces y cuenta una; el #1 es de hace 20 días y no suma
+    { repo: 'acme/web', data: repo(), acts: [cl('1', 7, 2), cl('2', 7, 2), cl('3', 8, 1), cl('4', 1, 20)] },
+    // api: sin commits, solo un issue cerrado: igual sale
+    { repo: 'acme/api', data: quiet, acts: [cl('5', 9, 3)] },
+    { repo: 'acme/quieto', data: quiet, acts: [] },
+  ], NOW);
+  assert.equal(o.closed, 3);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.closed.total, 2);
+  assert.deepEqual(o.rows.map((r) => r.repo), ['acme/web', 'acme/api']);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', closed: 'Cerrados', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- M: 0\n- Cerrados: 3\n- R: 0\n/);
+  assert.match(md, /## acme\/web\n[^#]*- Cerrados: #8, #7\n/);
+  assert.match(md, /## acme\/api\n\n- C 0\n- Cerrados: #9\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Cerrados: 3'));
+  assert.ok(lines.some((l) => /^C 0 · Cerrados: #9$/.test(l)));
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW);
+  assert.equal(sin.closed, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Cerrados/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Cerrados/);
+});
+
+test('organización: suma los PRs cerrados sin fusionar de los repos seguidos, sin los fusionados ni los repetidos, en Markdown e imagen', () => {
+  const dr = (id, number, days, kind = 'pr-close') => ({ id, kind, number, detail: `PR ${number}`, time: NOW - days * 864e5 });
+  const quiet = { commits: new Map([c('v', 30, [], 'ana')]), branches: new Map([['main', { name: 'main', sha: 'v' }]]) };
+  const o = computeOrg([
+    // web: el #7 llega dos veces y cuenta una; el #9 se cerró y luego se fusionó (no es «sin fusionar»); el #1 es viejo
+    { repo: 'acme/web', data: repo(), acts: [dr('1', 7, 2), dr('2', 7, 1), dr('3', 8, 1), dr('4', 1, 20), dr('5', 9, 3), dr('6', 9, 1, 'pr-merge')] },
+    { repo: 'acme/api', data: quiet, acts: [dr('7', 4, 3)] },
+    { repo: 'acme/quieto', data: quiet, acts: [] },
+  ], NOW);
+  assert.equal(o.dropped, 3);
+  assert.equal(o.rows.find((r) => r.repo === 'acme/web').d.dropped.total, 2);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', dropped: 'Sin fusionar', releases: 'R', people: 'P', branch: 'B' };
+  const md = toMarkdownOrg(o, 'acme', t);
+  assert.match(md, /\n- Sin fusionar: 3\n- R: 0\n/);
+  assert.match(md, /## acme\/web\n[\s\S]*?- Sin fusionar: #8, #7\n/);
+  assert.match(md, /## acme\/api\n\n- C 0\n- Sin fusionar: #4\n/);
+  const lines = imageLinesOrg(o, 'acme', t).map((l) => l.text);
+  assert.ok(lines.includes('Sin fusionar: 3'));
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [] }], NOW);
+  assert.equal(sin.dropped, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Sin fusionar/);
+  const one = compute(repo(), [dr('1', 7, 2)], NOW);
+  assert.match(toMarkdown(one, 'a/b', t), /## Sin fusionar \(1\)\n\n- #7 PR 7\n/);
+});
+
 test('organización: suma los autores nuevos de los repos seguidos, cada persona una vez, en Markdown e imagen', () => {
   // web: ana firma antes de la semana; beto y caro son nuevos en web
   const web = { commits: new Map([c('a', 40, [], 'ana'), c('b', 2, ['a'], 'beto'), c('k', 1, ['b'], 'caro')]), branches: new Map([['main', { name: 'main', sha: 'k' }]]) };
@@ -378,4 +430,269 @@ test('organización: suma los autores nuevos de los repos seguidos, cada persona
   assert.equal(sin.newcomers, 0);
   assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Autores nuevos/);
   assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Autores nuevos/);
+});
+
+test('organización: suma quién fusionó entre los repos seguidos (la misma cuenta una vez, hasta 5) en Markdown e imagen', () => {
+  const mg = (id, number, days, who) => ({ id, kind: 'pr-merge', number, detail: `PR ${number}`, time: NOW - days * 864e5, actor: { login: who } });
+  const o = computeOrg([
+    { repo: 'acme/web', data: repo(), acts: [mg('1', 1, 1, 'ana'), mg('2', 2, 1, 'ana'), mg('3', 3, 2, 'beto'), mg('4', 4, 20, 'vieja')] },
+    { repo: 'acme/api', data: repo(), acts: [mg('5', 1, 1, 'ana'), mg('6', 2, 2, 'caro'), mg('7', 3, 2, 'd1'), mg('8', 4, 2, 'd2'), mg('9', 5, 2, 'd3'), mg('10', 6, 2, 'd4')] },
+  ], NOW);
+  assert.equal(o.mergers.total, 7); // ana (en los dos repos, una cuenta), beto, caro, d1..d4
+  assert.deepEqual(JSON.parse(JSON.stringify(o.mergers.rows[0])), { name: 'ana', prs: 3 });
+  assert.equal(o.mergers.rows.length, 5);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', mergers: 'Quién fusionó', releases: 'R', people: 'P', branch: 'B' };
+  assert.match(toMarkdownOrg(o, 'acme', t), /\n- M: 9\n- Quién fusionó: ana \(3\), beto \(1\), caro \(1\), d1 \(1\), d2 \(1\)\n/);
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => l.text === 'Quién fusionó: ana (3) · beto (1) · caro (1) · d1 (1) · d2 (1)'));
+  // sin cuentas, la línea no sale
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [{ id: 'z', kind: 'pr-merge', number: 9, time: NOW - 864e5 }] }], NOW);
+  assert.equal(sin.mergers.total, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Quién fusionó/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién fusionó/);
+});
+
+test('organización: suma quién abrió más PRs entre los repos seguidos (la misma cuenta una vez, el mismo número en dos repos son dos PRs, hasta 5) en Markdown e imagen', () => {
+  const op = (id, number, days, who) => ({ id, kind: 'pr-open', number, detail: `PR ${number}`, time: NOW - days * 864e5, ...(who ? { actor: { login: who } } : {}) });
+  const o = computeOrg([
+    // en web: beto reabrió el #1 de ana (cuenta para ana), y uno de hace 20 días no entra
+    { repo: 'acme/web', data: repo(), acts: [op('1b', 1, 0.5, 'beto'), op('1', 1, 1, 'ana'), op('2', 2, 1, 'ana'), op('3', 3, 2, 'beto'), op('4', 4, 20, 'vieja')] },
+    // en api: el #1 es otro PR (otro repo), y uno sin autor no cuenta
+    { repo: 'acme/api', data: repo(), acts: [op('5', 1, 1, 'ana'), op('6', 2, 2, 'caro'), op('7', 3, 2, 'd1'), op('8', 4, 2, 'd2'), op('9', 5, 2, 'd3'), op('10', 6, 2, 'd4'), op('11', 7, 2)] },
+  ], NOW);
+  assert.equal(o.opened, 10);
+  assert.equal(o.openers.total, 7); // ana (en los dos repos, una cuenta), beto, caro, d1..d4
+  assert.deepEqual(JSON.parse(JSON.stringify(o.openers.rows)), [{ name: 'ana', prs: 3 }, { name: 'beto', prs: 1 }, { name: 'caro', prs: 1 }, { name: 'd1', prs: 1 }, { name: 'd2', prs: 1 }]);
+  const t = { head: 'S {repo}', commits: 'C {n}', merged: 'M', opened: 'Abiertos', openers: 'Quién abrió más', releases: 'R', people: 'P', branch: 'B' };
+  assert.match(toMarkdownOrg(o, 'acme', t), /\n- Abiertos: 10\n- Quién abrió más: ana \(3\), beto \(1\), caro \(1\), d1 \(1\), d2 \(1\)\n/);
+  assert.ok(imageLinesOrg(o, 'acme', t).some((l) => l.kind === 'row' && l.text === 'Quién abrió más: ana (3) · beto (1) · caro (1) · d1 (1) · d2 (1)'));
+  // los nombres van escapados en el Markdown
+  const raro = computeOrg([{ repo: 'a/b', data: repo(), acts: [{ id: 'r', kind: 'pr-open', number: 1, time: NOW - 864e5, actor: { name: 'Ca*rla' } }] }], NOW);
+  assert.match(toMarkdownOrg(raro, 'a', t), /\n- Quién abrió más: Ca\\\*rla \(1\)\n/);
+  // sin cuentas (o sin la etiqueta), la línea no sale
+  const sin = computeOrg([{ repo: 'a/b', data: repo(), acts: [op('z', 9, 1)] }], NOW);
+  assert.equal(sin.opened, 1);
+  assert.equal(sin.openers.total, 0);
+  assert.doesNotMatch(toMarkdownOrg(sin, 'a', t), /Quién abrió más/);
+  assert.doesNotMatch(imageLinesOrg(sin, 'a', t).map((l) => l.text).join('\n'), /Quién abrió más/);
+  assert.doesNotMatch(toMarkdownOrg(o, 'acme', { ...t, openers: '' }), /Quién abrió más/);
+});
+
+test('quién abrió más PRs: cuenta los PRs abiertos de la semana por su autor, una vez por PR, sin la semana anterior, en Markdown e imagen', () => {
+  const ana = { login: 'ana' };
+  const opens = [
+    // esta semana
+    // como llega del feed, del más nuevo al más viejo: beto reabrió el #1 que ana había abierto antes
+    { id: 'o1b', kind: 'pr-open', time: ago(0.5), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo PR reabierto por otra cuenta: cuenta para quien lo abrió
+    { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana },
+    { id: 'o1', kind: 'pr-open', time: ago(1), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
+    { id: 'o2', kind: 'pr-open', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
+    { id: 'o3', kind: 'pr-open', time: ago(3), number: 3, detail: 'tres', actor: ana },
+    { id: 'o4', kind: 'pr-open', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre
+    { id: 'o5', kind: 'pr-open', time: ago(4), number: 5, detail: 'sin actor' },
+    { id: 'o7', kind: 'pr-open', time: ago(5), number: 7, detail: 'siete', actor: ana },
+    // la semana anterior: no cuenta
+    { id: 'o6', kind: 'pr-open', time: ago(9), number: 6, detail: 'vieja', actor: { login: 'dora' } },
+    { id: 'o8', kind: 'pr-open', time: ago(10), number: 8, detail: 'vieja', actor: { login: 'beto' } },
+    { id: 'o9', kind: 'pr-open', time: ago(12), number: 9, detail: 'vieja', actor: { login: 'beto' } },
+  ];
+  const d = compute(repo(), opens, NOW);
+  assert.equal(d.openers.total, 3);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.openers.rows)), [{ name: 'ana', prs: 3 }, { name: 'Ca*rla', prs: 1 }, { name: 'beto', prs: 1 }]);
+  const t = { head: 'Semana de {repo}', commits: 'Commits: {n}', merged: 'Fusionados', opened: 'Abiertos', openers: 'Quién abrió más', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const text = toMarkdown(d, 'o/r', t);
+  assert.match(text, /\nQuién abrió más: ana \(3\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
+  // va debajo de la lista de PRs abiertos
+  assert.ok(text.indexOf('## Abiertos') < text.indexOf('Quién abrió más'));
+  assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién abrió más: ana (3) · Ca*rla (1) · beto (1)'));
+  // sin PRs abiertos con autor, la línea no sale
+  const quiet = compute(repo(), [{ id: 'z', kind: 'pr-open', time: ago(1), number: 9 }], NOW);
+  assert.equal(quiet.openers.total, 0);
+  assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién abrió más/);
+  assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién abrió más/.test(l.text)));
+});
+
+test('quién cerró más issues: cuenta los issues cerrados de la semana por quien los cerró, una vez por issue, sin la semana anterior, en Markdown e imagen', () => {
+  const ana = { login: 'ana' };
+  const closes = [
+    // como llega del feed, del más nuevo al más viejo: el #1 lo cerró ana, beto lo reabrió y ana lo cerró otra vez
+    { id: 'k1b', kind: 'issue-close', time: ago(0.5), number: 1, detail: 'uno', actor: ana },
+    { id: 'k1', kind: 'issue-close', time: ago(1), number: 1, detail: 'uno', actor: { login: 'beto' } }, // el mismo issue: cuenta una vez, para quien lo cerró al final
+    { id: 'k1b', kind: 'issue-close', time: ago(0.5), number: 1, detail: 'uno', actor: ana }, // la misma actividad dos veces
+    { id: 'k2', kind: 'issue-close', time: ago(2), number: 2, detail: 'dos', actor: { login: 'beto' } },
+    { id: 'k3', kind: 'issue-close', time: ago(3), number: 3, detail: 'tres', actor: ana },
+    { id: 'k4', kind: 'issue-close', time: ago(3), number: 4, detail: 'cuatro', actor: { name: 'Ca*rla' } }, // sin usuario: su nombre
+    { id: 'k5', kind: 'issue-close', time: ago(4), number: 5, detail: 'sin actor' }, // sin autor no suma
+    { id: 'k7', kind: 'issue-close', time: ago(5), number: 7, detail: 'siete', actor: ana },
+    { id: 'k9', kind: 'issue-open', time: ago(1), number: 9, detail: 'abierto', actor: { login: 'dora' } }, // abrir no es cerrar
+    { id: 'p1', kind: 'pr-close', time: ago(1), number: 10, detail: 'un PR', actor: { login: 'dora' } }, // un PR cerrado no es un issue
+    // la semana anterior: no cuenta
+    { id: 'k6', kind: 'issue-close', time: ago(9), number: 6, detail: 'vieja', actor: { login: 'dora' } },
+    { id: 'k8', kind: 'issue-close', time: ago(10), number: 8, detail: 'vieja', actor: { login: 'beto' } },
+    { id: 'k10', kind: 'issue-close', time: ago(12), number: 11, detail: 'vieja', actor: { login: 'beto' } },
+  ];
+  const d = compute(repo(), closes, NOW);
+  assert.equal(d.closed.total, 6);
+  assert.equal(d.closers.total, 3);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.closers.rows)), [{ name: 'ana', issues: 3 }, { name: 'Ca*rla', issues: 1 }, { name: 'beto', issues: 1 }]);
+  const t = { head: 'Semana de {repo}', commits: 'Commits: {n}', merged: 'Fusionados', closed: 'Cerrados', closers: 'Quién cerró más', releases: 'Releases', people: 'Personas', branch: 'Rama' };
+  const text = toMarkdown(d, 'o/r', t);
+  assert.match(text, /\nQuién cerró más: ana \(3\) · Ca\\\*rla \(1\) · beto \(1\)\n/);
+  // va debajo de la lista de issues cerrados
+  assert.ok(text.indexOf('## Cerrados') < text.indexOf('Quién cerró más'));
+  assert.ok(text.indexOf('Quién cerró más') < text.indexOf('## Releases'));
+  assert.ok(imageLines(d, 'o/r', t).some((l) => l.kind === 'row' && l.text === 'Quién cerró más: ana (3) · Ca*rla (1) · beto (1)'));
+  // sin la etiqueta, la línea no sale
+  assert.doesNotMatch(toMarkdown(d, 'o/r', { ...t, closers: '' }), /Quién cerró más/);
+  // sin issues cerrados con autor, la línea no sale
+  const quiet = compute(repo(), [{ id: 'z', kind: 'issue-close', time: ago(1), number: 9 }], NOW);
+  assert.equal(quiet.closers.total, 0);
+  assert.doesNotMatch(toMarkdown(quiet, 'o/r', t), /Quién cerró más/);
+  assert.ok(!imageLines(quiet, 'o/r', t).some((l) => /Quién cerró más/.test(l.text)));
+});
+
+/* ---------- borrador de notas de la versión (releaseNotes, toMarkdownNotes) ---------- */
+
+const { releaseNotes, toMarkdownNotes } = ctx.window.GB.digest;
+const NOTES_T = { head: 'Notas de {repo}', since: 'Desde {tag} ({date}) en {branch}', noTag: 'Sin tags en {branch}', prs: 'PRs fusionados', people: 'Quienes contribuyeron' };
+
+/** Un repo con un tag v1.0 en la rama por defecto y, después, dos PRs (uno con commit de merge y uno aplastado),
+    uno fusionado en otra rama, otro de antes del tag y un tag más nuevo que no está en la rama por defecto. */
+function tagged() {
+  const cm = (sha, d, parents, login, message) => [sha, { sha, date: ago(d), parents, message, author: { login, name: login } }];
+  return {
+    repo: { defaultBranch: 'main' },
+    commits: new Map([
+      cm('a', 30, [], 'ana', 'init'),
+      cm('h1', 25, ['a'], 'beto', 'arregla algo viejo'),
+      cm('m1', 24, ['a', 'h1'], 'ana', 'Merge pull request #3 from acme/viejo'), // antes del tag: no entra
+      cm('t', 20, ['m1'], 'ana', 'versión 1.0'), // v1.0
+      cm('f1', 10, ['t'], 'carla', 'feat: login'),
+      cm('f2', 9, ['f1'], 'dani', 'feat: login, pruebas'),
+      cm('m2', 8, ['t', 'f2'], 'ana', 'Merge pull request #12 from acme/login\n\nInicio de sesión con GitHub'),
+      cm('s', 5, ['m2'], 'eva', 'Arregla el tema oscuro (#15)'),
+      cm('d1', 4, ['t'], 'fede', 'Merge pull request #20 from acme/otra'), // en develop, no en main
+      cm('x', 3, ['d1'], 'fede', 'algo de develop'),
+    ]),
+    branches: new Map([
+      ['main', { name: 'main', sha: 's' }],
+      ['develop', { name: 'develop', sha: 'x' }],
+    ]),
+    tags: new Map([
+      ['t', ['v1.0']],
+      ['x', ['v2.0-beta']], // más nuevo, pero fuera de la rama por defecto
+    ]),
+  };
+}
+
+test('notas de la versión: los PRs fusionados en la rama por defecto desde su último tag, cada uno una vez y con su autor', () => {
+  const acts = [
+    // el mismo #12 llega también por la actividad, con su URL: no se repite y suma la URL
+    { id: 'p12', kind: 'pr-merge', time: ago(8), number: 12, detail: 'Inicio de sesión con GitHub', url: 'https://github.com/acme/app/pull/12', branch: 'main', sha: 'm2', actor: { login: 'ana' } },
+    // #3 se fusionó antes del tag: su commit está detrás de v1.0
+    { id: 'p3', kind: 'pr-merge', time: ago(24), number: 3, detail: 'viejo', branch: 'main', sha: 'm1', actor: { login: 'ana' } },
+    // #20 se fusionó en develop: no es de esta versión
+    { id: 'p20', kind: 'pr-merge', time: ago(4), number: 20, detail: 'otra', branch: 'develop', actor: { login: 'fede' } },
+    // #18 se fusionó en main después del tag y su commit no está cargado: entra por la fecha, con su autor
+    { id: 'p18', kind: 'pr-merge', time: ago(2), number: 18, detail: 'Traducciones', branch: 'main', actor: { login: 'ana' }, author: { login: 'gabi', name: 'gabi' } },
+    // #9: fusionado en main antes de la fecha del tag y sin commit cargado: no entra
+    { id: 'p9', kind: 'pr-merge', time: ago(21), number: 9, detail: 'antes', branch: 'main', actor: { login: 'ana' } },
+    { id: 'o18', kind: 'pr-open', time: ago(6), number: 18, actor: { login: 'otra' } },
+  ];
+  const n = releaseNotes(tagged(), acts);
+  assert.equal(n.branch, 'main');
+  assert.deepEqual({ ...n.tag }, { name: 'v1.0', sha: 't', time: ago(20) });
+  assert.deepEqual([...n.prs.rows].map((r) => r.number), [18, 15, 12], 'del más nuevo al más viejo, sin #3, #9 ni #20');
+  assert.equal(n.prs.total, 3);
+  const by = Object.fromEntries(n.prs.rows.map((r) => [r.number, r]));
+  assert.equal(by[12].title, 'Inicio de sesión con GitHub');
+  assert.equal(by[12].author, 'dani', 'el autor de un merge es quien firmó la punta del PR, no quien lo fusionó');
+  assert.equal(by[12].url, 'https://github.com/acme/app/pull/12');
+  assert.equal(by[15].title, 'Arregla el tema oscuro');
+  assert.equal(by[15].author, 'eva');
+  assert.equal(by[18].author, 'gabi', 'el autor que trae la actividad manda sobre quien lo abrió');
+  // quienes contribuyeron: los autores de los commits de la versión y de sus PRs, sin los de antes del tag ni los de develop
+  assert.deepEqual([...n.people.rows].map((r) => r.name), ['ana', 'carla', 'dani', 'eva', 'gabi']);
+  assert.equal(n.people.rows.find((r) => r.name === 'gabi').commits, 0);
+});
+
+test('notas de la versión: sin autor en la actividad sirve quien abrió el PR; sin tags, todo lo cargado; sin rama por defecto, nada', () => {
+  const data = tagged();
+  const acts = [
+    { id: 'p18', kind: 'pr-merge', time: ago(2), number: 18, detail: 'Traducciones', branch: 'main', actor: { login: 'ana' } },
+    { id: 'o18b', kind: 'pr-open', time: ago(3), number: 18, actor: { login: 'reabre' } },
+    { id: 'o18', kind: 'pr-open', time: ago(6), number: 18, actor: { login: 'gabi' } },
+  ];
+  assert.equal(releaseNotes(data, acts).prs.rows[0].author, 'gabi', 'quien lo abrió primero');
+
+  data.tags = new Map();
+  const all = releaseNotes(data, []);
+  assert.equal(all.tag, null);
+  assert.deepEqual([...all.prs.rows].map((r) => r.number), [15, 12, 3]);
+
+  // dos tags en la rama: manda el del commit más nuevo; en el mismo commit, la versión más alta
+  data.tags = new Map([['t', ['v1.0']], ['m1', ['v0.9']], ['m2', ['v1.1', 'v1.10', 'v1.9']]]);
+  const last = releaseNotes(data, []);
+  assert.equal(last.tag.name, 'v1.10');
+  assert.deepEqual([...last.prs.rows].map((r) => r.number), [15]);
+
+  assert.equal(releaseNotes({ ...tagged(), repo: { defaultBranch: 'nada' } }, []), null);
+  assert.equal(releaseNotes({ ...tagged(), repo: {} }, []), null);
+});
+
+test('notas de la versión en Markdown: encabezado, desde qué tag, cada PR con número, título, autor y enlace, y quienes contribuyeron', () => {
+  const acts = [{ id: 'p12', kind: 'pr-merge', time: ago(8), number: 12, detail: 'Inicio de *sesión* [GitHub]', url: 'https://github.com/acme/app/pull/12', branch: 'main', sha: 'm2' }];
+  const md = toMarkdownNotes(releaseNotes(tagged(), acts), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  const lines = md.split('\n');
+  assert.equal(lines[0], '# Notas de acme/app');
+  assert.ok(md.includes('Desde v1.0 (2026-09-24) en `main`'), md);
+  assert.ok(md.includes('## PRs fusionados (2)'), md);
+  assert.ok(md.includes('- [#12 Inicio de \\*sesión\\* \\[GitHub\\]](https://github.com/acme/app/pull/12) (@dani)'), md);
+  assert.ok(md.includes('- #15 Arregla el tema oscuro (@eva)'), md);
+  assert.ok(md.indexOf('#15') < md.indexOf('#12'));
+  assert.ok(md.includes('## Quienes contribuyeron (4)'), md);
+  assert.ok(md.includes('- @ana (1)') && md.includes('- @carla (1)'), md);
+
+  const empty = tagged();
+  empty.branches.get('main').sha = 't';
+  const none = toMarkdownNotes(releaseNotes(empty, []), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  assert.ok(none.includes('## PRs fusionados (0)\n\n—'), none);
+  const noTag = toMarkdownNotes(releaseNotes({ ...tagged(), tags: undefined }, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(noTag.includes('Sin tags en `main`'), noTag);
+  // un nombre sin cuenta va sin @, y un nombre de rama con ` no rompe el código
+  const odd = tagged();
+  odd.repo.defaultBranch = 'ma`in';
+  odd.branches.set('ma`in', odd.branches.get('main'));
+  odd.commits.get('s').author = { name: 'Eva Pérez', login: null };
+  const oddMd = toMarkdownNotes(releaseNotes(odd, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(oddMd.includes("`ma'in`") && oddMd.includes('(Eva Pérez)') && oddMd.includes('- Eva Pérez (1)'), oddMd);
+});
+
+test('notas de la versión: un PR que ya está en el tag no vuelve por la actividad; solo cuentan los mensajes del primer padre; lo cortado se dice', () => {
+  const data = tagged();
+  // el sondeo vio el merge del #3 después de etiquetar (sin su commit en la actividad): su commit está detrás del tag
+  const late = [{ id: 'p3', kind: 'pr-merge', time: ago(1), number: 3, detail: 'viejo', branch: 'main' }];
+  assert.deepEqual([...releaseNotes(data, late).prs.rows].map((r) => r.number), [15, 12]);
+  // un commit dentro de la rama del PR con «(#45)» (un issue) no es un PR fusionado en main
+  data.commits.get('f1').message = 'Arregla el login (#45)';
+  assert.deepEqual([...releaseNotes(data, []).prs.rows].map((r) => r.number), [15, 12]);
+  // tags cargados, pero ninguno en la historia cargada de main: lo dice aparte
+  const out = tagged();
+  out.tags = new Map([['x', ['v2.0-beta']]]);
+  const n = releaseNotes(out, []);
+  assert.equal(n.tag, null);
+  assert.equal(n.tagsOut, true);
+  assert.ok(toMarkdownNotes(n, 'acme/app', { ...NOTES_T, tagsOut: 'Ningún tag en lo cargado de {branch}' }, undefined, '—').includes('Ningún tag en lo cargado de `main`'));
+  assert.equal(releaseNotes({ ...tagged(), tags: new Map() }, []).tagsOut, false, 'sin tags cargados es «sin tags»');
+  // un tag con $' o {branch} en el nombre no se sustituye otra vez
+  const odd = tagged();
+  odd.tags = new Map([['t', ["v1$'{branch}"]]]);
+  const md = toMarkdownNotes(releaseNotes(odd, []), 'acme/app', NOTES_T, (ms) => new Date(ms).toISOString().slice(0, 10), '—');
+  assert.ok(md.includes("Desde v1$'\\{branch\\} (2026-09-24) en `main`"), md);
+  // más PRs que los que se listan: una línea dice cuántos faltan; una @ de afuera no menciona a nadie
+  const many = tagged();
+  for (let i = 0; i < 205; i++) many.commits.set('q' + i, { sha: 'q' + i, date: ago(1), parents: [i ? 'q' + (i - 1) : 's'], message: `Cambio ${i} de @alguien (#${100 + i})`, author: { name: 'x @bob', login: null } });
+  many.branches.get('main').sha = 'q204';
+  const big = toMarkdownNotes(releaseNotes(many, []), 'acme/app', NOTES_T, undefined, '—');
+  assert.ok(big.includes('## PRs fusionados (207)') && big.includes('\n- … +7\n'), big.slice(0, 300));
+  assert.ok(!/@alguien|@bob/.test(big), 'una @ de un título o de un nombre sin cuenta no queda como mención');
 });

@@ -1,7 +1,10 @@
 /* GraphBranch — constelación de repos: cada repo seguido es una galaxia, para ver más repos de los que caben
-   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras y,
-   si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
-   ninguna consulta: parte del estado ya cargado. Todo texto entra con textContent. */
+   en pestañas. Una galaxia es un botón (se recorre con Tab y se abre con Intro) con su nombre, sus cifras, cuánto
+   hace de su commit más reciente ya cargado y, si hay, las novedades sin ver; el tamaño sale de los commits cargados y el color, del nombre. No hace
+   ninguna consulta: parte del estado ya cargado. Los repos de una organización (o un usuario) seguida que no tienen
+   pestaña son galaxias tenues, con la fecha de su último push de la lista que ya se pidió (`ghostItems`). Con una tarea
+   de GitHub Classroom seguida, el plazo (`?plazo=AAAA-MM-DD` o su campo) marca las entregas cuyo último push de esa
+   misma lista es posterior (`submissions`, `isLate`). Todo texto entra con textContent. */
 (function (GB) {
   'use strict';
 
@@ -10,6 +13,74 @@
   const R_MAX = 2.4;
   const PAD = 4; // margen del cuadro, en % del lado
   const ORDERS = ['activity', 'recent', 'prs', 'issues', 'stars', 'forks', 'new', 'name']; // los órdenes que no son el de las pestañas (el selector y ?order=)
+  const ORG_MAX = 100; // los repos de una organización seguida que caben en la constelación: una página de su lista
+
+  /** Los repos de las organizaciones (o usuarios) seguidas que no tienen pestaña, cada uno una galaxia tenue: `lists`
+      ({ dueño: [{ owner, name, pushedAt }] }, la lista de push más reciente que ya se pidió al seguirla), `open` (las
+      claves con pestaña) y `keyOf({ owner, name })`. Hasta ORG_MAX por dueño, en el orden de su lista y sin repetir;
+      `last` es su último push (ms, o `null`). No hace ninguna consulta. */
+  function ghostItems(lists, open, keyOf) {
+    const seen = new Set(open);
+    const out = [];
+    for (const list of Object.values(lists || {})) {
+      for (const p of (Array.isArray(list) ? list : []).slice(0, ORG_MAX)) {
+        if (!p || !p.owner || !p.name) continue;
+        const key = keyOf({ owner: p.owner, name: p.name });
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const at = Date.parse(p.pushedAt);
+        out.push({ key, name: `${p.owner}/${p.name}`, owner: p.owner, repo: p.name, ghost: true, state: 'ghost', commits: 0, branches: 0, last: Number.isFinite(at) ? at : null });
+      }
+    }
+    return out;
+  }
+
+  /** Las entregas de las tareas de GitHub Classroom seguidas: `lists` ({ tarea: [{ owner, name, pushedAt }] }, solo
+      las listas de tareas, `org:curso/tarea-1-*`) → Map clave → último push (ms, o `null`), hasta ORG_MAX por tarea y
+      sin repetir. Es la misma lista que ya se pidió al seguirla: ninguna consulta. */
+  function submissions(lists, keyOf) {
+    const out = new Map();
+    for (const list of Object.values(lists || {})) {
+      for (const p of (Array.isArray(list) ? list : []).slice(0, ORG_MAX)) {
+        if (!p || !p.owner || !p.name) continue;
+        const key = keyOf({ owner: p.owner, name: p.name });
+        if (out.has(key)) continue;
+        const at = Date.parse(p.pushedAt);
+        out.set(key, Number.isFinite(at) ? at : null);
+      }
+    }
+    return out;
+  }
+
+  /** `?plazo=AAAA-MM-DD`: el día del plazo de una tarea, si es una fecha que existe (`2026-02-30` no). Si no, `null`. */
+  function dueParam(q) {
+    const v = String(q.get('plazo') || '').trim();
+    return dueAt(v) === null ? null : v;
+  }
+
+  /** El momento (ms) en que vence el plazo `AAAA-MM-DD`: al terminar ese día en la hora local, así que un push de ese
+      mismo día llega a tiempo. `null` si no es una fecha que existe o es de antes de 1970 (al escribir el año en el
+      campo, Chromium pasa por `0002`, `0020` y `0202`: con esos, todas las entregas saldrían tarde un instante). */
+  function dueAt(day) {
+    const m = String(day ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m || +m[1] < 1970) return null;
+    const [y, mo, d] = [+m[1], +m[2] - 1, +m[3]];
+    const start = new Date(y, mo, d);
+    if (start.getFullYear() !== y || start.getMonth() !== mo || start.getDate() !== d) return null;
+    return new Date(y, mo, d + 1).getTime();
+  }
+
+  /** ¿Una entrega (`it.sub`) recibió su último push (`it.pushed`, ms) después del plazo (`at`, de dueAt)? Sin push
+      conocido, sin plazo o si el repo no es de una tarea, no: nunca se acusa sin el dato. */
+  function isLate(it, at) {
+    return !!it?.sub && Number.isFinite(at) && Number.isFinite(it.pushed) && it.pushed >= at;
+  }
+
+  /** Cuántas entregas de `items` llegaron después del plazo (`late`) de cuántas hay (`total`). */
+  function lateCount(items, at) {
+    const subs = (items || []).filter((it) => it?.sub);
+    return { late: subs.filter((it) => isLate(it, at)).length, total: subs.length };
+  }
 
   /** Tamaño relativo de una galaxia según sus commits: crece con la raíz y se queda entre R_MIN y R_MAX. */
   function radiusOf(commits, maxCommits) {
@@ -29,9 +100,12 @@
       const a = i * GOLDEN;
       let d = i ? Math.sqrt(i) * R_MIN : 0;
       const at = (dist) => ({ x: Math.cos(a) * dist, y: Math.sin(a) * dist });
-      // se aleja del centro hasta que cabe sin tocar a las ya puestas (con un poco de aire)
-      while (put.some((p) => Math.hypot(p.x - at(d).x, p.y - at(d).y) < p.r + o.r + 0.3)) d += 0.1;
-      put.push({ key: o.it.key, ...at(d), r: o.r, idx: o.idx });
+      // se aleja del centro hasta que cabe sin tocar a las ya puestas (con un poco de aire); el punto se calcula una vez
+      // por paso, no una por galaxia ya puesta: con los repos de una organización son 120 y el cuadrático pesaba
+      const fits = (q) => !put.some((p) => Math.hypot(p.x - q.x, p.y - q.y) < p.r + o.r + 0.3);
+      let q = at(d);
+      while (!fits(q)) q = at((d += 0.1));
+      put.push({ key: o.it.key, ...q, r: o.r, idx: o.idx });
     });
     if (!put.length) return [];
     // todo cabe en el cuadro: una sola escala para posiciones y radios (así nada se toca)
@@ -172,13 +246,64 @@
     return svg;
   }
 
-  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `onGo(key)`: Intro sobre una galaxia. */
-  function mount(root, { text, fmt = String, onGo, select = null, status = null }) {
+  /** Los mismos 30 días de las ramas quietas de la vista de texto (`GB.textview.QUIET_DAYS`). */
+  const QUIET_DAYS = 30;
+
+  /** Una galaxia quieta: su commit más reciente ya cargado (`it.last`) tiene más de QUIET_DAYS días a `now`. Sin `last`, o mientras la pestaña carga, no es quieta: no hay fecha que lo diga. */
+  function isQuiet(it, now = Date.now()) {
+    return it.state !== 'loading' && Number.isFinite(it.last) && now - it.last > QUIET_DAYS * 864e5;
+  }
+
+  /** Lo que dice una galaxia: `label` (su nombre accesible) y `title` (su globo). Nombre, commits y ramas, cuánto hace de
+      su commit más reciente ya cargado (`it.last`, con `ago(ms)`, el formato relativo de la app: nada si carga o está
+      vacía, sin `last`), si está quieta («sin actividad hace más de 30 días») y, solo en `label`, las novedades sin ver.
+      Una galaxia sin pestaña (`it.ghost`) dice su nombre, su último push, si está quieta y que no tiene pestaña. Con un
+      plazo (`due`, de dueAt), la entrega que llegó después lo dice en los dos, con palabras y no solo con color. */
+  function describe(it, { text, fmt = String, ago = null, now = Date.now(), due = null }) {
+    const late = isLate(it, due) ? text('constellation.late') : '';
+    if (it.ghost) {
+      // sin pestaña no hay nada cargado: ni commits ni ramas que contar, solo su último push (de la lista de su dueño)
+      const pushed = ago && Number.isFinite(it.last) ? text('constellation.pushed', { ago: ago(it.last) }) : '';
+      const parts = [it.name, pushed, late, isQuiet(it, now) ? text('textview.quiet') : '', text('constellation.ghost')].filter(Boolean);
+      return { label: parts.join(', '), title: parts.join(' · ') };
+    }
+    const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
+    const when = ago && Number.isFinite(it.last) ? ago(it.last) : '';
+    const quiet = isQuiet(it, now) ? text('textview.quiet') : '';
+    return {
+      label: [it.name, stats, when, quiet, late, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '),
+      title: [it.name, stats, when, quiet, late].filter(Boolean).join(' · '),
+    };
+  }
+
+  /** Monta la constelación en `root`. `text(key, params)`: traductor; `fmt(n)`: número; `ago(ms)`: «hace 3 h»; `onGo(key)`: Intro sobre una galaxia.
+      `plazo` ({ field, input, count }): el campo del plazo de una tarea, que se muestra solo si hay entregas (`it.sub`), y
+      la línea con la cuenta de las que llegaron después. */
+  function mount(root, { text, fmt = String, ago = null, onGo, select = null, status = null, plazo = null }) {
     let items = [];
     let mode = 'tabs';
     let filter = '';
     let recent = null;
+    let due = ''; // el día del plazo (AAAA-MM-DD), o '' sin plazo
     if (select) select.addEventListener('change', () => setOrder(select.value, true));
+    if (plazo?.input) plazo.input.addEventListener('change', () => setDue(plazo.input.value, true));
+    /** Fija el plazo de la tarea (`AAAA-MM-DD`; lo que no es una fecha que existe lo quita) y vuelve a marcar las entregas.
+        Desde la URL deja el campo puesto; desde el campo no lo toca: borrarle a medio escribir el año lo vaciaba. */
+    function setDue(day, fromField = false) {
+      due = dueAt(day) === null ? '' : String(day);
+      if (!fromField && plazo?.input && plazo.input.value !== due) plazo.input.value = due;
+      draw();
+    }
+    /** El campo del plazo, solo con alguna entrega de una tarea entre los repos, y la cuenta de las que llegaron tarde. */
+    function drawDue() {
+      if (!plazo) return;
+      const { late, total } = lateCount(items, dueAt(due));
+      if (plazo.field) plazo.field.hidden = !total;
+      if (plazo.count) {
+        plazo.count.hidden = !total || !due;
+        plazo.count.textContent = total && due ? text('constellation.dueCount', { n: fmt(late), m: fmt(total) }) : '';
+      }
+    }
     /** Cambia el orden (el de Tab y el de lector de pantalla) y, si lo pidió la persona, lo anuncia. */
     function setOrder(next, announce) {
       mode = ORDERS.includes(next) ? next : 'tabs';
@@ -209,6 +334,7 @@
     function draw() {
       const shown = sortItems(visible(), mode);
       const had = document.activeElement?.closest?.('.cs-gx') ? document.activeElement.dataset.key : null;
+      const at = dueAt(due);
       root.textContent = '';
       const spots = place(shown);
       shown.forEach((it, i) => {
@@ -218,13 +344,15 @@
         b.className = 'cs-gx';
         b.dataset.key = it.key;
         b.dataset.state = it.state || 'live';
+        if (isQuiet(it)) b.dataset.quiet = 'true';
+        if (isLate(it, at)) b.dataset.late = 'true';
         if (it.active) b.setAttribute('aria-current', 'true');
         b.style.left = `${s.x - s.r}%`;
         b.style.top = `${s.y - s.r}%`;
         b.style.width = b.style.height = `${s.r * 2}%`;
-        const stats = text('constellation.stats', { commits: fmt(it.commits || 0), branches: fmt(it.branches || 0) });
-        b.setAttribute('aria-label', [it.name, stats, it.unread ? text('tabs.unread', { n: it.unread }) : ''].filter(Boolean).join(', '));
-        b.title = `${it.name} · ${stats}`;
+        const said = describe(it, { text, fmt, ago, due: at });
+        b.setAttribute('aria-label', said.label);
+        b.title = said.title;
         b.appendChild(disc(hueOf(it.name)));
         const name = document.createElement('span');
         name.className = 'cs-name';
@@ -232,6 +360,22 @@
         name.setAttribute('aria-hidden', 'true');
         name.textContent = it.name;
         b.appendChild(name);
+        if (b.dataset.late) {
+          // fuera de plazo: un reloj en la esquina (además del borde de color y de lo que dicen su nombre y su globo)
+          const clock = document.createElementNS(SVG, 'svg');
+          clock.setAttribute('class', 'cs-late');
+          clock.setAttribute('viewBox', '0 0 16 16');
+          clock.setAttribute('aria-hidden', 'true');
+          clock.setAttribute('focusable', 'false');
+          const face = document.createElementNS(SVG, 'circle');
+          face.setAttribute('cx', '8');
+          face.setAttribute('cy', '8');
+          face.setAttribute('r', '6');
+          const hands = document.createElementNS(SVG, 'path');
+          hands.setAttribute('d', 'M8 4.5V8l2.5 1.5');
+          clock.append(face, hands);
+          b.appendChild(clock);
+        }
         if (it.unread) {
           const n = document.createElement('span');
           n.className = 'cs-n';
@@ -243,9 +387,10 @@
         root.appendChild(b);
       });
       if (had) [...root.children].find((n) => n.dataset.key === had)?.focus();
+      drawDue();
     }
-    return { render, setOrder, setFilter, setRecent };
+    return { render, setOrder, setFilter, setRecent, setDue };
   }
 
-  GB.constellation = { place, sortItems, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, recentParam, recentItems, radiusOf, hueOf, mount };
+  GB.constellation = { place, sortItems, describe, ghostItems, submissions, dueParam, dueAt, isLate, lateCount, ORG_MAX, openIssues, starsOf, forksOf, newBranches, orderParam, filterParam, filterItems, isQuiet, QUIET_DAYS, recentParam, recentItems, radiusOf, hueOf, mount };
 })(window.GB);

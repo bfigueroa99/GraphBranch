@@ -402,3 +402,15 @@ test('mount: un issue con enlace es un enlace a su página, uno sin enlace abre 
   pin.listeners.click();
   assert.deepEqual(pins, [['a#issue-2', true]], 'se fija con su identidad de issue (el más nuevo va primero)');
 });
+
+test('groupPulls: un PR en la cola de fusión (ítem 231) lleva su lugar y su estado, sin la hora estimada; fuera de ella, nada', () => {
+  const pr = (number, extra = {}) => ({ number, title: `PR ${number}`, head: `r${number}`, user: { login: 'ana' }, createdAt: number, review: 'approved', ...extra });
+  const g = plain(O.groupPulls([{ key: 'a', name: 'o/a', pulls: [pr(1, { queue: { position: 2, state: 'AWAITING_CHECKS', eta: 123456 } }), pr(2), pr(3, { queue: null }), pr(4, { queue: { position: 1, state: null, eta: null } })] }]));
+  const items = g.find((x) => x.id === 'approved').items;
+  const by = (n) => items.find((i) => i.number === n);
+  assert.deepEqual(by(1).queue, { position: 2, state: 'AWAITING_CHECKS' }, 'sin la hora: el Launchpad no se repinta en cada ciclo porque cambie la estimación');
+  assert.equal('queue' in by(2), false, 'fuera de la cola, la fila no cambia');
+  assert.equal('queue' in by(3), false);
+  assert.deepEqual(by(4).queue, { position: 1, state: null });
+  assert.deepEqual(items.map((i) => i.number), [4, 3, 2, 1], 'la cola no cambia el orden ni el grupo');
+});

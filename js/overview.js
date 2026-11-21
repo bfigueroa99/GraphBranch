@@ -107,6 +107,9 @@
     return out.sort((x, y) => y.createdAt - x.createdAt || (Number(y.number) || 0) - (Number(x.number) || 0));
   }
 
+  /** Los estados de una entrada de la cola de fusión de GitHub que tienen texto (`pr.queueState.*`). */
+  const QUEUE_STATES = ['QUEUED', 'AWAITING_CHECKS', 'MERGEABLE', 'UNMERGEABLE', 'LOCKED'];
+
   /** Cuánto dura posponer un PR del Launchpad: un día. */
   const SNOOZE_MS = 24 * 60 * 60 * 1000;
 
@@ -204,6 +207,9 @@
           createdAt: p.createdAt || 0,
           pinned: isPinned(id),
           snoozed: !isPinned(id) && isSnoozed(id),
+          // en la cola de fusión (ítem 231): su lugar y su estado, sin la hora estimada, que cambia en cada ciclo y
+          // repintaría el Launchpad (y le quitaría el foco) sin que nada cambie a la vista
+          ...(p.queue && Number.isInteger(p.queue.position) ? { queue: { position: p.queue.position, state: p.queue.state || null } } : {}),
         });
       }
       for (const i of e.issues || []) {
@@ -462,7 +468,10 @@
             chip.dir = 'auto'; // lleva un login: en derecha a izquierda no se desordena
             b.append(chip);
           }
-          const label = [t(it.issue ? 'all.issues.open' : 'all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role].filter(Boolean).join('. ');
+          // en la cola de fusión (ítem 231): su lugar y, si GitHub lo dice, su estado, también en el nombre accesible
+          const queue = it.queue ? [t('pr.queue', { pos: num(it.queue.position) }), QUEUE_STATES.includes(it.queue.state) ? t(`pr.queueState.${it.queue.state}`) : ''].filter(Boolean).join(' · ') : '';
+          if (queue) b.append(mk('span', 'ap-queue', queue));
+          const label = [t(it.issue ? 'all.issues.open' : 'all.prs.open', { num: it.number, repo: it.repo, title: GB.U.truncate(it.title, 80) }), role, queue].filter(Boolean).join('. ');
           b.setAttribute('aria-label', label);
           b.title = label;
           if (it.issue) {

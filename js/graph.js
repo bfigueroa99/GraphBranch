@@ -27,6 +27,10 @@
   const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
   const easeOut = (p) => 1 - (1 - p) ** 3;
   const TAU = Math.PI * 2;
+  /** Cuánto lleva un efecto, nunca menos de 0. `requestDraw` toma `now` al empezar el cuadro y `drawFx` corre ahí los
+      efectos aplazados (`later`): el que nace en ese momento toma su `t0` de `performance.now()`, después de `now`, y
+      con un cuadro lento su primer dibujo caía antes de su comienzo (una onda con radio negativo: `arc` lanzaba). */
+  const sinceStart = (now, t0) => Math.max(0, now - t0);
 
   /** '#rrggbb' -> 'rgba(r,g,b,a)' (los gradientes del canvas piden el alfa en el color). */
   function rgba(hex, a) {
@@ -1912,7 +1916,7 @@
     ripple(name, col, k = 1) {
       const t0 = performance.now();
       this.fx.push((now, c) => {
-        const p = (now - t0) / 1300;
+        const p = sinceStart(now, t0) / 1300;
         const at = this.branchAt(name);
         if (p >= 1 || !at) return false;
         c.globalAlpha = (this.dark ? 0.9 : 0.75) * (1 - p) ** 1.5;
@@ -1953,7 +1957,7 @@
       this.fx.push((now, c) => {
         const pts = route();
         if (!pts) return false;
-        const p = (now - t0) / DUR_C;
+        const p = sinceStart(now, t0) / DUR_C;
         const q = p < 1 ? 0 : (now - t0 - DUR_C) / 700; // la estela entra en la base y se apaga
         if (q >= 1) return false;
         const cum = measurePath(pts);
@@ -2005,7 +2009,7 @@
       this.ripple(name, col);
       const t0 = performance.now();
       this.fx.push((now, c) => {
-        const s = (now - t0) / 1000;
+        const s = sinceStart(now, t0) / 1000;
         const at = this.branchAt(name);
         if (s >= 3.4 || !at) return false;
         const h = (30 + this.geo.lane * 1.6) * easeOut(clamp(s / 0.6, 0, 1));
@@ -2145,9 +2149,12 @@
       c.clip();
       c.globalCompositeOperation = this.dark ? 'lighter' : 'source-over';
       c.lineCap = 'round';
-      for (let i = this.fx.length - 1; i >= 0; i--) if (!this.fx[i](now, c)) this.fx.splice(i, 1);
-      this.stepSparks(c, dt);
-      c.restore();
+      try {
+        for (let i = this.fx.length - 1; i >= 0; i--) if (!this.fx[i](now, c)) this.fx.splice(i, 1);
+        this.stepSparks(c, dt);
+      } finally {
+        c.restore(); // un efecto que falla no deja el recorte puesto para los cuadros que siguen
+      }
       return true;
     }
 

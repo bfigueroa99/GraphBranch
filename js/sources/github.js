@@ -73,6 +73,23 @@
     if (!v || typeof v !== 'object' || typeof v.verified !== 'boolean') return undefined;
     return v.verified ? { ok: true } : { ok: false, state: sigState(v.reason) };
   };
+  /** La cola de fusión (ítem 231): lo que pide la consulta de PRs de siempre de cada uno (`PullRequest.mergeQueueEntry`,
+      null si no está en la cola de su base), y los estados que da GitHub (`MergeQueueEntryState`). */
+  const GQL_QUEUE = 'mergeQueueEntry { position state estimatedTimeToMerge }';
+  const QUEUE_STATES = ['QUEUED', 'AWAITING_CHECKS', 'MERGEABLE', 'UNMERGEABLE', 'LOCKED'];
+  /** La entrada de un PR en la cola en una sola forma: `{ position, state, eta }`, con su lugar tal como lo da GitHub (un
+      entero desde 0; su documentación no dice desde cuál cuenta), su estado solo si es uno de los de GitHub (si no, null) y
+      la hora a la que se fusionaría según su estimación (`estimatedTimeToMerge`, en segundos desde `now`; null si no la da
+      o no es un lapso creíble, de 0 a 30 días). null si no está en la cola o la entrada no trae un lugar. */
+  const queueOf = (e, now = Date.now()) => {
+    if (!e || typeof e !== 'object' || !Number.isInteger(e.position) || e.position < 0 || e.position > 1e6) return null;
+    const s = e.estimatedTimeToMerge;
+    return {
+      position: e.position,
+      state: QUEUE_STATES.includes(e.state) ? e.state : null,
+      eta: Number.isFinite(s) && s >= 0 && s <= 30 * 86400 ? now + s * 1000 : null,
+    };
+  };
   /** El agente de un commit al traerlo (js/agents.js): `{ agent }` para sumarlo al commit, o nada si no se cargó. */
   const agentOf = (author, message) => (GB.agents ? { agent: GB.agents.detect(author, message) } : {});
   const FORK_DAYS = 90; // un fork cuenta como activo si hizo push en los últimos 90 días
@@ -118,6 +135,24 @@
       .slice(0, SCORECARD_CHECKS)
       .map((c) => ({ name: c.name, score: c.score, reason: reasonOf(c.reason) }));
     return { state: 'ok', score, date: Date.parse(body.date) || null, checks };
+  };
+  /** Alertas de Dependabot (ítem 232): una página de `/dependabot/alerts?state=open`, la primera (las más recientes).
+      Una gravedad de GitHub es una de estas cuatro; la salud las cuenta de la más grave a la más leve. */
+  const DEPENDABOT_PAGE = 100; // el máximo de la API: lo que pasa de ahí no se pide (la salud dice que hay más)
+  const DEPENDABOT_SEVERITIES = ['critical', 'high', 'medium', 'low'];
+  /** Una página de alertas de Dependabot como `{ state: 'ok', critical, high, medium, low, more }`, o null si no es una
+      lista: solo las cifras, nunca el paquete, el aviso ni su enlace (ni siquiera se copian). Cuenta las abiertas, cada
+      una por la gravedad del aviso o, si esa no es una de las cuatro, la de la vulnerabilidad; sin ninguna conocida, no
+      cuenta. `more`: la cabecera `Link` dice que hay otra página. */
+  const dependabotOf = (body, headers) => {
+    if (!Array.isArray(body)) return null;
+    const n = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const a of body.slice(0, DEPENDABOT_PAGE)) {
+      if (a?.state !== 'open') continue;
+      const sev = [a.security_advisory?.severity, a.security_vulnerability?.severity].find((s) => DEPENDABOT_SEVERITIES.includes(s));
+      if (sev) n[sev]++;
+    }
+    return { state: 'ok', ...n, more: /\brel="next"/.test(headers?.get?.('Link') || '') };
   };
   /** Las revisiones de un PR como las da `/pulls/:n/reviews` (ítem 223), con su hora y su tipo como los del feed de
       eventos: aprobada (`review-ok`), con cambios pedidos (`review-changes`) o de comentario, descartada incluida (`review`,
@@ -507,7 +542,9 @@
             kind: 'rate',
             resetAt: (this.gqlRate?.reset || Date.now() / 1000 + 60) * 1000,
           });
-        throw new ApiError(M('err.graphql', { message: e.message }), { kind: 'graphql' });
+        const err = new ApiError(M('err.graphql', { message: e.message }), { kind: 'graphql' });
+        err.detail = String(e.message || ''); // el texto de GitHub sin traducir: dice qué campo no conoce su esquema
+        throw err;
       }
       return body?.data;
     }
@@ -793,6 +830,51 @@
         if (err?.kind === 'aborted') return false; // la fuente se detuvo: nadie va a mirar la respuesta
       }
       this.data.scorecard = next || { state: 'error', at: Date.now() };
+      return true;
+    }
+
+    /** Las alertas de Dependabot abiertas del repo, por gravedad (ítem 232, `data.dependabot`): una consulta
+        (`/dependabot/alerts?state=open&per_page=100`, con ETag), solo cuando el panel de salud lo pide, no más de una cada
+        15 minutos y nunca dos a la vez. Solo de GitHub y GitHub Enterprise (las fuentes que heredan de esta no las tienen)
+        y solo con token: sin él no se pregunta, y la salud dice cómo verlas. Las ve quien puede escribir en el repo (o a
+        quien su administración se las abrió), con un token que pueda leerlas («Dependabot alerts», o `security_events` en
+        uno clásico): un 403, un 404 (también si el repo no las tiene activadas) o el token rechazado quedan como «sin
+        permiso», y en esta visita no se vuelve a preguntar (en un repo que solo se sigue, es lo de siempre). Otro fallo
+        (un 5xx, un 422, la red, una respuesta que no es una lista) queda como fallo y se vuelve a preguntar en la próxima
+        apertura, como Scorecard; la cuota agotada lanza su error (como `syncCodeFrequency`) y no cambia nada. Nada de esto
+        corta el ciclo del grafo. Devuelve si cambió lo que muestra la salud. */
+    syncDependabot() {
+      if (this.host && this.host !== 'github') return Promise.resolve(false);
+      const prev = this.data.dependabot;
+      if (!this.token) {
+        if (prev?.state === 'notoken') return Promise.resolve(false);
+        this.data.dependabot = { state: 'notoken' };
+        return Promise.resolve(true);
+      }
+      if (prev?.state === 'denied') return Promise.resolve(false);
+      if (this.dependabotAsk) return this.dependabotAsk.then(() => false);
+      if (prev?.state === 'ok' && Date.now() - this.lastPoll.dependabot < 15 * 60000) return Promise.resolve(false);
+      this.lastPoll.dependabot = Date.now();
+      const ask = this.askDependabot().finally(() => (this.dependabotAsk = null));
+      this.dependabotAsk = ask.catch(() => {});
+      return ask;
+    }
+
+    async askDependabot() {
+      let next;
+      try {
+        const { data, fresh, headers } = await this.api(`${this.base}/dependabot/alerts?state=open&per_page=${DEPENDABOT_PAGE}`, { cacheKey: 'dependabot' });
+        // con un 304, lo de la vez anterior: junto a su ETag se guardan solo las cifras, no la página entera (hasta 100
+        // alertas con su aviso), que no tiene por qué quedarse en memoria
+        next = fresh ? dependabotOf(data, headers) : data?.state === 'ok' ? { ...data } : null;
+        const kept = this.etags.get('dependabot');
+        if (kept && next && (!fresh || kept.etag === headers?.get?.('ETag'))) kept.data = { ...next };
+        else this.etags.delete('dependabot'); // sin ETag nuevo (o sin cifras) no queda nada que validar con un 304
+      } catch (err) {
+        if (err?.kind === 'rate' || err?.kind === 'aborted') throw err;
+        if (err?.kind === 'notfound' || err?.kind === 'auth' || err?.status === 403) next = { state: 'denied' };
+      }
+      this.data.dependabot = next || { state: 'error', at: Date.now() };
       return true;
     }
 
@@ -1181,7 +1263,8 @@
 
       const listing = this.listing;
       const first = names.slice(0, PAGE);
-      const query = `query($owner: String!, $name: String!${listing ? ', $q: String, $after: String' : ''}) {
+      // con la entrada de cada PR en la cola de fusión (ítem 231), salvo en un GitHub Enterprise cuyo esquema no la tiene
+      const query = () => `query($owner: String!, $name: String!${listing ? ', $q: String, $after: String' : ''}) {
         rateLimit { cost remaining limit resetAt }
         repository(owner: $owner, name: $name) {
           defaultBranchRef { name ${GQL_TARGET_CI} }
@@ -1189,17 +1272,27 @@
           ${listing ? `page: ${this.refsPage()}` : ''}
           pullRequests(states: OPEN, first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
             totalCount
-            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } reviewRequests(first: 10) { nodes { requestedReviewer { ... on User { login } } } } assignees(first: 10) { nodes { login } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
+            nodes { number title isDraft reviewDecision url headRefName baseRefName isCrossRepository createdAt author { login avatarUrl } reviewRequests(first: 10) { nodes { requestedReviewer { ... on User { login } } } } assignees(first: 10) { nodes { login } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }${this.noQueue ? '' : ' ' + GQL_QUEUE} }
           }
           ${aliases(first)}
         }
       }`;
+      const vars = listing ? { q: this.filter || null, after: listing.after } : {};
       let data;
       try {
-        data = await this.gql(query, listing ? { q: this.filter || null, after: listing.after } : {});
+        data = await this.gql(query(), vars);
       } catch (err) {
-        if (listing?.after && err.kind === 'graphql') this.listing = null; // un cursor vencido no traba el ciclo: se vuelve a listar
-        throw err;
+        // un GitHub Enterprise viejo no conoce el campo y rechaza la consulta entera: se repite sin él, una vez por fuente
+        if (err.kind === 'graphql' && !this.noQueue && /\bmergeQueueEntry\b/.test(err.detail || '')) {
+          this.noQueue = true;
+          data = await this.gql(query(), vars).catch((e) => {
+            if (listing?.after && e.kind === 'graphql') this.listing = null;
+            throw e;
+          });
+        } else {
+          if (listing?.after && err.kind === 'graphql') this.listing = null; // un cursor vencido no traba el ciclo: se vuelve a listar
+          throw err;
+        }
       }
       const repo = data?.repository;
       if (!repo) throw this.notFound();
@@ -1299,6 +1392,7 @@
 
       const prs = repo.pullRequests || { totalCount: 0, nodes: [] }; // null si el token no tiene permiso de PRs
       this.data.pullsUnknown = !repo.pullRequests; // sin permiso no se sabe qué ramas tienen PR (js/textview.js: «sin PR abierto»)
+      const at = Date.now();
       const pulls = prs.nodes.map((p) => ({
         number: p.number,
         title: p.title || '',
@@ -1313,6 +1407,7 @@
         assignees: logins(p.assignees?.nodes),
         createdAt: Date.parse(p.createdAt) || Date.now(),
         ci: ciState(p.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),
+        queue: queueOf(p.mergeQueueEntry, at), // su lugar en la cola de fusión, o null fuera de ella (ítem 231)
       }));
       await this.applyPulls(acts, quiet, pulls, prs.totalCount);
       this.lastPoll.pulls = Date.now();
@@ -2472,6 +2567,7 @@
   GitHubSource.endpoints = endpoints;
   GitHubSource.scorecardOf = scorecardOf;
   GitHubSource.sigOf = sigOf;
+  GitHubSource.queueOf = queueOf;
   GitHubSource.restSig = restSig;
   GitHubSource.ApiError = ApiError;
   GitHubSource.editError = editError; // para las fuentes que heredan de esta (GitLab, Codeberg)

@@ -8,6 +8,7 @@
 const { execFile } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const SHA = /^[0-9a-f]{40,64}$/;
@@ -20,17 +21,68 @@ const RS = '\x1e';
 const repos = new Map();
 let store = null; // archivo donde se recuerdan
 
-/** Corre git en `dir`. Nada de lo que hay en el repo se ejecuta: sin fsmonitor, sin bloqueos opcionales ni preguntas. */
-function git(dir, args) {
+/* Una ruta donde nunca puede haber nada: debajo del ejecutable de la app (un archivo no tiene hijos).
+   Hace de programa que no corre, de carpeta de ganchos vacía y de configuración global que no existe,
+   igual en todos los sistemas: en Windows, /bin/false y /dev/null serían C:\bin\false y C:\dev\null,
+   que cualquier usuario puede crear. */
+const NOWHERE = path.join(process.execPath, 'ninguna-parte');
+
+/* La configuración del repo la escribe quien escribe en el repo (otra persona, un agente), y git la lee
+   aunque solo se pidan ramas y commits. Lo que en ella hace correr un programa se pisa aquí: la línea de
+   comandos manda sobre el repo y sus include. */
+const OVERRIDES = [
+  'core.fsmonitor=false',
+  'core.quotepath=off',
+  `core.hooksPath=${NOWHERE}`,
+  // con log.showSignature, `git log` verifica cada commit firmado con el programa que diga el repo
+  'log.showSignature=false',
+  `gpg.program=${NOWHERE}`,
+  `gpg.openpgp.program=${NOWHERE}`,
+  `gpg.ssh.program=${NOWHERE}`,
+  `gpg.x509.program=${NOWHERE}`,
+  'credential.helper=',
+].flatMap((kv) => ['-c', kv]);
+
+const ENV = {
+  GIT_OPTIONAL_LOCKS: '0',
+  GIT_TERMINAL_PROMPT: '0',
+  LC_ALL: 'C',
+  // ni la configuración del sistema ni la global: solo la del repo, con lo de arriba encima
+  GIT_CONFIG_NOSYSTEM: '1',
+  GIT_CONFIG_GLOBAL: NOWHERE,
+  // sin red: un remoto «promisor» del repo iría a buscar el objeto que falta corriendo su programa (ext::,
+  // uploadpack). -c protocol.allow=never no basta, porque el repo puede poner protocol.ext.allow=always;
+  // esta lista manda sobre toda configuración y '-' no es el nombre de ningún protocolo.
+  GIT_ALLOW_PROTOCOL: '-',
+  GIT_NO_LAZY_FETCH: '1',
+};
+
+/* safe.directory: las carpetas de otro dueño que el usuario ya aceptó (en WSL, un disco externo…). Git
+   solo lo toma de la configuración del sistema, la global o la línea de comandos, y las dos primeras ya no
+   se leen: se leen una vez (esos archivos, no los de un repo) y se pasan con -c. */
+let trusted = null;
+function trustedDirs() {
+  const read = (scope) =>
+    new Promise((resolve) => {
+      const args = ['config', scope, '--includes', '-z', '--get-all', 'safe.directory'];
+      execFile('git', args, { cwd: os.homedir(), timeout: TIMEOUT, windowsHide: true }, (err, out) => resolve(err ? [] : String(out).split('\0').slice(0, -1)));
+    });
+  trusted ??= Promise.all([read('--system'), read('--global')]).then((lists) => lists.flat().flatMap((dir) => ['-c', `safe.directory=${dir}`]));
+  return trusted;
+}
+
+/** Corre git en `dir`. Nada de lo que hay en el repo se ejecuta (ver OVERRIDES y ENV), sin bloqueos opcionales ni preguntas. */
+async function git(dir, args) {
   const opts = {
     cwd: dir,
     maxBuffer: MAX_BUFFER,
     timeout: TIMEOUT,
     windowsHide: true,
-    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' },
+    env: { ...process.env, ...ENV },
   };
+  const trust = await trustedDirs();
   return new Promise((resolve, reject) => {
-    execFile('git', ['-c', 'core.fsmonitor=false', '-c', 'core.quotepath=off', ...args], opts, (err, stdout, stderr) => {
+    execFile('git', [...OVERRIDES, ...trust, ...args], opts, (err, stdout, stderr) => {
       if (!err) return resolve(stdout);
       if (err.code === 'ENOENT') return reject(Object.assign(new Error('git no está instalado'), { kind: 'nogit' }));
       reject(Object.assign(new Error(String(stderr || err.message).trim().split('\n')[0]), { kind: 'git', code: err.code }));
@@ -235,4 +287,4 @@ function watch(id, onChange) {
   };
 }
 
-module.exports = { init, allow, branches, log, isAncestor, files, diff, watch, repos };
+module.exports = { init, allow, branches, log, isAncestor, files, diff, watch, repos, git };

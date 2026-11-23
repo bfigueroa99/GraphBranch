@@ -192,6 +192,30 @@ async function quieta(page, fn) {
   }
 }
 
+/** Como `quieta`, pero con algún PR abierto en la demo (la cifra de PRs de la barra de cifras): pasados unos minutos la
+    demo viva fusiona los que tenía y pasa ratos sin ninguno hasta que abre otro, y un paso que mira un PR (su ficha, su
+    chip en la vista de texto) fallaba entonces con «ninguna ficha de rama con PR…» o `{"named":0,…}` (pendiente 1). Medido
+    en la iteración 317 con la demo viva 8 min: 17 de 95 muestras sin ninguno, la primera a los 255 s y tramos de hasta
+    50 s; dejada sin ninguno, volvió a abrir uno a los 10, 41 y 56 s (actúa cada unos 5 s, y una de cada diez veces abre
+    un PR), y una vez pasó 120 s sin abrirlo: el tope, T(120000), son 6 min. Espera a que haya uno, la pausa y lo vuelve
+    a mirar ya en pausa (pudo fusionarse justo antes). */
+async function quietaConPr(page, fn) {
+  const open = () => page.evaluate(() => Number(document.querySelector('#st-prs')?.textContent) > 0);
+  const deadline = Date.now() + T(120000);
+  while (Date.now() < deadline) {
+    const ok = await page.waitForFunction(() => Number(document.querySelector('#st-prs')?.textContent) > 0, null, { timeout: Math.max(1000, deadline - Date.now()), polling: 250 }).then(() => true, () => false);
+    if (!ok) break;
+    let ran = false;
+    await quieta(page, async () => {
+      if (!(await open())) return;
+      ran = true;
+      await fn();
+    });
+    if (ran) return;
+  }
+  throw new Error(`la demo no tuvo ningún PR abierto en ${Math.round(T(120000) / 1000)} s`);
+}
+
 /** `allow`: errores de consola que el paso provoca a propósito (por ejemplo, un 404 de la API simulada). */
 async function step(page, name, fn, { allow = null } = {}) {
   const before = page.errors.length;
@@ -1094,7 +1118,7 @@ if (seccion('Escritorio (1280×800)'))
   });
 
   // la región viva dice al abrir los tags, releases y forks; si la demo publica antes de leerla ya dice «Novedades»
-  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quieta(page, async () => {
+  await step(page, 'vista de texto: árbol con teclado, nombres accesibles y Enter lleva al grafo', () => quietaConPr(page, async () => {
     await page.click('#textview-btn');
     await page.waitForSelector('#textview[open]', { timeout: T(3000) });
     const info = await page.evaluate(() => {
@@ -1705,19 +1729,24 @@ if (seccion('Escritorio (1280×800)'))
     });
   });
 
-  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', async () => {
+  await step(page, 'vista de un PR: la ficha de una rama con PR muestra su descripción y comentarios al pulsar, sin consultar api.github.com', () => quietaConPr(page, async () => {
     await page.keyboard.press('Escape');
     await page.click('#view-2d');
     const heads = await page.$$('#graph svg .head[role=button]');
     let btn = null;
+    const seen = []; // de cada punta, su rama y qué botones trae su ficha: si falla, el error dice dónde (pendiente 1)
     for (const h of heads) {
       await h.focus();
       await page.keyboard.press('Enter');
       btn = await page.$('#graph .tip .tip-prview');
       if (btn) break;
+      seen.push(await h.evaluate((e) => `${e.__name}: ${[...document.querySelectorAll('#graph .tip .tip-actions button')].map((b) => b.className).join(' ') || (document.querySelector('#graph .tip') ? 'sin botones' : 'sin ficha')}`));
       await page.keyboard.press('Escape');
     }
-    if (!btn) throw new Error('ninguna ficha de rama con PR trae «Ver descripción y comentarios»');
+    if (!btn) {
+      const st = await page.evaluate(() => ({ prs: document.querySelector('#st-prs')?.textContent, url: location.search, vista2d: document.querySelector('#view-2d')?.getAttribute('aria-pressed') })); // un filtro o una rama oculta quedan en la URL
+      throw new Error(`ninguna ficha de rama con PR trae «Ver descripción y comentarios» (${JSON.stringify({ ...st, puntas: seen })})`);
+    }
     await btn.focus();
     await page.keyboard.press('Enter');
     await page.waitForSelector('#graph .tip .tip-prbody .pv-list li', { timeout: T(5000) });
@@ -1733,7 +1762,7 @@ if (seccion('Escritorio (1280×800)'))
     const hidden = await page.$eval('.tip-prbody', (b) => b.hidden);
     if (!hidden) throw new Error('pulsarlo otra vez no esconde la vista del PR');
     await page.keyboard.press('Escape');
-  });
+  }));
 
   await step(page, 'firma de los commits: la ficha de un commit dice su firma, y la salud cuenta los de main sin firma verificada y lleva a cada uno', async () => {
     // la demo firma cada commit como lo diría GitHub (ítem 230): verificada, sin firma o firmado sin verificar con su motivo
@@ -6688,6 +6717,215 @@ if (seccion('OpenSSF Scorecard en la salud'))
     await page.waitForTimeout(1500);
     if (await page.$('#hl-scorecard')) throw new Error('un repo privado muestra la sección de Scorecard');
     if (asked.length !== mid) throw new Error(`el nombre de un repo privado salió a Scorecard: ${JSON.stringify(asked.slice(mid))}`);
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
+if (seccion('Alertas de Dependabot en la salud'))
+{
+  // ítem 232: con token, al abrir la salud, una consulta de las alertas abiertas del repo y solo sus cifras
+  const gh = fakeGitHub();
+  gh.repo('o/d'); // con alertas
+  gh.repo('o/x'); // el token no puede leerlas: 403
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  const asked = [];
+  const alerta = (n, severity, state = 'open') => ({
+    number: n,
+    state,
+    html_url: `https://github.com/o/d/security/dependabot/${n}`,
+    dependency: { package: { ecosystem: 'npm', name: 'paquete-secreto' }, manifest_path: 'package-lock.json' },
+    security_advisory: { ghsa_id: 'GHSA-xxxx-yyyy-zzzz', summary: '<img src=x onerror="document.body.dataset.pwned=1">', severity },
+    security_vulnerability: { package: { ecosystem: 'npm', name: 'paquete-secreto' }, severity },
+  });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => {
+    const u = new URL(r.request().url());
+    if (!u.pathname.endsWith('/dependabot/alerts')) return gh.handle(r);
+    asked.push({ path: u.pathname + u.search, auth: r.request().headers().authorization || '' });
+    const headers = { 'access-control-allow-origin': '*' };
+    if (u.pathname === '/repos/o/d/dependabot/alerts') return r.fulfill({ contentType: 'application/json', headers, body: JSON.stringify([alerta(1, 'critical'), alerta(2, 'high'), alerta(3, 'high'), alerta(4, 'medium'), alerta(5, 'low'), alerta(6, 'critical', 'fixed')]) });
+    return r.fulfill({ status: 403, contentType: 'application/json', headers, body: JSON.stringify({ message: 'Resource not accessible by personal access token' }) });
+  });
+  const text = (sel) => page.$eval(sel, (e) => e.textContent).catch(() => null);
+  await step(page, 'la demo muestra sus alertas de Dependabot abiertas por gravedad, sin consultarlas ni enlace', async () => {
+    await page.goto(`${base}/index.html?lang=es&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(5000) }).catch(() => {
+      throw new Error('la salud de la demo no muestra las alertas de Dependabot');
+    });
+    const got = [await text('#hl-dependabot h3'), await text('#hl-dependabot-count')];
+    if (JSON.stringify(got) !== JSON.stringify(['Seguridad: alertas de Dependabot', 'Abiertas: 10 — críticas: 1, altas: 2, medias: 4, bajas: 3'])) throw new Error(`la sección dice ${JSON.stringify(got)}`);
+    if (await page.$('#hl-dependabot-link')) throw new Error('la demo, que no es un repo de GitHub, lleva un enlace');
+    if (asked.length) throw new Error(`la demo consultó las alertas: ${JSON.stringify(asked)}`);
+    await page.keyboard.press('Escape');
+  });
+  await step(page, 'con token, una consulta al abrir la salud (y no otra al volver a abrirla), las cifras como texto y el enlace a la pestaña de seguridad', async () => {
+    await page.evaluate(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_dependabot0123')));
+    await page.goto(`${base}/index.html?lang=es&repo=o/d`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.waitForTimeout(1500);
+    if (asked.length) throw new Error(`se consultaron las alertas sin abrir la salud: ${JSON.stringify(asked)}`);
+    if (!gh.calls.some((c) => c === '/repos/o/d')) throw new Error('no se cargó el repo simulado');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(8000) });
+    const count = await text('#hl-dependabot-count');
+    if (count !== 'Abiertas: 5 — críticas: 1, altas: 2, medias: 1, bajas: 1') throw new Error(`la cuenta dice ${JSON.stringify(count)} (la arreglada no cuenta)`);
+    const link = await page.$eval('#hl-dependabot-link', (a) => ({ href: a.getAttribute('href'), target: a.target, rel: a.rel, text: a.textContent }));
+    if (link.href !== 'https://github.com/o/d/security/dependabot' || link.target !== '_blank' || !/noopener/.test(link.rel) || !/noreferrer/.test(link.rel) || link.text !== 'Ver las alertas en GitHub') throw new Error(`el enlace: ${JSON.stringify(link)}`);
+    if (asked.length !== 1 || asked[0].path !== '/repos/o/d/dependabot/alerts?state=open&per_page=100' || asked[0].auth !== 'Bearer ghp_dependabot0123') throw new Error(`consultas: ${JSON.stringify(asked)}`);
+    const html = await page.$eval('#health', (e) => e.innerHTML);
+    if (/paquete-secreto|GHSA|security\/dependabot\/\d|<img/.test(html)) throw new Error('el paquete o el aviso entraron a la página');
+    if (await page.evaluate(() => document.body.dataset.pwned)) throw new Error('el aviso corrió código');
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-count', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== 1) throw new Error(`al volver a abrir la salud se consultó otra vez: ${asked.length}`);
+    await page.keyboard.press('Escape');
+  }, { allow: /40[34]/ });
+  await step(page, 'a 320 px y en árabe, la sección de Dependabot no desborda el panel y va de derecha a izquierda', async () => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/d&health=1`);
+    await loaded(page);
+    await page.waitForSelector('#health[open] #hl-dependabot-link', { timeout: T(10000) });
+    const m = await page.evaluate(() => {
+      const w = document.querySelector('#health .tr-wrap');
+      const a = document.querySelector('#hl-dependabot-link').getBoundingClientRect();
+      return { sw: w.scrollWidth, cw: w.clientWidth, dir: getComputedStyle(document.querySelector('#hl-dependabot')).direction, link: [Math.round(a.width), Math.round(a.height)] };
+    });
+    if (m.sw > m.cw) throw new Error(`la sección desborda el panel: scrollWidth ${m.sw} > clientWidth ${m.cw}`);
+    if (m.dir !== 'rtl') throw new Error(`la sección no va de derecha a izquierda en árabe: ${m.dir}`);
+    if (m.link[0] < 24 || m.link[1] < 24) throw new Error(`el enlace es chico para pulsarlo: ${m.link.join('×')} px`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press('Escape');
+  }, { allow: /40[34]/ });
+  await step(page, 'sin permiso (403) lo dice y no vuelve a preguntar en esa visita; sin token no consulta y dice cómo verlas', async () => {
+    const before = asked.length;
+    await page.goto(`${base}/index.html?lang=es&repo=o/x&health=1`);
+    await loaded(page);
+    const denied = await page.waitForSelector('#health[open] #hl-dependabot-denied', { timeout: T(10000) });
+    if (!/no puede leer las alertas de Dependabot.+«Dependabot alerts»/.test(await denied.textContent())) throw new Error(`sin permiso dice ${await denied.textContent()}`);
+    if (asked.length !== before + 1 || asked.at(-1).path !== '/repos/o/x/dependabot/alerts?state=open&per_page=100') throw new Error(`consultas: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    await page.click('#health-btn');
+    await page.waitForSelector('#health[open] #hl-dependabot-denied', { timeout: T(5000) });
+    await page.waitForTimeout(500);
+    if (asked.length !== before + 1) throw new Error(`sin permiso volvió a preguntar: ${JSON.stringify(asked.slice(before))}`);
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => localStorage.removeItem('graphbranch:token'));
+    await page.goto(`${base}/index.html?lang=es&repo=o/d&health=1`);
+    await loaded(page);
+    const hint = await page.waitForSelector('#health[open] #hl-dependabot-notoken', { timeout: T(10000) });
+    if (!/^Con un token que pueda leer las alertas de Dependabot/.test(await hint.textContent())) throw new Error(`sin token dice ${await hint.textContent()}`);
+    await page.waitForTimeout(500);
+    if (asked.length !== before + 1) throw new Error(`sin token se consultaron las alertas: ${JSON.stringify(asked.slice(before + 1))}`);
+  }, { allow: /40[34]/ });
+  await page.context().close();
+}
+
+if (seccion('La cola de fusión de GitHub (GraphQL simulado)'))
+{
+  // ítem 231: con token, la consulta de PRs de siempre trae la entrada de cada uno en la cola de fusión de su base; la
+  // ficha de la rama de un PR en la cola dice su lugar y su estado, y el Launchpad lo marca. Un GraphQL mínimo sobre el
+  // repo simulado: la consulta del ciclo (ramas, listado y PRs), la de una rama suelta y la de la historia
+  const gh = fakeGitHub();
+  const Q = gh.repo('o/q');
+  for (const b of ['feat/cola', 'feat/fuera']) Q.branches.set(b, Q.branches.get('main')); // salen de main
+  gh.push('o/q', 'feat/cola', 'cambio en la cola');
+  gh.push('o/q', 'feat/fuera', 'cambio fuera de la cola');
+  gh.repo('o/a');
+  const sent = [];
+  const prs = {
+    'o/q': [
+      { number: 7, title: 'En la cola', head: 'feat/cola', entry: { position: 2, state: 'AWAITING_CHECKS', estimatedTimeToMerge: 1200 } },
+      { number: 8, title: 'Fuera de la cola', head: 'feat/fuera', entry: null },
+    ],
+  };
+  const graphql = (r) => {
+    const { query, variables = {} } = JSON.parse(r.request().postData() || '{}');
+    sent.push(query);
+    const full = `${variables.owner}/${variables.name}`;
+    const R = gh.repo(full);
+    const date = (s) => R.commits.get(s)?.commit.committer.date;
+    const target = (s) => ({ oid: s, committedDate: date(s), statusCheckRollup: { state: 'SUCCESS' } });
+    const repository = {};
+    if (query.includes('defaultBranchRef')) {
+      const nodes = (prs[full] || []).map((p) => ({
+        number: p.number, title: p.title, isDraft: false, reviewDecision: 'APPROVED', url: `https://github.com/${full}/pull/${p.number}`, headRefName: p.head, baseRefName: 'main',
+        isCrossRepository: false, createdAt: new Date(Date.now() - 3600e3).toISOString(), author: { login: 'bea', avatarUrl: null }, reviewRequests: { nodes: [] }, assignees: { nodes: [] },
+        commits: { nodes: [{ commit: { statusCheckRollup: { state: 'SUCCESS' } } }] },
+        ...(query.includes('mergeQueueEntry') ? { mergeQueueEntry: p.entry } : {}),
+      }));
+      Object.assign(repository, {
+        defaultBranchRef: { name: 'main', target: target(R.branches.get('main')) },
+        all: { totalCount: R.branches.size },
+        pullRequests: { totalCount: nodes.length, nodes },
+      });
+      if (query.includes('page: refs(')) repository.page = { totalCount: R.branches.size, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [...R.branches].map(([name, s]) => ({ name, target: target(s) })) };
+    }
+    for (const m of query.matchAll(/(t\d+): ref\(qualifiedName: "refs\/heads\/([^"]+)"\)/g)) repository[m[1]] = R.branches.has(m[2]) ? { target: target(R.branches.get(m[2])) } : null;
+    for (const m of query.matchAll(/(h\d+): object\(oid: "([0-9a-f]+)"\) \{ \.\.\. on Commit \{ history\(first: (\d+)\)/g)) {
+      const nodes = [];
+      for (let s = m[2]; s && R.commits.has(s) && nodes.length < Number(m[3]); s = R.commits.get(s).parents[0]?.sha) {
+        const c = R.commits.get(s);
+        nodes.push({ oid: s, url: c.html_url, committedDate: c.commit.committer.date, messageHeadline: c.commit.message, messageBody: '', author: { name: 'Ana', email: '', user: null }, parents: { nodes: c.parents.map((p) => ({ oid: p.sha })) }, signature: null });
+      }
+      repository[m[1]] = { history: { nodes } };
+    }
+    const body = { data: { rateLimit: { cost: 1, remaining: 4900, limit: 5000, resetAt: new Date(Date.now() + 3600e3).toISOString() }, repository } };
+    return r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type' }, body: JSON.stringify(body) });
+  };
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => (new URL(r.request().url()).pathname === '/graphql' ? graphql(r) : gh.handle(r)));
+  await page.addInitScript(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_colafusion0123')));
+  /** Abre con el teclado la ficha de la rama `name` del grafo 2D y devuelve su texto, con lo que dice de la cola. */
+  const tipOf = async (name) => {
+    await page.keyboard.press('Escape');
+    const head = await page.waitForFunction((n) => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((h) => h.querySelector('.h-name')?.textContent === n), name, { timeout: T(10000) });
+    await head.asElement().focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph .tip:not([hidden]) .tip-extra', { timeout: T(3000) });
+    return page.evaluate(() => ({ queue: document.querySelector('#graph .tip:not([hidden]) .tip-queue')?.textContent ?? null, extra: document.querySelector('#graph .tip:not([hidden]) .tip-extra')?.textContent || '' }));
+  };
+  await step(page, 'con token, la ficha de la rama de un PR en la cola de fusión dice su lugar, su estado y cuánto falta; la de uno fuera de la cola, nada', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/q`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.click('#view-2d');
+    const cola = await tipOf('feat/cola');
+    if (!/^En la cola de fusión: puesto 2 · esperando los checks · se fusionaría en unos (19|20) min$/.test(cola.queue || '')) throw new Error(`la ficha del PR en la cola dice ${JSON.stringify(cola)}`);
+    if (!/PR #7/.test(cola.extra)) throw new Error(`la ficha no es la del PR #7: ${cola.extra}`);
+    const fuera = await tipOf('feat/fuera');
+    if (fuera.queue !== null || !/PR #8/.test(fuera.extra)) throw new Error(`la ficha del PR fuera de la cola dice ${JSON.stringify(fuera)}`);
+    await page.keyboard.press('Escape');
+    const cycle = sent.filter((q) => q.includes('pullRequests('));
+    if (!cycle.length || cycle.some((q) => !q.includes('mergeQueueEntry { position state estimatedTimeToMerge }'))) throw new Error('la consulta de PRs no pide la entrada en la cola');
+    if (sent.filter((q) => /mergeQueue/.test(q)).length !== cycle.length) throw new Error('la cola se pidió en otra consulta');
+  }, { allow: /404/ });
+  await step(page, 'el Launchpad marca el PR en la cola con su lugar y su estado, también en su nombre accesible, y a 320 px en árabe no desborda', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/q,o/a&all=1`);
+    await loaded(page);
+    const chip = await page.waitForSelector('#all-prs .ap-row[data-number="7"] .ap-queue', { timeout: T(20000) });
+    const row = await page.$eval('#all-prs .ap-row[data-number="7"]', (b) => ({ label: b.getAttribute('aria-label'), group: b.closest('.ap-group').dataset.group }));
+    if ((await chip.textContent()) !== 'En la cola de fusión: puesto 2 · esperando los checks') throw new Error(`la marca dice ${await chip.textContent()}`);
+    if (!row.label.endsWith('. En la cola de fusión: puesto 2 · esperando los checks') || row.group !== 'approved') throw new Error(`la fila: ${JSON.stringify(row)}`);
+    if (await page.$('#all-prs .ap-row[data-number="8"] .ap-queue')) throw new Error('el PR fuera de la cola lleva la marca');
+    if (!(await page.$('#all-prs .ap-row[data-number="8"]'))) throw new Error('el PR fuera de la cola no está en el Launchpad');
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/q,o/a&all=1`);
+    await loaded(page);
+    await page.waitForSelector('#all-prs .ap-row[data-number="7"] .ap-queue', { timeout: T(20000) });
+    const m = await page.evaluate(() => {
+      const c = document.querySelector('#all-prs .ap-row[data-number="7"] .ap-queue');
+      const b = c.closest('.ap-row').getBoundingClientRect();
+      const r = c.getBoundingClientRect();
+      return { text: c.textContent, dir: getComputedStyle(c).direction, inside: r.left >= b.left - 1 && r.right <= b.right + 1, page: document.documentElement.scrollWidth <= document.documentElement.clientWidth };
+    });
+    if (!/^في قائمة انتظار الدمج: الموضع ٢ · بانتظار الفحوصات$/.test(m.text.replace(/[⁨⁩]/g, '')) && !/^في قائمة انتظار الدمج: الموضع 2 · بانتظار الفحوصات$/.test(m.text)) throw new Error(`en árabe la marca dice ${m.text}`);
+    if (m.dir !== 'rtl' || !m.inside || !m.page) throw new Error(`a 320 px en árabe: ${JSON.stringify(m)}`);
+    await page.setViewportSize({ width: 1280, height: 800 });
   }, { allow: /404/ });
   await page.context().close();
 }

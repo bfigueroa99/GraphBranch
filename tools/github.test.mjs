@@ -1852,3 +1852,268 @@ test('la firma: sigOf y restSig leen solo la forma de GitHub', () => {
   assert.deepEqual(plain(restSig({ verified: false, reason: 'gpgverify_unavailable' })), { ok: false, state: 'GPGVERIFY_UNAVAILABLE' });
   assert.equal(restSig({ verified: false, reason: 'x'.repeat(80) }).state.length, 32, 'un motivo largo se corta');
 });
+
+/* Alertas de Dependabot (ítem 232): /dependabot/alerts, solo al abrir la salud, solo con token y solo las cifras. */
+
+const DEPENDABOT = '/repos/o/r/dependabot/alerts?state=open&per_page=100';
+/** Una alerta como la da la API, con el paquete y el aviso que la página no guarda. */
+const depAlert = (n, severity, extra = {}) => ({
+  number: n,
+  state: 'open',
+  html_url: `https://github.com/o/r/security/dependabot/${n}`,
+  dependency: { package: { ecosystem: 'npm', name: 'paquete-vulnerable' }, manifest_path: 'package-lock.json', scope: 'runtime' },
+  security_advisory: { ghsa_id: 'GHSA-aaaa-bbbb-cccc', cve_id: 'CVE-2026-0001', summary: 'el aviso entero', severity },
+  security_vulnerability: { package: { ecosystem: 'npm', name: 'paquete-vulnerable' }, severity, vulnerable_version_range: '< 1.2.3' },
+  ...extra,
+});
+const depAsked = (gh) => gh.calls.filter((c) => c.includes('/dependabot/'));
+
+test('alertas de Dependabot: con token, una consulta al abrir la salud (con ETag), las abiertas por gravedad y solo sus cifras', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let reply = {
+    body: [
+      depAlert(1, 'critical'),
+      depAlert(2, 'critical'),
+      depAlert(3, 'high'),
+      depAlert(4, 'medium'),
+      depAlert(5, 'medium'),
+      depAlert(6, 'medium'),
+      depAlert(7, 'low'),
+      depAlert(8, 'rara', { security_vulnerability: { severity: 'high' } }), // la gravedad del aviso no se conoce: vale la de la vulnerabilidad
+      depAlert(9, 'high', { state: 'dismissed' }), // descartada: aunque llegue, no es abierta
+      depAlert(10, '<b>', { security_vulnerability: { severity: '__proto__' } }), // ninguna gravedad conocida: no cuenta
+      null,
+    ],
+  };
+  const inm = [];
+  gh.override = (path, opts) => {
+    if (!path.includes('/dependabot/')) return null;
+    inm.push(opts.headers?.['If-None-Match'] || null);
+    return reply;
+  };
+  const { src, errors, GB } = connect(gh, 'tok');
+  await src.cycle();
+  assert.deepEqual(depAsked(gh), [], 'sin abrir la salud no se consulta');
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(depAsked(gh), [DEPENDABOT], 'una consulta: las abiertas, 100 por página');
+  assert.equal(errors.length, 0);
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 2, high: 2, medium: 3, low: 1, more: false });
+  const saved = JSON.stringify([plain(src.data.dependabot), plain([...src.etags.values()])]);
+  assert.ok(!/paquete|GHSA|CVE|aviso|package|security\/dependabot\/\d/.test(saved), `ni el paquete ni el aviso quedan en la página: ${saved}`);
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'ok', total: 8, critical: 2, high: 2, medium: 3, low: 1, more: false, url: 'https://github.com/o/r/security/dependabot' });
+  assert.equal(await src.syncDependabot(), false, 'otra apertura antes de 15 minutos no vuelve a preguntar');
+  assert.equal(depAsked(gh).length, 1);
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  const [a, b] = await Promise.all([src.syncDependabot(), src.syncDependabot()]);
+  assert.deepEqual([a, b], [true, false], 'dos aperturas seguidas: una sola consulta en vuelo');
+  assert.equal(depAsked(gh).length, 2);
+  assert.ok(!inm[0] && inm[1], 'la segunda llevó el ETag de la primera (y la respuesta fue un 304)');
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 2, high: 2, medium: 3, low: 1, more: false }, 'el 304 deja las mismas cifras');
+  // más de una página: la cuenta es de las primeras 100, y lo dice
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  reply = { body: Array.from({ length: 100 }, (_, i) => depAlert(i + 1, i < 3 ? 'critical' : 'low')), headers: { Link: `<${gh.base}/repos/o/r/dependabot/alerts?state=open&per_page=100&after=Y3Vyc29y>; rel="next"` } };
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 3, high: 0, medium: 0, low: 97, more: true });
+  assert.equal(GB.health.compute(src.data, [], Date.now()).dependabot.total, 100);
+  // ninguna abierta
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  reply = { body: [] };
+  assert.equal(await src.syncDependabot(), true);
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'ok', total: 0, critical: 0, high: 0, medium: 0, low: 0, more: false, url: 'https://github.com/o/r/security/dependabot' });
+  assert.equal(errors.length, 0);
+});
+
+test('alertas de Dependabot: sin permiso (403, 404 o el token rechazado) lo dice y no vuelve a preguntar en esa visita; sin token no consulta', async () => {
+  const denied = [
+    { status: 403, body: { message: 'Resource not accessible by personal access token' } },
+    { status: 403, body: { message: 'Dependabot alerts are disabled for this repository.' } },
+    { status: 404, body: { message: 'Not Found' } },
+    { status: 401, body: { message: 'Bad credentials' } },
+  ];
+  for (const r of denied) {
+    const gh = fakeGitHub();
+    gh.push('main', 'a1');
+    gh.override = (path) => (path.includes('/dependabot/') ? r : null);
+    const { src, errors } = connect(gh, 'tok');
+    await src.cycle();
+    assert.equal(await src.syncDependabot(), true);
+    assert.deepEqual(plain(src.data.dependabot), { state: 'denied' }, `${r.status} ${r.body.message}`);
+    src.lastPoll.dependabot = Date.now() - 24 * 3600e3;
+    assert.equal(await src.syncDependabot(), false, 'no vuelve a preguntar en esa visita, por mucho que pase');
+    assert.equal(depAsked(gh).length, 1);
+    assert.equal(errors.length, 0, 'el grafo no se entera');
+  }
+  // sin token: ninguna consulta, y la salud dice cómo verlas
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const { src, GB } = connect(gh);
+  await src.cycle();
+  assert.equal(await src.syncDependabot(), true, 'la primera vez, la salud se vuelve a pintar con la línea');
+  assert.equal(await src.syncDependabot(), false);
+  assert.deepEqual(depAsked(gh), [], 'sin token no se consulta');
+  assert.deepEqual(plain(GB.health.compute(src.data, [], Date.now()).dependabot), { state: 'notoken' });
+});
+
+test('alertas de Dependabot: la cuota agotada no es «sin permiso», un fallo se reintenta en la próxima apertura, y en GitHub Enterprise va a su host', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  let reply = { status: 403, body: { message: 'API rate limit exceeded for user ID 1.' }, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + 600) } };
+  gh.override = (path) => (path.includes('/dependabot/') ? reply : null);
+  const { src } = connect(gh, 'tok');
+  await src.cycle();
+  await assert.rejects(src.syncDependabot(), (err) => err.kind === 'rate');
+  assert.equal(src.data.dependabot ?? null, null, 'la cuota no es un permiso que falte');
+  await assert.rejects(src.syncDependabot(), (err) => err.kind === 'rate', 'ni deja de preguntar en la próxima apertura');
+  assert.equal(depAsked(gh).length, 2);
+  for (const r of [{ status: 500, body: { message: 'Server Error' } }, { status: 422, body: { message: 'Validation Failed' } }, { body: { message: 'no es una lista' } }]) {
+    src.lastPoll.dependabot = Date.now() - 16 * 60000;
+    reply = r;
+    assert.equal(await src.syncDependabot(), true);
+    assert.equal(src.data.dependabot.state, 'error', `${r.status || 200}: un fallo, no un permiso`);
+    reply = { body: [depAlert(1, 'high')] };
+    assert.equal(await src.syncDependabot(), true, 'la próxima apertura vuelve a preguntar enseguida');
+    assert.deepEqual(plain(src.data.dependabot), { state: 'ok', critical: 0, high: 1, medium: 0, low: 0, more: false });
+    reply = r;
+  }
+  gh.failOnce = (path) => path.includes('/dependabot/');
+  src.lastPoll.dependabot = Date.now() - 16 * 60000;
+  assert.equal(await src.syncDependabot(), true);
+  assert.equal(src.data.dependabot.state, 'error', 'sin red, también un fallo que se reintenta');
+  // GitHub Enterprise Server: la misma consulta a su host, y el enlace a su pestaña de seguridad
+  const ghe = fakeGitHub();
+  ghe.base = GHE;
+  ghe.repo.html_url = 'https://ghe.example.com/o/r'; // como lo da la API de GitHub Enterprise
+  ghe.push('main', 'a1');
+  ghe.override = (path) => (path.includes('/dependabot/') ? { body: [depAlert(1, 'critical')] } : null);
+  const c = connect(ghe, 'tok', GHE);
+  await c.src.cycle();
+  assert.equal(await c.src.syncDependabot(), true);
+  assert.deepEqual(depAsked(ghe), [DEPENDABOT]);
+  assert.ok(ghe.urls.filter((u) => u.includes('/dependabot/')).every((u) => u.startsWith(GHE + '/')));
+  assert.equal(c.GB.health.compute(c.src.data, [], Date.now()).dependabot.url, 'https://ghe.example.com/o/r/security/dependabot');
+});
+
+/* La cola de fusión (ítem 231): con token, la consulta de PRs de siempre pide la entrada de cada PR en la cola de su base
+   (`mergeQueueEntry { position state estimatedTimeToMerge }`), sin otra consulta; un PR fuera de la cola no cambia. */
+
+const QUEUE_FIELD = 'mergeQueueEntry { position state estimatedTimeToMerge }';
+/** Las consultas GraphQL que salieron (se anotan antes de que las responda `fakeGraphQL`). */
+function gqlSent(gh) {
+  const sent = [];
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql')) sent.push(JSON.parse(opts.body).query);
+    return fetch(url, opts);
+  };
+  return sent;
+}
+const prNode = (number, extra = {}) => ({ number, title: `PR ${number}`, isDraft: false, reviewDecision: 'APPROVED', url: `https://github.com/o/r/pull/${number}`, headRefName: `rama-${number}`, baseRefName: 'main', isCrossRepository: false, createdAt: '2026-01-01T00:00:00Z', author: null, commits: { nodes: [] }, ...extra });
+
+test('la cola de fusión: con token, la consulta de PRs de siempre trae el lugar, el estado y el tiempo estimado de los que están en ella', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  const ci = { main: 'SUCCESS', pr: null };
+  fakeGraphQL(gh, ci);
+  const sent = gqlSent(gh);
+  const nodes = [
+    prNode(7, { mergeQueueEntry: { position: 2, state: 'AWAITING_CHECKS', estimatedTimeToMerge: 600 } }),
+    prNode(8, { mergeQueueEntry: null }), // fuera de la cola
+    prNode(9, { mergeQueueEntry: { position: 1, state: 'MERGEABLE', estimatedTimeToMerge: null } }),
+    prNode(10, { mergeQueueEntry: { position: 3, state: '<b>x</b>', estimatedTimeToMerge: -5 } }), // un estado que no es de GitHub
+    prNode(11, { mergeQueueEntry: { position: '1', state: 'QUEUED' } }), // un lugar que no es un entero
+    prNode(12, { mergeQueueEntry: { position: 4, state: '__proto__', estimatedTimeToMerge: 1e12 } }),
+    prNode(13, {}), // sin el campo (una respuesta parcial)
+  ];
+  const fetch = gh.fetch;
+  gh.fetch = async (url, opts = {}) => {
+    const res = await fetch(url, opts);
+    if (!url.endsWith('/graphql') || !JSON.parse(opts.body).query.includes('defaultBranchRef')) return res;
+    const body = await res.json();
+    body.data.repository.pullRequests = { totalCount: nodes.length, nodes };
+    const text = JSON.stringify(body);
+    return { status: 200, ok: true, headers: { get: () => null }, text: async () => text, json: async () => JSON.parse(text) };
+  };
+  const { src, GB } = connect(gh, 'tok');
+  const before = Date.now();
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  const main = sent.filter((q) => q.includes('defaultBranchRef'));
+  assert.ok(main.length >= 1 && main.every((q) => q.includes(QUEUE_FIELD)), 'la consulta de PRs pide la entrada en la cola');
+  assert.equal(sent.filter((q) => q.includes('mergeQueue')).length, main.length, 'sin otra consulta para la cola');
+  const q = (n) => plain(src.data.pulls.get(n).queue ?? null);
+  const seven = q(7);
+  assert.equal(seven.position, 2);
+  assert.equal(seven.state, 'AWAITING_CHECKS');
+  assert.ok(seven.eta >= before + 600e3 && seven.eta <= Date.now() + 600e3, 'el tiempo estimado se guarda como la hora a la que se fusionaría');
+  assert.equal(q(8), null, 'fuera de la cola, nada');
+  assert.deepEqual(q(9), { position: 1, state: 'MERGEABLE', eta: null });
+  assert.deepEqual(q(10), { position: 3, state: null, eta: null }, 'un estado desconocido no se dice; un tiempo negativo tampoco');
+  assert.equal(q(11), null, 'sin un lugar entero no hay entrada');
+  assert.deepEqual(q(12), { position: 4, state: null, eta: null }, '__proto__ no es un estado; un tiempo de años, tampoco');
+  assert.equal(q(13), null);
+  assert.deepEqual(plain(GB.GitHubSource.queueOf({ position: 0, state: 'LOCKED', estimatedTimeToMerge: 0 }, 1000)), { position: 0, state: 'LOCKED', eta: 1000 }, 'el lugar 0 vale tal como lo da GitHub');
+  assert.equal(GB.GitHubSource.queueOf('x'), null);
+  assert.equal(GB.GitHubSource.queueOf({ position: -1, state: 'QUEUED' }), null);
+});
+
+test('la cola de fusión: un GitHub Enterprise sin el campo no rompe la consulta de PRs (se repite sin él y no se vuelve a pedir)', async () => {
+  const gh = fakeGitHub();
+  gh.base = GHE;
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: 'SUCCESS' });
+  const fetch = gh.fetch;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql') && JSON.parse(opts.body).query.includes('mergeQueueEntry')) {
+      // como un GitHub Enterprise viejo: el campo no existe en su esquema y la consulta entera falla
+      const body = JSON.stringify({ errors: [{ message: "Field 'mergeQueueEntry' doesn't exist on type 'PullRequest'", extensions: { code: 'undefinedField' } }] });
+      return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+    }
+    return fetch(url, opts);
+  };
+  const sent = gqlSent(gh); // la última envoltura: anota también las que rechaza el GitHub Enterprise viejo
+  const { src, errors } = connect(gh, 'tok', GHE);
+  await src.cycle();
+  assert.equal(src.mode, 'graphql', 'sigue con GraphQL: no pasa a REST por un campo');
+  assert.deepEqual(errors, [], 'sin aviso de error');
+  assert.equal(src.data.pulls.get(7).ci, 'success', 'los PRs llegan igual');
+  assert.equal(src.data.pulls.get(7).queue ?? null, null);
+  const asked = sent.filter((q) => q.includes('mergeQueueEntry')).length;
+  assert.equal(asked, 1, 'se pidió una vez');
+  await src.cycle();
+  assert.equal(sent.filter((q) => q.includes('mergeQueueEntry')).length, asked, 'y no se vuelve a pedir');
+  assert.equal(src.data.pulls.get(7).ci, 'success');
+});
+
+test('la cola de fusión: otro error de GraphQL no apaga la cola, y sin token (REST) no hay cola', async () => {
+  const gh = fakeGitHub();
+  gh.push('main', 'a1');
+  fakeGraphQL(gh, { main: 'SUCCESS', pr: 'SUCCESS', prNode: { mergeQueueEntry: { position: 1, state: 'QUEUED', estimatedTimeToMerge: 60 } } });
+  const sent = gqlSent(gh);
+  const fetch = gh.fetch;
+  let fail = 0;
+  gh.fetch = (url, opts = {}) => {
+    if (url.endsWith('/graphql') && fail && JSON.parse(opts.body).query.includes('defaultBranchRef')) {
+      fail--;
+      const body = JSON.stringify({ errors: [{ message: 'Something went wrong while executing your query.' }] });
+      return Promise.resolve({ status: 200, ok: true, headers: { get: () => null }, text: async () => body, json: async () => JSON.parse(body) });
+    }
+    return fetch(url, opts);
+  };
+  const { src, errors } = connect(gh, 'tok');
+  await src.cycle();
+  fail = 1; // ya cargado: un error pasajero corta el ciclo y se reintenta, sin pasar a REST
+  await src.cycle();
+  assert.equal(errors.length, 1, 'el fallo se dice');
+  await src.cycle();
+  assert.equal(src.mode, 'graphql');
+  assert.ok(sent.filter((q) => q.includes('defaultBranchRef')).every((q) => q.includes(QUEUE_FIELD)), 'un fallo ajeno no deja de pedir la cola');
+  assert.equal(src.data.pulls.get(7).queue.position, 1);
+
+  const rest = fakeGitHub();
+  rest.push('main', 'a1');
+  rest.pulls.push({ number: 3, state: 'open', title: 'PR 3', head: { ref: 'feat', repo: { full_name: 'o/r' } }, base: { ref: 'main' }, user: { login: 'ana' }, html_url: 'https://github.com/o/r/pull/3', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z' });
+  const r = connect(rest).src;
+  await r.cycle();
+  assert.equal(r.data.pulls.get(3).queue ?? null, null, 'el REST no da la cola: nada');
+});

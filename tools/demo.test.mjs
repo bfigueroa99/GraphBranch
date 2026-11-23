@@ -244,3 +244,31 @@ test('la firma de los commits de la demo (ítem 230): cada autor siempre igual, 
   const s = ctx.window.GB.health.compute(src.data, [], Date.now()).signed;
   assert.ok(s?.invalid >= 1 && s.unsigned >= 1, JSON.stringify(s));
 });
+
+test('la demo trae sus alertas de Dependabot (ítem 232) sin consultar nada: abiertas de las cuatro gravedades, sin enlace', () => {
+  const { src, GB } = demo(7);
+  const health = vm.createContext({ window: { GB: {} } });
+  vm.runInContext(code('health.js'), health, { filename: 'health.js' });
+  const d = health.window.GB.health.compute(src.view(), [], Date.now()).dependabot;
+  assert.equal(d?.state, 'ok', 'la salud de la demo muestra la sección');
+  assert.ok(d.critical > 0 && d.high > 0 && d.medium > 0 && d.low > 0, 'una de cada gravedad, para que se vean todas');
+  assert.equal(d.total, d.critical + d.high + d.medium + d.low);
+  assert.equal(d.more, false);
+  assert.equal(d.url, null, 'la demo no es un repo de GitHub: sin enlace');
+  assert.equal(typeof src.syncDependabot, 'undefined', 'y no tiene a quién preguntar');
+  assert.ok(GB);
+});
+
+test('la demo trae un PR en la cola de fusión (ítem 231): el aprobado de feature/login, el primero, esperando los checks', () => {
+  for (const seed of [1, 7, 42]) {
+    const { src } = demo(seed);
+    const queued = [...src.view().pulls.values()].filter((p) => p.queue);
+    assert.equal(queued.length, 1, 'uno solo, para que se vea sin llenar la demo');
+    const [p] = queued;
+    assert.equal(p.head, 'feature/login');
+    assert.equal(p.review, 'approved', 'en la cola va uno aprobado');
+    assert.equal(p.queue.position, 1);
+    assert.equal(p.queue.state, 'AWAITING_CHECKS');
+    assert.ok(p.queue.eta > Date.now() && p.queue.eta <= Date.now() + 10 * 60e3, 'con su hora estimada de fusión, unos minutos adelante');
+  }
+});

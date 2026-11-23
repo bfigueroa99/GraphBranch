@@ -301,6 +301,9 @@
           ['Dependency-Update-Tool', 10, 'update tool detected'],
         ].map(([name, score, reason]) => ({ name, score, reason })),
       };
+      // las alertas de Dependabot abiertas, como las contaría la fuente de GitHub (solo las cifras, ítem 232): una de cada
+      // gravedad por lo menos, para que se vean todas; la demo no es un repo de GitHub, así que la salud no lleva enlace
+      this.data.dependabot = { state: 'ok', critical: 1, high: 2, medium: 4, low: 3, more: false };
       this.data.forks = [
         { fullName: 'maya-dev/orbita', url: 'https://github.com/maya-dev/orbita', pushedAt: Date.now() - 6 * 36e5, stars: 4 },
         { fullName: 'lucas-r/orbita', url: 'https://github.com/lucas-r/orbita', pushedAt: Date.now() - 9 * 864e5, stars: 0 },
@@ -345,6 +348,9 @@
       this.prSeq = 35;
       openPR('feature/login', 'develop', S.prLogin, J, false, [], [J]);
       this.data.pulls.get(this.prSeq).review = 'approved';
+      // aprobado y en la cola de fusión de develop, el primero, esperando los checks de su grupo (ítem 231): un dato fijo,
+      // sin gastar el azar de la demo
+      this.data.pulls.get(this.prSeq).queue = { position: 1, state: 'AWAITING_CHECKS', eta: Date.now() + 9 * 60e3 };
       openPR('feature/dark-mode', 'feature/login', S.prDark, T, true, [], [T]);
       openPR('fix/rate-limit', 'main', S.prRetry, M, false, [V, J]);
       openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP, false, [M], [V]);

@@ -621,3 +621,15 @@ test('la firma de los commits (ítem 230) es solo de GitHub: el verification de 
   await src.cycle();
   for (const sha of ['m1', 'm2', 'm3']) assert.equal(src.data.commits.get(sha).sig, undefined, `${sha} no dice nada de su firma`);
 });
+
+test('las alertas de Dependabot (ítem 232) son solo de GitHub: Codeberg y Forgejo no las piden ni dicen nada, con token o sin él', async () => {
+  for (const opts of [{}, { token: 'de-codeberg' }]) {
+    const cb = repo();
+    if (opts.token) cb.expectAuth = 'token de-codeberg';
+    const { src } = connect(cb, opts);
+    await src.cycle();
+    assert.equal(await src.syncDependabot(), false);
+    assert.ok(cb.calls.every((c) => !c.includes('dependabot')), `consultó ${JSON.stringify(cb.calls.filter((c) => c.includes('dependabot')))}`);
+    assert.equal(src.data.dependabot ?? null, null, 'la salud no muestra la sección');
+  }
+});

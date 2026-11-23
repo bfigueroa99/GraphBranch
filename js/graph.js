@@ -27,6 +27,10 @@
   const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
   const easeOut = (p) => 1 - (1 - p) ** 3;
   const TAU = Math.PI * 2;
+  /** Cuánto lleva un efecto, nunca menos de 0. `requestDraw` toma `now` al empezar el cuadro y `drawFx` corre ahí los
+      efectos aplazados (`later`): el que nace en ese momento toma su `t0` de `performance.now()`, después de `now`, y
+      con un cuadro lento su primer dibujo caía antes de su comienzo (una onda con radio negativo: `arc` lanzaba). */
+  const sinceStart = (now, t0) => Math.max(0, now - t0);
 
   /** '#rrggbb' -> 'rgba(r,g,b,a)' (los gradientes del canvas piden el alfa en el color). */
   function rgba(hex, a) {
@@ -162,6 +166,8 @@
       const stack = ctx.stacks?.get(branch);
       if (stack) rows.push(`<span class="tip-stack">${i18n.html('tip.stacked', { num: stack.parentNum, parent: stack.parent })}</span>`);
       if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${U.safeUrl(pr.url) ? ` · <a href="${U.esc(U.safeUrl(pr.url))}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
+      const queue = queueText(pr?.queue);
+      if (queue) rows.push(`<span class="tip-queue">${U.esc(queue)}</span>`);
       if (pr?.reviewers?.length) {
         const VOTES = { yes: 'tip.voteYes', no: 'tip.voteNo', wait: 'tip.voteWait' };
         const list = pr.reviewers.map((r) => (VOTES[r.vote] ? `${r.name} (${tr(VOTES[r.vote])})` : r.name)).join(', ');
@@ -181,6 +187,23 @@
         ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
         ${branch && ctx.hasMore?.(branch) ? `<button type="button" class="tip-more" data-branch="${U.esc(branch)}">${i18n.html('tip.more', { branch: U.truncate(branch, 28) })}</button><span class="tip-more-note" role="status"></span>` : ''}
       </div>` : ''}`;
+  }
+
+  /** Los estados de una entrada de la cola de fusión de GitHub que tienen texto (`pr.queueState.*`). */
+  const QUEUE_STATES = ['QUEUED', 'AWAITING_CHECKS', 'MERGEABLE', 'UNMERGEABLE', 'LOCKED'];
+
+  /** Lo que dice la ficha de una rama cuyo PR está en la cola de fusión (ítem 231): su lugar, su estado si GitHub lo da y,
+      si todavía no pasó, cuánto falta para la hora a la que GitHub estimó que se fusionaría. '' fuera de la cola. */
+  function queueText(q, now = Date.now()) {
+    if (!q || !Number.isInteger(q.position)) return '';
+    const left = Number.isFinite(q.eta) ? q.eta - now : -1;
+    return [
+      tr('pr.queue', { pos: U.fmtNum(q.position) }),
+      QUEUE_STATES.includes(q.state) ? tr(`pr.queueState.${q.state}`) : '',
+      left > 0 ? tr('pr.queueEta', { time: i18n.fmtSpan(Math.max(60e3, left)) }) : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   const pinLabel = (branch, on) => i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) });
@@ -1893,7 +1916,7 @@
     ripple(name, col, k = 1) {
       const t0 = performance.now();
       this.fx.push((now, c) => {
-        const p = (now - t0) / 1300;
+        const p = sinceStart(now, t0) / 1300;
         const at = this.branchAt(name);
         if (p >= 1 || !at) return false;
         c.globalAlpha = (this.dark ? 0.9 : 0.75) * (1 - p) ** 1.5;
@@ -1934,7 +1957,7 @@
       this.fx.push((now, c) => {
         const pts = route();
         if (!pts) return false;
-        const p = (now - t0) / DUR_C;
+        const p = sinceStart(now, t0) / DUR_C;
         const q = p < 1 ? 0 : (now - t0 - DUR_C) / 700; // la estela entra en la base y se apaga
         if (q >= 1) return false;
         const cum = measurePath(pts);
@@ -1986,7 +2009,7 @@
       this.ripple(name, col);
       const t0 = performance.now();
       this.fx.push((now, c) => {
-        const s = (now - t0) / 1000;
+        const s = sinceStart(now, t0) / 1000;
         const at = this.branchAt(name);
         if (s >= 3.4 || !at) return false;
         const h = (30 + this.geo.lane * 1.6) * easeOut(clamp(s / 0.6, 0, 1));
@@ -2126,9 +2149,12 @@
       c.clip();
       c.globalCompositeOperation = this.dark ? 'lighter' : 'source-over';
       c.lineCap = 'round';
-      for (let i = this.fx.length - 1; i >= 0; i--) if (!this.fx[i](now, c)) this.fx.splice(i, 1);
-      this.stepSparks(c, dt);
-      c.restore();
+      try {
+        for (let i = this.fx.length - 1; i >= 0; i--) if (!this.fx[i](now, c)) this.fx.splice(i, 1);
+        this.stepSparks(c, dt);
+      } finally {
+        c.restore(); // un efecto que falla no deja el recorte puesto para los cuadros que siguen
+      }
       return true;
     }
 
@@ -2260,5 +2286,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireMoreButton, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, queueText, wirePinButton, wireViewButtons, wireMoreButton, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

@@ -6824,6 +6824,112 @@ if (seccion('Alertas de Dependabot en la salud'))
   await page.context().close();
 }
 
+if (seccion('La cola de fusión de GitHub (GraphQL simulado)'))
+{
+  // ítem 231: con token, la consulta de PRs de siempre trae la entrada de cada uno en la cola de fusión de su base; la
+  // ficha de la rama de un PR en la cola dice su lugar y su estado, y el Launchpad lo marca. Un GraphQL mínimo sobre el
+  // repo simulado: la consulta del ciclo (ramas, listado y PRs), la de una rama suelta y la de la historia
+  const gh = fakeGitHub();
+  const Q = gh.repo('o/q');
+  for (const b of ['feat/cola', 'feat/fuera']) Q.branches.set(b, Q.branches.get('main')); // salen de main
+  gh.push('o/q', 'feat/cola', 'cambio en la cola');
+  gh.push('o/q', 'feat/fuera', 'cambio fuera de la cola');
+  gh.repo('o/a');
+  const sent = [];
+  const prs = {
+    'o/q': [
+      { number: 7, title: 'En la cola', head: 'feat/cola', entry: { position: 2, state: 'AWAITING_CHECKS', estimatedTimeToMerge: 1200 } },
+      { number: 8, title: 'Fuera de la cola', head: 'feat/fuera', entry: null },
+    ],
+  };
+  const graphql = (r) => {
+    const { query, variables = {} } = JSON.parse(r.request().postData() || '{}');
+    sent.push(query);
+    const full = `${variables.owner}/${variables.name}`;
+    const R = gh.repo(full);
+    const date = (s) => R.commits.get(s)?.commit.committer.date;
+    const target = (s) => ({ oid: s, committedDate: date(s), statusCheckRollup: { state: 'SUCCESS' } });
+    const repository = {};
+    if (query.includes('defaultBranchRef')) {
+      const nodes = (prs[full] || []).map((p) => ({
+        number: p.number, title: p.title, isDraft: false, reviewDecision: 'APPROVED', url: `https://github.com/${full}/pull/${p.number}`, headRefName: p.head, baseRefName: 'main',
+        isCrossRepository: false, createdAt: new Date(Date.now() - 3600e3).toISOString(), author: { login: 'bea', avatarUrl: null }, reviewRequests: { nodes: [] }, assignees: { nodes: [] },
+        commits: { nodes: [{ commit: { statusCheckRollup: { state: 'SUCCESS' } } }] },
+        ...(query.includes('mergeQueueEntry') ? { mergeQueueEntry: p.entry } : {}),
+      }));
+      Object.assign(repository, {
+        defaultBranchRef: { name: 'main', target: target(R.branches.get('main')) },
+        all: { totalCount: R.branches.size },
+        pullRequests: { totalCount: nodes.length, nodes },
+      });
+      if (query.includes('page: refs(')) repository.page = { totalCount: R.branches.size, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [...R.branches].map(([name, s]) => ({ name, target: target(s) })) };
+    }
+    for (const m of query.matchAll(/(t\d+): ref\(qualifiedName: "refs\/heads\/([^"]+)"\)/g)) repository[m[1]] = R.branches.has(m[2]) ? { target: target(R.branches.get(m[2])) } : null;
+    for (const m of query.matchAll(/(h\d+): object\(oid: "([0-9a-f]+)"\) \{ \.\.\. on Commit \{ history\(first: (\d+)\)/g)) {
+      const nodes = [];
+      for (let s = m[2]; s && R.commits.has(s) && nodes.length < Number(m[3]); s = R.commits.get(s).parents[0]?.sha) {
+        const c = R.commits.get(s);
+        nodes.push({ oid: s, url: c.html_url, committedDate: c.commit.committer.date, messageHeadline: c.commit.message, messageBody: '', author: { name: 'Ana', email: '', user: null }, parents: { nodes: c.parents.map((p) => ({ oid: p.sha })) }, signature: null });
+      }
+      repository[m[1]] = { history: { nodes } };
+    }
+    const body = { data: { rateLimit: { cost: 1, remaining: 4900, limit: 5000, resetAt: new Date(Date.now() + 3600e3).toISOString() }, repository } };
+    return r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type' }, body: JSON.stringify(body) });
+  };
+  const page = await openPage({ viewport: { width: 1280, height: 800 } });
+  await page.unroute('https://api.github.com/**');
+  await page.route('https://api.github.com/**', (r) => (new URL(r.request().url()).pathname === '/graphql' ? graphql(r) : gh.handle(r)));
+  await page.addInitScript(() => localStorage.setItem('graphbranch:token', JSON.stringify('ghp_colafusion0123')));
+  /** Abre con el teclado la ficha de la rama `name` del grafo 2D y devuelve su texto, con lo que dice de la cola. */
+  const tipOf = async (name) => {
+    await page.keyboard.press('Escape');
+    const head = await page.waitForFunction((n) => [...document.querySelectorAll('#graph svg .head[role=button]:not(.exit)')].find((h) => h.querySelector('.h-name')?.textContent === n), name, { timeout: T(10000) });
+    await head.asElement().focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#graph .tip:not([hidden]) .tip-extra', { timeout: T(3000) });
+    return page.evaluate(() => ({ queue: document.querySelector('#graph .tip:not([hidden]) .tip-queue')?.textContent ?? null, extra: document.querySelector('#graph .tip:not([hidden]) .tip-extra')?.textContent || '' }));
+  };
+  await step(page, 'con token, la ficha de la rama de un PR en la cola de fusión dice su lugar, su estado y cuánto falta; la de uno fuera de la cola, nada', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/q`);
+    await loaded(page);
+    await page.waitForSelector('#status:not([data-state=loading])', { timeout: T(20000) });
+    await page.click('#view-2d');
+    const cola = await tipOf('feat/cola');
+    if (!/^En la cola de fusión: puesto 2 · esperando los checks · se fusionaría en unos (19|20) min$/.test(cola.queue || '')) throw new Error(`la ficha del PR en la cola dice ${JSON.stringify(cola)}`);
+    if (!/PR #7/.test(cola.extra)) throw new Error(`la ficha no es la del PR #7: ${cola.extra}`);
+    const fuera = await tipOf('feat/fuera');
+    if (fuera.queue !== null || !/PR #8/.test(fuera.extra)) throw new Error(`la ficha del PR fuera de la cola dice ${JSON.stringify(fuera)}`);
+    await page.keyboard.press('Escape');
+    const cycle = sent.filter((q) => q.includes('pullRequests('));
+    if (!cycle.length || cycle.some((q) => !q.includes('mergeQueueEntry { position state estimatedTimeToMerge }'))) throw new Error('la consulta de PRs no pide la entrada en la cola');
+    if (sent.filter((q) => /mergeQueue/.test(q)).length !== cycle.length) throw new Error('la cola se pidió en otra consulta');
+  }, { allow: /404/ });
+  await step(page, 'el Launchpad marca el PR en la cola con su lugar y su estado, también en su nombre accesible, y a 320 px en árabe no desborda', async () => {
+    await page.goto(`${base}/index.html?lang=es&repo=o/q,o/a&all=1`);
+    await loaded(page);
+    const chip = await page.waitForSelector('#all-prs .ap-row[data-number="7"] .ap-queue', { timeout: T(20000) });
+    const row = await page.$eval('#all-prs .ap-row[data-number="7"]', (b) => ({ label: b.getAttribute('aria-label'), group: b.closest('.ap-group').dataset.group }));
+    if ((await chip.textContent()) !== 'En la cola de fusión: puesto 2 · esperando los checks') throw new Error(`la marca dice ${await chip.textContent()}`);
+    if (!row.label.endsWith('. En la cola de fusión: puesto 2 · esperando los checks') || row.group !== 'approved') throw new Error(`la fila: ${JSON.stringify(row)}`);
+    if (await page.$('#all-prs .ap-row[data-number="8"] .ap-queue')) throw new Error('el PR fuera de la cola lleva la marca');
+    if (!(await page.$('#all-prs .ap-row[data-number="8"]'))) throw new Error('el PR fuera de la cola no está en el Launchpad');
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(`${base}/index.html?lang=ar&repo=o/q,o/a&all=1`);
+    await loaded(page);
+    await page.waitForSelector('#all-prs .ap-row[data-number="7"] .ap-queue', { timeout: T(20000) });
+    const m = await page.evaluate(() => {
+      const c = document.querySelector('#all-prs .ap-row[data-number="7"] .ap-queue');
+      const b = c.closest('.ap-row').getBoundingClientRect();
+      const r = c.getBoundingClientRect();
+      return { text: c.textContent, dir: getComputedStyle(c).direction, inside: r.left >= b.left - 1 && r.right <= b.right + 1, page: document.documentElement.scrollWidth <= document.documentElement.clientWidth };
+    });
+    if (!/^في قائمة انتظار الدمج: الموضع ٢ · بانتظار الفحوصات$/.test(m.text.replace(/[⁨⁩]/g, '')) && !/^في قائمة انتظار الدمج: الموضع 2 · بانتظار الفحوصات$/.test(m.text)) throw new Error(`en árabe la marca dice ${m.text}`);
+    if (m.dir !== 'rtl' || !m.inside || !m.page) throw new Error(`a 320 px en árabe: ${JSON.stringify(m)}`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+  }, { allow: /404/ });
+  await page.context().close();
+}
+
 if (seccion('Tiempo de ciclo: las revisiones que el feed no trajo'))
 {
   // ítem 223: un PR fusionado que se abrió antes de la actividad cargada entra en las etapas con sus revisiones, que se

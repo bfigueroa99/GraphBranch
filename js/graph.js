@@ -162,6 +162,8 @@
       const stack = ctx.stacks?.get(branch);
       if (stack) rows.push(`<span class="tip-stack">${i18n.html('tip.stacked', { num: stack.parentNum, parent: stack.parent })}</span>`);
       if (pr) rows.push(`<span>${i18n.html(prKey(pr, pr.draft ? 'tip.prDraft' : 'tip.pr'), { num: pr.number, base: pr.base })}${U.safeUrl(pr.url) ? ` · <a href="${U.esc(U.safeUrl(pr.url))}" target="_blank" rel="noopener">${U.esc(tr(prKey(pr, 'tip.viewPr')))}</a>` : ''}</span>`);
+      const queue = queueText(pr?.queue);
+      if (queue) rows.push(`<span class="tip-queue">${U.esc(queue)}</span>`);
       if (pr?.reviewers?.length) {
         const VOTES = { yes: 'tip.voteYes', no: 'tip.voteNo', wait: 'tip.voteWait' };
         const list = pr.reviewers.map((r) => (VOTES[r.vote] ? `${r.name} (${tr(VOTES[r.vote])})` : r.name)).join(', ');
@@ -181,6 +183,23 @@
         ${branch && ctx.canHide ? viewButtonsHTML(branch) : ''}
         ${branch && ctx.hasMore?.(branch) ? `<button type="button" class="tip-more" data-branch="${U.esc(branch)}">${i18n.html('tip.more', { branch: U.truncate(branch, 28) })}</button><span class="tip-more-note" role="status"></span>` : ''}
       </div>` : ''}`;
+  }
+
+  /** Los estados de una entrada de la cola de fusión de GitHub que tienen texto (`pr.queueState.*`). */
+  const QUEUE_STATES = ['QUEUED', 'AWAITING_CHECKS', 'MERGEABLE', 'UNMERGEABLE', 'LOCKED'];
+
+  /** Lo que dice la ficha de una rama cuyo PR está en la cola de fusión (ítem 231): su lugar, su estado si GitHub lo da y,
+      si todavía no pasó, cuánto falta para la hora a la que GitHub estimó que se fusionaría. '' fuera de la cola. */
+  function queueText(q, now = Date.now()) {
+    if (!q || !Number.isInteger(q.position)) return '';
+    const left = Number.isFinite(q.eta) ? q.eta - now : -1;
+    return [
+      tr('pr.queue', { pos: U.fmtNum(q.position) }),
+      QUEUE_STATES.includes(q.state) ? tr(`pr.queueState.${q.state}`) : '',
+      left > 0 ? tr('pr.queueEta', { time: i18n.fmtSpan(Math.max(60e3, left)) }) : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   const pinLabel = (branch, on) => i18n.html(on ? 'tip.unpin' : 'tip.pin', { branch: U.truncate(branch, 28) });
@@ -2260,5 +2279,5 @@
   }
 
   GB.Graph = Graph;
-  GB.graphShared = { tipHTML, wirePinButton, wireViewButtons, wireMoreButton, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
+  GB.graphShared = { tipHTML, queueText, wirePinButton, wireViewButtons, wireMoreButton, wireDiffButton, wirePrButton, prBodyHTML, focusTip, returnFocus, measure, fitText, prRef, prKey, CI_MARK, ciText, LABEL_FONT, SMALL_FONT };
 })(window.GB);

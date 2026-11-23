@@ -3566,6 +3566,12 @@ kbd {
   border-radius: 2px;
   background: var(--s7);
 }
+/* el PR de la rama, en la cola de fusión (ítem 231): su lugar, su estado y cuánto falta, en el color del texto */
+.tip-queue {
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
 .tip-refs code {
   padding: 1px 5px;
   border-radius: 5px;
@@ -7355,6 +7361,18 @@ a.ap-row {
 .ap-m {
   font-size: 11px;
   color: var(--ink-2);
+}
+/* un PR en la cola de fusión de GitHub (ítem 231): su lugar y su estado; parte la línea antes que cortarla, porque el
+   estado es lo que se quiere leer (en alemán o en tamil no cabe en una fila angosta) */
+.ap-queue {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
 }
 /* con una persona elegida: por qué está un PR que no abrió ella (se le pidió revisión o está asignada) */
 .ap-role {

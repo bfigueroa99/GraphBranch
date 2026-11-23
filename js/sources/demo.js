@@ -348,6 +348,9 @@
       this.prSeq = 35;
       openPR('feature/login', 'develop', S.prLogin, J, false, [], [J]);
       this.data.pulls.get(this.prSeq).review = 'approved';
+      // aprobado y en la cola de fusión de develop, el primero, esperando los checks de su grupo (ítem 231): un dato fijo,
+      // sin gastar el azar de la demo
+      this.data.pulls.get(this.prSeq).queue = { position: 1, state: 'AWAITING_CHECKS', eta: Date.now() + 9 * 60e3 };
       openPR('feature/dark-mode', 'feature/login', S.prDark, T, true, [], [T]);
       openPR('fix/rate-limit', 'main', S.prRetry, M, false, [V, J]);
       openPR('claude/search-index', 'develop', this.prTitleOf(agentBranch), CLAUDE_APP, false, [M], [V]);

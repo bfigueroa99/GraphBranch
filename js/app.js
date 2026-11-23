@@ -4059,8 +4059,8 @@
 
   function renderTokenBanner() {
     const data = source?.data;
-    // el aviso es del token de GitHub: a un proyecto de GitLab o de Codeberg no le cambia nada
-    const show = data && !data.repo.demo && !FORGES[data.repo.host] && !settings.token && data.mode;
+    // el aviso es del token de GitHub: a un proyecto de GitLab o de Codeberg, o a un repo local, no le cambia nada
+    const show = data && !data.repo.demo && !FORGES[data.repo.host] && data.repo.host !== 'local' && !settings.token && data.mode;
     el.tokenBanner.hidden = !show;
     if (!show) return;
     el.tokenBannerText.textContent =

@@ -579,6 +579,8 @@ test('un repositorio de esta máquina se sigue sin GitHub: ve un commit y una ra
   await expect(page.locator('#repo-badge')).toHaveText('local');
   await expect(page.locator('#st-branches')).toHaveText('1');
   await expect(page.locator('#st-commits')).toHaveText('1');
+  // el aviso de las 60 consultas por hora es del token de GitHub: a un repo local no le cambia nada
+  await expect(page.locator('#token-banner')).toBeHidden();
   // un commit nuevo llega sin esperar al sondeo (el proceso principal vigila .git)
   repo.commit('b.txt', 'segundo');
   await expect(page.locator('#st-commits')).toHaveText('2', { timeout: 3_000 });

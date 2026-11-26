@@ -6,7 +6,8 @@
    carpeta con `git` (electron/git.js) y la página solo conoce su id, el de una carpeta que el usuario
    eligió; sin GitHub ni cuota, sirve para repos privados, sin conexión y de cualquier servidor.
 
-   - Las ramas son las locales (refs/heads), también las que nunca se publicaron.
+   - Las ramas son las locales (refs/heads), también las que nunca se publicaron, y las remotas (refs/remotes,
+     `origin/x`) que no tienen una local con su nombre: lo que otro publicó y llegó con un fetch.
    - La historia de una rama sale de `git log`: lo suyo desde la rama por defecto (una rama nueva),
      lo nuevo desde su cabeza anterior (una rama que se movió) o sus últimos commits.
    - Cada cambio en .git (un commit, una rama nueva o borrada, un fetch) llega al instante porque el

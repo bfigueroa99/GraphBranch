@@ -35,6 +35,9 @@
     ['opencode', /\bopen[ -]?code\b/i],
     ['aider', /\baider\b/i],
     ['openhands', /\bopen[ -]?hands\b/i],
+    ['openclaw', /\bopen[ -]?claw\b/i],
+    ['hermes', /\bhermes\b/i],
+    ['zeroclaw', /\bzero[ -]?claw\b/i],
   ];
 
   const num = (v) => {

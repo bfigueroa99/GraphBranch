@@ -1,5 +1,6 @@
 /* GraphBranch — agentes e interacciones. Reconoce qué commits y qué cuentas son de un agente (Claude Code, GitHub
-   Copilot, Codex, Cursor, Devin, Jules, Gemini, OpenCode, Aider, OpenHands) o de un bot (Dependabot, Renovate, GitHub
+   Copilot, Codex, Cursor, Devin, Jules, Gemini, OpenCode, Aider, OpenHands, OpenClaw, Hermes Agent, ZeroClaw) o de un bot
+   (Dependabot, Renovate, GitHub
    Actions, cualquier `[bot]`), y cada sesión de un agente por separado cuando el commit la nombra (`Claude-Session:`,
    `sesión cse_…`). Con eso cuenta quién trabaja con quién, entre personas, entre agentes y entre unos y otros:
    quién continuó la rama de quién, quién fusionó el trabajo de quién (y en qué PR) y quién revisó o comentó el PR de
@@ -23,8 +24,13 @@
   const OTHERS = COLORS + 1;
 
   /* Agentes conocidos. `login`: su cuenta en el servicio; `author`: el nombre con que firma sus commits; `email`: su
-     correo (si se conoce, tiene que calzar con `author`); `co`: cómo se nombra en un `Co-Authored-By:`. */
+     correo (si se conoce, tiene que calzar con `author`); `mail`: un correo que basta solo, con cualquier nombre; `co`:
+     cómo se nombra en un `Co-Authored-By:` (`coEmail`, su correo ahí). */
   const BOT = /\[bot\]$/i;
+  /* Hermes Agent (NousResearch) firma `Hermes <hermes@localhost>` el commit con que nace un repo desde su web, y su
+     proyecto trata como de IA hermes@, noreply@ y nousbot@nousresearch.com (scripts/contributor_audit.py). «Hermes» a
+     secas es también un nombre de persona: sin uno de estos correos, solo «Hermes Agent» cuenta. */
+  const HERMES_MAIL = /^(hermes@localhost|(hermes|noreply|nousbot)@nousresearch\.com)$/i;
   const KNOWN = [
     { id: 'claude', name: 'Claude Code', login: /^claude(\[bot\])?$/i, author: /^claude$/i, email: /(^|[.@])anthropic\.com$/i, co: /^claude\b/i, coEmail: /@anthropic\.com$/i },
     { id: 'copilot', name: 'GitHub Copilot', login: /^(copilot|copilot-swe-agent(\[bot\])?|copilot-pull-request-reviewer(\[bot\])?)$/i, author: /^copilot$/i, co: /^copilot\b/i },
@@ -36,15 +42,26 @@
     { id: 'opencode', name: 'OpenCode', login: /^opencode(-agent)?(\[bot\])?$/i, author: /^opencode$/i, co: /^opencode\b/i, coEmail: /@opencode\.ai$/i },
     { id: 'aider', name: 'Aider', author: /\(aider\)$/i, co: /^aider\b/i, coEmail: /@aider\.chat$/i },
     { id: 'openhands', name: 'OpenHands', login: /^openhands(-agent)?(\[bot\])?$/i, author: /^openhands$/i, co: /^openhands\b/i },
+    /* OpenClaw no se pone de co-autor (solo acredita a personas) y publica con la cuenta que elija quien lo usa; lo que sí
+       deja es el trailer `OpenClaw-Publication:` y el pie «Made with [OpenClaw]» (ver SIGNATURES). ZeroClaw firma con la
+       identidad de quien lo usa y no deja ninguna seña propia: los dos se reconocen además por su nombre. */
+    { id: 'openclaw', name: 'OpenClaw', author: /^openclaw$/i, co: /^openclaw\b/i },
+    { id: 'hermes', name: 'Hermes Agent', author: /^hermes agent$/i, mail: HERMES_MAIL, co: /^hermes agent\b/i, coEmail: HERMES_MAIL },
+    { id: 'zeroclaw', name: 'ZeroClaw', author: /^zeroclaw$/i, co: /^zeroclaw\b/i },
     { id: 'dependabot', name: 'Dependabot', login: /^dependabot(\[bot\])?$/i, author: /^dependabot(\[bot\])?$/i, bot: true },
     { id: 'renovate', name: 'Renovate', login: /^renovate(\[bot\])?$/i, author: /^renovate(\[bot\])?$/i, bot: true },
     { id: 'actions', name: 'GitHub Actions', login: /^github-actions(\[bot\])?$/i, author: /^github-actions(\[bot\])?$/i, bot: true },
   ];
   const BY_ID = new Map(KNOWN.map((k) => [k.id, k]));
-  /* «Generated with [Claude Code]», «Generated with [opencode]»: la firma que dejan algunos agentes al pie */
+  /* «Generated with [Claude Code]», «Generated with [opencode]»: la firma que dejan algunos agentes al pie. De OpenClaw,
+     el trailer de lo que publica desde su Gateway (`OpenClaw-Publication: <id>`, su id es la sesión: ver sessionOf) y el
+     pie «🦞 Made with [OpenClaw](https://openclaw.ai)» de sus PR (apagado por omisión; llega a un commit con un squash). */
+  const PUBLICATION = /^[ \t]*openclaw-publication:[ \t]*([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})[ \t]*$/im;
   const SIGNATURES = [
     [/generated with \[?claude code\]?/i, 'claude'],
     [/generated with \[?opencode\]?/i, 'opencode'],
+    [PUBLICATION, 'openclaw'],
+    [/made with \[?openclaw\]?/i, 'openclaw'],
   ];
 
   const clean = (s, max = 80) => String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -62,13 +79,16 @@
   }
 
   /** La sesión que nombra un mensaje: el trailer `<Algo>-Session:` (con una URL o el id solo), una URL de sesión de
-      Claude Code o «sesión cse_…» / «session cse_…» (los reclamos del loop). null si no nombra ninguna. */
+      Claude Code, el id de una publicación de OpenClaw (`OpenClaw-Publication:`) o «sesión cse_…» / «session cse_…»
+      (los reclamos del loop). null si no nombra ninguna. */
   function sessionOf(message) {
     const s = String(message || '');
     const url = /claude\.ai\/code\/session_([A-Za-z0-9_-]{4,80})/i.exec(s);
     if (url) return sessionId(url[1]);
     const trailer = /^[ \t]*[A-Za-z][\w-]*-session:[ \t]*(\S+)/im.exec(s);
     if (trailer) return sessionId(trailer[1].replace(/[/?#]+$/, '').split(/[/?#=]/).pop());
+    const pub = PUBLICATION.exec(s);
+    if (pub) return sessionId(pub[1]);
     const word = /\bsess?i(?:ó|o)n[ \t]+((?:cse_|session_)[A-Za-z0-9_-]{4,80})/i.exec(s);
     return word ? sessionId(word[1]) : null;
   }
@@ -86,6 +106,7 @@
     const e = clean(email, 120);
     for (const k of KNOWN) {
       if (l && k.login?.test(l)) return k;
+      if (e && k.mail?.test(e)) return k;
       if (n && k.author?.test(n) && (!e || !k.email || k.email.test(e) || /noreply/i.test(e))) return k;
     }
     return null;

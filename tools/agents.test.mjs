@@ -69,6 +69,37 @@ test('otros agentes y bots, por cuenta, por nombre o por co-autor', () => {
   assert.equal(detectActor({ login: 'bfigueroa99' }), null);
 });
 
+test('OpenClaw, Hermes Agent y ZeroClaw, solo con las señas que dejan de verdad', () => {
+  /* Lo que firman según su código (2026-11-26): OpenClaw no se pone de co-autor, pero sus PR publicados desde el
+     Gateway llevan el trailer `OpenClaw-Publication: <id>` y, si se activa, el pie «🦞 Made with [OpenClaw]»; Hermes
+     firma `Hermes <hermes@localhost>` el primer commit de un repo nuevo y su proyecto trata como de IA
+     hermes@, noreply@ y nousbot@nousresearch.com; ZeroClaw firma con la identidad de quien lo usa. */
+  const id = '9150bc10-f212-8d84-9f99-b8ab6f4a466f';
+  const pub = detect({ name: 'mi-cuenta', login: 'mi-cuenta' }, `Publish openclaw/arreglo\n\nWorked on by:\n- @ana\n\nOpenClaw-Publication: ${id}`);
+  assert.deepEqual(plain(pub), { id: 'openclaw', name: 'OpenClaw', bot: false, model: null, session: id });
+  assert.equal(detect({ name: 'Ana' }, 'Arreglo (#12)\n\n🦞 Made with [OpenClaw](https://openclaw.ai)').id, 'openclaw');
+  assert.equal(detect({ name: 'OpenClaw', email: 'claw@minipc.local' }, 'Fix').id, 'openclaw');
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-authored-by: OpenClaw <openclaw@ejemplo.cl>').id, 'openclaw');
+  // Hermes: el nombre del agente, o su correo
+  assert.equal(detect({ name: 'Hermes', email: 'hermes@localhost' }, 'Initial commit').id, 'hermes');
+  assert.equal(detect({ name: 'Hermes Agent', email: 'agent@hermes.local' }, 'Fix').id, 'hermes');
+  assert.equal(detect({ name: 'cualquiera', email: 'nousbot@nousresearch.com' }, 'Fix').id, 'hermes');
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-authored-by: Hermes Agent <hermes@nousresearch.com>').id, 'hermes');
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-authored-by: Hermes <hermes@localhost>').id, 'hermes');
+  assert.equal(detectActor({ name: 'Hermes Agent' })?.id, 'hermes');
+  // una persona que se llama Hermes no es el agente
+  assert.equal(detect({ name: 'Hermes', email: 'hermes.soto@ejemplo.cl' }, 'Fix'), null);
+  assert.equal(detect({ name: 'Hermes Soto', email: 'hermes@localhost.cl' }, 'Fix'), null);
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-authored-by: Hermes Soto <hermes.soto@ejemplo.cl>'), null);
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-authored-by: Hermes <hermes@ejemplo.cl>'), null);
+  // ZeroClaw: solo por su nombre
+  assert.equal(detect({ name: 'ZeroClaw', email: 'zeroclaw@minipc' }, 'Fix').id, 'zeroclaw');
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nCo-Authored-By: ZeroClaw <zeroclaw@ejemplo.cl>').id, 'zeroclaw');
+  // un trailer que se le parece no cuenta, y las ramas openclaw/… o hermes/… no hacen agente un commit de una persona
+  assert.equal(detect({ name: 'Ana' }, 'Fix\n\nOpenClaw-Publication: pendiente'), null);
+  assert.equal(detect({ name: 'Ana' }, 'Merge branch openclaw/arreglo'), null);
+});
+
 test('sesiones, co-autores y números de PR', () => {
   assert.equal(sessionOf(`x\n\nClaude-Session: https://claude.ai/code/session_${S1}`), S1);
   assert.equal(sessionOf('x\n\nAgent-Session: abc12345'), 'abc12345');

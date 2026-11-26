@@ -132,25 +132,32 @@ function dirOf(id) {
   return dir;
 }
 
-/** Las ramas locales con su cabeza, la rama por defecto y el nombre de la carpeta. */
+/** Las ramas con su cabeza, la rama por defecto y el nombre de la carpeta. Las locales (refs/heads), también las que nunca
+    se publicaron, y las remotas (refs/remotes: `origin/x`, lo último que trajo un fetch) que no tienen una local con su
+    nombre: la que alguien publicó y aquí no está. Una remota con local (`origin/main` y `main`) no se dibuja aparte: manda
+    la local. Sin `origin/HEAD` ni ninguna otra referencia simbólica. */
 async function branches(id) {
   const dir = dirOf(id);
   const [refs, head, init, abs] = await Promise.all([
-    git(dir, ['for-each-ref', '--format=%(refname:short)%09%(objectname)%09%(committerdate:unix)', 'refs/heads']),
+    git(dir, ['for-each-ref', '--format=%(refname)%09%(objectname)%09%(committerdate:unix)%09%(symref)', 'refs/heads', 'refs/remotes']),
     git(dir, ['symbolic-ref', '--quiet', '--short', 'HEAD']).catch(() => ''),
     git(dir, ['config', '--get', 'init.defaultBranch']).catch(() => ''),
     git(dir, ['rev-parse', '--absolute-git-dir']),
   ]);
-  const list = refs
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [name, sha, date] = line.split('\t');
-      return { name, sha, date: Number(date) * 1000 || 0 };
-    });
-  // la rama por defecto: a la que apunta origin/HEAD, si no la que tiene HEAD, si no main o master
+  const locals = [];
+  const remotes = [];
+  for (const line of refs.split('\n')) {
+    const [ref, sha, date, symref] = line.split('\t');
+    if (!ref || symref) continue;
+    const b = { name: '', sha, date: Number(date) * 1000 || 0 };
+    if (ref.startsWith('refs/heads/')) locals.push({ ...b, name: ref.slice('refs/heads/'.length) });
+    else if (ref.startsWith('refs/remotes/')) remotes.push({ ...b, name: ref.slice('refs/remotes/'.length) });
+  }
+  const names = new Set(locals.map((b) => b.name));
+  // `origin/feature/x` es la remota de `feature/x`: el nombre del remoto es lo que va antes de la primera barra
+  const list = [...locals, ...remotes.filter((b) => b.name.includes('/') && !names.has(b.name.slice(b.name.indexOf('/') + 1)))];
+  // la rama por defecto: a la que apunta origin/HEAD, si no la que tiene HEAD, si no main o master (siempre una local)
   const origin = (await git(dir, ['symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD']).catch(() => '')).trim().replace(/^origin\//, '');
-  const names = new Set(list.map((b) => b.name));
   const defaultBranch = [origin, head.trim(), init.trim(), 'main', 'master'].find((n) => n && names.has(n)) || list[0]?.name || null;
   return { name: path.basename(dir), gitDir: abs.trim(), defaultBranch, branches: list };
 }

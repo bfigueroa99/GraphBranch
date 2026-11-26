@@ -133,6 +133,11 @@ test('agentOf: los agentes de js/agents.js por su nombre corriente, sin confundi
   assert.equal(agentOf('OpenCode'), 'opencode');
   assert.equal(agentOf('open-code loop'), 'opencode');
   assert.equal(agentOf('Gemini CLI'), 'gemini');
+  assert.equal(agentOf('OpenClaw del mini PC'), 'openclaw');
+  assert.equal(agentOf('hermes_noche'), 'hermes');
+  assert.equal(agentOf('Hermes Agent'), 'hermes');
+  assert.equal(agentOf('zeroclaw'), 'zeroclaw');
+  assert.equal(agentOf('openclawd'), null);
   assert.equal(agentOf('claudette'), null);
   assert.equal(agentOf('scripts'), null);
   assert.equal(agentOf(''), null);

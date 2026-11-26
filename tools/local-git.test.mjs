@@ -57,6 +57,33 @@ test('branches lista las ramas locales con su cabeza y la rama por defecto', asy
   assert.ok(info.branches.every((b) => b.date > 0));
 });
 
+test('branches suma las remotas que no tienen una local con su nombre, sin origin/HEAD', async () => {
+  const server = makeRepo('servidor');
+  const first = commit(server, 'a.txt', 'a\n', 'primero');
+  git(server, 'checkout', '-q', '-b', 'solo-remota');
+  const remota = commit(server, 'b.txt', 'b\n', 'de otra persona');
+  git(server, 'checkout', '-q', '-b', 'feature/x', 'main');
+  const fx = commit(server, 'c.txt', 'c\n', 'feature en el servidor');
+  git(server, 'checkout', '-q', 'main');
+  git(base, 'clone', '-q', server, 'clon');
+  const dir = join(base, 'clon');
+  // feature/x también es local (con un commit que todavía no se publicó): manda la local, origin/feature/x no se dibuja aparte
+  git(dir, 'checkout', '-q', '-b', 'feature/x', 'origin/feature/x');
+  const fxLocal = commit(dir, 'd.txt', 'd\n', 'sin publicar');
+  git(dir, 'checkout', '-q', 'main');
+  const { id } = await local.allow(dir);
+  const info = await local.branches(id);
+  assert.equal(info.defaultBranch, 'main');
+  assert.deepEqual(
+    info.branches.map((b) => [b.name, b.sha]).sort(),
+    [['feature/x', fxLocal], ['main', first], ['origin/solo-remota', remota]],
+  );
+  assert.notEqual(fx, fxLocal);
+  assert.ok(info.branches.every((b) => b.date > 0));
+  // la historia de una remota sale como la de cualquier otra rama
+  assert.deepEqual((await local.log(id, remota, first, 10)).map((c) => c.message), ['de otra persona']);
+});
+
 test('log trae los commits de una cabeza sin los de la otra, los más nuevos primero, con autor y padres', async () => {
   const dir = makeRepo('historia');
   const c1 = commit(dir, 'a.txt', '1\n', 'uno');
